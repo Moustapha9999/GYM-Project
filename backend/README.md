@@ -31,6 +31,16 @@ alembic upgrade head
 python -m scripts.seed
 ```
 
+**Interface pgAdmin (navigateur) :** `http://localhost:5050`
+
+| Champ | Valeur |
+|---|---|
+| Email pgAdmin | `admin@gym.sylla` |
+| Mot de passe pgAdmin | `admin` |
+| Mot de passe serveur PostgreSQL (`gym_user`) | `gym_password` |
+
+Le serveur **GYM SYLLA — PostgreSQL** est préconfiguré (tables, données, requêtes SQL).
+
 ### Option B — Supabase
 
 1. Créer un projet sur [supabase.com](https://supabase.com)

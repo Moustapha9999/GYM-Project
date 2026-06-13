@@ -1,0 +1,16 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "GYM SYLLA — PostgreSQL",
+      "Group": "Servers",
+      "Host": "db",
+      "Port": 5432,
+      "MaintenanceDB": "gym_sylla",
+      "Username": "gym_user",
+      "Password": "gym_password",
+      "PassFile": "/pgadmin4/pgpass",
+      "SSLMode": "prefer",
+      "SavePassword": true
+    }
+  }
+}
