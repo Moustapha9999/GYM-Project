@@ -1,0 +1,32 @@
+# ── Framework API ───────────────────────────────────────────
+fastapi
+uvicorn[standard]
+
+# ── Base de données (Supabase PostgreSQL) ───────────────────
+sqlalchemy
+psycopg2-binary
+alembic
+
+# ── Validation & configuration ──────────────────────────────
+pydantic
+pydantic-settings
+python-dotenv
+email-validator
+
+# ── Authentification & sécurité ─────────────────────────────
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt
+python-multipart
+
+# ── Génération de documents ─────────────────────────────────
+reportlab
+qrcode[pil]
+openpyxl
+
+# ── HTTP (appels au service de notifications) ───────────────
+httpx
+
+# ── Tests ───────────────────────────────────────────────────
+pytest
+pytest-asyncio
