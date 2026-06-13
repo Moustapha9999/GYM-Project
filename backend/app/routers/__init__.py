@@ -3,7 +3,7 @@ from fastapi import APIRouter
 
 from app.routers import (
     auth, clients, abonnements, seances_journalieres, presences,
-    paiements, dashboard, finances, rh, coach, notifications,
+    paiements, dashboard, finances, rh, coach, notifications, rapports,
 )
 
 api_router = APIRouter()
@@ -18,3 +18,4 @@ api_router.include_router(finances.router)
 api_router.include_router(rh.router)
 api_router.include_router(coach.router)
 api_router.include_router(notifications.router)
+api_router.include_router(rapports.router)
