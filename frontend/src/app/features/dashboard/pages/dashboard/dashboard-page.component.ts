@@ -5,7 +5,6 @@ import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
 import { PageHeaderComponent } from '@shared/components/page-header/page-header.component';
 import {
-  DashboardKpis,
   DashboardService,
 } from '@features/dashboard/services/dashboard.service';
 
@@ -73,7 +72,7 @@ export class DashboardPageComponent implements OnInit {
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
-  readonly kpis = signal<DashboardKpis | null>(null);
+  readonly kpis = signal<Record<string, number | string> | null>(null);
 
   readonly roleLabel = computed(() => this.auth.currentUser()?.role.libelle);
   readonly dashboardSubtitle = computed(() => `Vue d'ensemble — ${this.roleLabel() ?? ''}`);
@@ -91,16 +90,38 @@ export class DashboardPageComponent implements OnInit {
 
   ngOnInit(): void {
     const role = this.auth.roleName();
-    const request$ =
-      role === 'coach'
-        ? this.dashboardService.getCoachDashboard()
-        : role === 'receptionniste'
-          ? this.dashboardService.getReceptionDashboard()
-          : this.dashboardService.getAdminDashboard();
 
-    request$.subscribe({
+    if (role === 'coach') {
+      this.dashboardService.getCoachDashboard().subscribe({
+        next: (data) => {
+          this.kpis.set(data);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error.set('Vérifiez que l\'API backend est démarrée.');
+          this.loading.set(false);
+        },
+      });
+      return;
+    }
+
+    if (role === 'receptionniste') {
+      this.dashboardService.getReceptionDashboard().subscribe({
+        next: (data) => {
+          this.kpis.set(data);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error.set('Vérifiez que l\'API backend est démarrée.');
+          this.loading.set(false);
+        },
+      });
+      return;
+    }
+
+    this.dashboardService.getAdminDashboard().subscribe({
       next: (data) => {
-        this.kpis.set(data);
+        this.kpis.set(data as unknown as Record<string, number | string>);
         this.loading.set(false);
       },
       error: () => {

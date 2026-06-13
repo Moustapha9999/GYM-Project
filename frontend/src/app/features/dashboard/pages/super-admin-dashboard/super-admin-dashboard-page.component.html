@@ -1,0 +1,144 @@
+<section class="sa-dash">
+  @if (loading()) {
+    <app-loading-spinner />
+  } @else if (error()) {
+    <div class="sa-dash__error">{{ error() }}</div>
+  } @else if (data()) {
+    <div class="sa-dash__welcome">
+      <div>
+        <h1>Bienvenue, {{ greeting() }} 👋</h1>
+        <p>Vue d'ensemble de la salle — revenus, abonnements et activité.</p>
+      </div>
+      <div class="sa-dash__actions">
+        <select class="sa-dash__select">
+          <option>Cette semaine</option>
+          <option>Ce mois</option>
+        </select>
+        <button type="button" class="sa-dash__export">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Exporter rapport
+        </button>
+      </div>
+    </div>
+
+    <div class="sa-dash__kpis">
+      @for (kpi of kpiCards(); track kpi.label) {
+        <article class="sa-kpi">
+          <div class="sa-kpi__top">
+            <span class="sa-kpi__label">{{ kpi.label }}</span>
+            <span class="sa-kpi__icon" [style.background]="kpi.iconBg">{{ kpi.icon }}</span>
+          </div>
+          <strong class="sa-kpi__value">{{ kpi.value }}</strong>
+          <span class="sa-kpi__trend" [class.is-down]="!kpi.trendUp">{{ kpi.trend }}</span>
+        </article>
+      }
+    </div>
+
+    <div class="sa-dash__row sa-dash__row--main">
+      <article class="sa-card sa-card--large">
+        <div class="sa-card__head">
+          <div>
+            <h2>Aperçu des revenus</h2>
+            <p class="sa-card__subtitle">
+              Total 7 jours :
+              <strong>{{ areaPoints().total | mruCurrency }}</strong>
+            </p>
+          </div>
+          <span class="sa-badge sa-badge--up">+{{ data()!.nouvelles_inscriptions_mois }} inscriptions</span>
+        </div>
+
+        <div class="sa-bar-chart">
+          @for (bar of barChart(); track bar.label) {
+            <div class="sa-bar-chart__group">
+              <div class="sa-bar-chart__bars">
+                <div class="sa-bar sa-bar--muted" [style.height.%]="bar.height * 0.7"></div>
+                <div class="sa-bar sa-bar--primary" [style.height.%]="bar.height"></div>
+              </div>
+              <span class="sa-bar-chart__label">{{ bar.label }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="sa-legend">
+          <span><i class="sa-legend__dot sa-legend__dot--muted"></i> Séances</span>
+          <span><i class="sa-legend__dot sa-legend__dot--primary"></i> Abonnements</span>
+        </div>
+      </article>
+
+      <article class="sa-card">
+        <div class="sa-card__head">
+          <h2>Résumé financier</h2>
+        </div>
+        <ul class="sa-summary">
+          <li>
+            <span>Revenus du jour</span>
+            <strong>{{ data()!.revenus_jour | mruCurrency }}</strong>
+          </li>
+          <li>
+            <span>Abonnements (mois)</span>
+            <strong>{{ data()!.total_abonnements_mois | mruCurrency }}</strong>
+          </li>
+          <li>
+            <span>Séances (mois)</span>
+            <strong>{{ data()!.total_seances_mois | mruCurrency }}</strong>
+          </li>
+          <li>
+            <span>Dépenses (mois)</span>
+            <strong>{{ data()!.total_depenses_mois | mruCurrency }}</strong>
+          </li>
+        </ul>
+      </article>
+    </div>
+
+    <div class="sa-dash__row">
+      <article class="sa-card">
+        <div class="sa-card__head">
+          <div>
+            <h2>Présences du jour</h2>
+            <p class="sa-card__subtitle">{{ data()!.presences_jour }} entrées enregistrées</p>
+          </div>
+        </div>
+        <div class="sa-area-chart">
+          <svg viewBox="0 0 100 60" preserveAspectRatio="none">
+            @if (areaPoints().area) {
+              <polygon [attr.points]="areaPoints().area" class="sa-area-fill" />
+              <polyline [attr.points]="areaPoints().line" class="sa-area-line" />
+            }
+          </svg>
+        </div>
+        <div class="sa-area-labels">
+          @for (label of areaPoints().labels; track label) {
+            <span>{{ label }}</span>
+          }
+        </div>
+      </article>
+
+      <article class="sa-card">
+        <div class="sa-card__head">
+          <h2>Abonnements par sexe</h2>
+        </div>
+        <div class="sa-donut-wrap">
+          <div class="sa-donut" [style.background]="donutGradient()">
+            <div class="sa-donut__hole">
+              <strong>{{ data()!.abonnements_actifs }}</strong>
+              <span>actifs</span>
+            </div>
+          </div>
+          <ul class="sa-donut-legend">
+            @for (seg of donutSegments(); track seg.label) {
+              <li>
+                <i [style.background]="seg.color"></i>
+                <span>{{ seg.label }}</span>
+                <strong>{{ seg.value }}</strong>
+              </li>
+            }
+          </ul>
+        </div>
+      </article>
+    </div>
+  }
+</section>

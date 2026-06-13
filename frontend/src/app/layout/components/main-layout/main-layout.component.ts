@@ -1,22 +1,28 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { AuthService } from '@core/services/auth.service';
 import { HeaderComponent } from '@layout/components/header/header.component';
 import { SidebarComponent } from '@layout/components/sidebar/sidebar.component';
+import { SuperAdminLayoutComponent } from '@layout/components/super-admin-layout/super-admin-layout.component';
 
 @Component({
   selector: 'app-main-layout',
-  imports: [RouterOutlet, SidebarComponent, HeaderComponent],
+  imports: [RouterOutlet, SidebarComponent, HeaderComponent, SuperAdminLayoutComponent],
   template: `
-    <div class="layout">
-      <app-sidebar />
-      <div class="layout__main">
-        <app-header />
-        <main class="layout__content">
-          <router-outlet />
-        </main>
+    @if (isSuperAdmin()) {
+      <app-super-admin-layout />
+    } @else {
+      <div class="layout">
+        <app-sidebar />
+        <div class="layout__main">
+          <app-header />
+          <main class="layout__content">
+            <router-outlet />
+          </main>
+        </div>
       </div>
-    </div>
+    }
   `,
   styles: `
     .layout {
@@ -38,4 +44,8 @@ import { SidebarComponent } from '@layout/components/sidebar/sidebar.component';
     }
   `,
 })
-export class MainLayoutComponent {}
+export class MainLayoutComponent {
+  private readonly auth = inject(AuthService);
+
+  readonly isSuperAdmin = computed(() => this.auth.roleName() === 'super_admin');
+}

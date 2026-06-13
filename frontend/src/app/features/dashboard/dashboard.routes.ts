@@ -4,6 +4,8 @@ export const DASHBOARD_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('./pages/dashboard/dashboard-page.component').then((m) => m.DashboardPageComponent),
+      import('./pages/dashboard-shell/dashboard-shell.component').then(
+        (m) => m.DashboardShellComponent,
+      ),
   },
 ];
