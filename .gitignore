@@ -1,0 +1,59 @@
+# ============================================================
+# GYM SYLLA — .gitignore (monorepo)
+# ============================================================
+
+# ── Backend Laravel ─────────────────────────────────────────
+backend/vendor/
+backend/node_modules/
+backend/.env
+backend/.env.backup
+backend/.env.production
+backend/.phpunit.result.cache
+backend/storage/*.key
+backend/storage/app/public/*
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/storage/logs/*
+backend/bootstrap/cache/*
+backend/public/storage
+backend/public/hot
+!backend/storage/**/.gitignore
+
+# ── Frontend Angular ────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/tmp/
+frontend/out-tsc/
+frontend/.angular/
+frontend/.env
+frontend/coverage/
+frontend/*.log
+
+# ── Notification Service (Node.js) ──────────────────────────
+notification-service/node_modules/
+notification-service/.env
+notification-service/auth_info_baileys/      # session WhatsApp = SENSIBLE, ne jamais commiter
+notification-service/*.log
+notification-service/dist/
+
+# ── Environnements & secrets ────────────────────────────────
+*.env
+*.pem
+*.key
+!*.env.example
+
+# ── OS / Éditeurs ───────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ── Divers ──────────────────────────────────────────────────
+*.log
+.cache/
