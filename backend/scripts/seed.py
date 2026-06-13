@@ -100,7 +100,7 @@ ADMIN = {
     "nom": "Admin",
     "prenom": "Super",
     "email": "admin@totalfitness.mr",
-    "password": "Admin@2025",  # à changer après la 1ère connexion
+    "password": "@",  # mot de passe dev — à changer en production
 }
 
 

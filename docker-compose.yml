@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: gym-sylla-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gym_sylla
+      POSTGRES_USER: gym_user
+      POSTGRES_PASSWORD: gym_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - gym_sylla_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gym_user -d gym_sylla"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  gym_sylla_pgdata:

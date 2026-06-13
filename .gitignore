@@ -6,6 +6,9 @@
 # ── Backend Laravel ─────────────────────────────────────────
 backend/vendor/
 backend/node_modules/
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
 backend/.env
 backend/.env.backup
 backend/.env.production
