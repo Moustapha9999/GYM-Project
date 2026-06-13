@@ -1,4 +1,4 @@
-# 🏋️ GYM SYLLA — ERP de gestion de salle de sport
+# 🏋️ GYM  — ERP de gestion de salle de sport
 
 ERP complet pour la gestion d'une salle de sport : clients, abonnements, paiements (moyens locaux mauritaniens), présences avec carte QR, RH/salaires, notifications WhatsApp + SMS, et tableaux de bord décisionnels.
 
@@ -92,13 +92,6 @@ Chaque sous-projet a son propre `.env.example`. **Ne jamais commiter de `.env` r
 
 ---
 
-## 👥 Équipe
-
-| Rôle | Responsable | Dossier |
-|---|---|---|
-| Backend (API Laravel) | *(toi)* | `backend/` |
-| Frontend (Angular) | *(ton ami)* | `frontend/` |
-
 ---
 
 ## 📚 Documentation
@@ -109,4 +102,4 @@ Chaque sous-projet a son propre `.env.example`. **Ne jamais commiter de `.env` r
 
 ---
 
-*GYM SYLLA — Projet de fin d'études · Master IAGE*
+
