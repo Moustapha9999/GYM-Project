@@ -21,6 +21,7 @@ POST /auth/login
 ```
 
 Requête :
+
 ```json
 {
   "email": "reception@gymsylla.mr",
@@ -29,6 +30,7 @@ Requête :
 ```
 
 Réponse `200` :
+
 ```json
 {
   "success": true,
@@ -227,6 +229,7 @@ Réponse `201` : abonnement créé + carte QR régénérée + URLs PDF.
 ## 🌍 CORS
 
 Le backend autorise les origines :
+
 - `http://localhost:4200` (dev Angular)
 - `https://gym-sylla.netlify.app` (prod)
 
