@@ -1,7 +1,10 @@
 """Agrégation de tous les routers de l'API."""
 from fastapi import APIRouter
 
-from app.routers import auth, clients, abonnements, seances_journalieres, presences, paiements, dashboard
+from app.routers import (
+    auth, clients, abonnements, seances_journalieres, presences,
+    paiements, dashboard, finances, rh, coach, notifications,
+)
 
 api_router = APIRouter()
 api_router.include_router(auth.router)
@@ -11,8 +14,7 @@ api_router.include_router(seances_journalieres.router)
 api_router.include_router(presences.router)
 api_router.include_router(paiements.router)
 api_router.include_router(dashboard.router)
-
-# Les autres routers seront ajoutés ici au fur et à mesure :
-# api_router.include_router(clients.router)
-# api_router.include_router(abonnements.router)
-# etc.
+api_router.include_router(finances.router)
+api_router.include_router(rh.router)
+api_router.include_router(coach.router)
+api_router.include_router(notifications.router)
