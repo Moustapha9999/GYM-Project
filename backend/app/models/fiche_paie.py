@@ -31,6 +31,7 @@ class FichePaie(Base):
     primes: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0)
     bonus: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0)
     retenues: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0)
+    
     # salaire_final est une colonne générée côté DB (voir migration)
     salaire_final: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
     statut_paiement: Mapped[str] = mapped_column(String(20), default="En attente")
