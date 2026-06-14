@@ -1,11 +1,13 @@
 /**
  * Client WhatsApp basé sur Baileys (WhatsApp Web multi-device).
  */
+
+
 import {
   makeWASocket,
   useMultiFileAuthState,
   DisconnectReason,
-} from "@whiskeysockets/baileys";
+} from "baileys";
 import qrcode from "qrcode-terminal";
 import pino from "pino";
 
