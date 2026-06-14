@@ -1,7 +1,6 @@
 {
   "name": "total-fitness-notifications",
   "version": "1.0.0",
-  "description": "Micro-service notifications WhatsApp + SMS pour TOTAL FITNESS",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
