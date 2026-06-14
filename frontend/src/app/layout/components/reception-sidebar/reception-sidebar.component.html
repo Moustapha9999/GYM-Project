@@ -1,0 +1,49 @@
+<aside class="rec-sidebar">
+  <div class="rec-sidebar__brand">
+    <span class="rec-sidebar__logo">
+      <span class="rec-sidebar__logo-dot"></span>
+      <span class="rec-sidebar__logo-dot"></span>
+    </span>
+    <strong>GYM SYLLA</strong>
+  </div>
+
+  <p class="rec-sidebar__section">MENU</p>
+  <nav class="rec-sidebar__nav">
+    @for (item of menuItems; track item.route) {
+      <a
+        [routerLink]="item.route"
+        routerLinkActive="is-active"
+        [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+        class="rec-sidebar__link"
+      >
+        <span class="rec-sidebar__icon" aria-hidden="true">
+          @switch (item.icon) {
+            @case ('dashboard') { ▦ }
+            @case ('clients') { 👥 }
+            @case ('abonnements') { 🎫 }
+            @case ('paiements') { 💳 }
+            @case ('presences') { ✓ }
+            @case ('seances') { 🏋️ }
+          }
+        </span>
+        <span>{{ item.label }}</span>
+        @if (item.badge) {
+          <span class="rec-sidebar__badge">{{ item.badge }}</span>
+        }
+      </a>
+    }
+  </nav>
+
+  <p class="rec-sidebar__section">GÉNÉRAL</p>
+  <nav class="rec-sidebar__nav">
+    <button type="button" class="rec-sidebar__link rec-sidebar__link--btn" (click)="logout()">
+      <span class="rec-sidebar__icon" aria-hidden="true">↪</span>
+      <span>Déconnexion</span>
+    </button>
+  </nav>
+
+  <div class="rec-sidebar__footer">
+    <small>{{ userName() }}</small>
+    <span>Réceptionniste</span>
+  </div>
+</aside>

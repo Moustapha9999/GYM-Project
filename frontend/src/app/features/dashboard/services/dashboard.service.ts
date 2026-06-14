@@ -3,6 +3,7 @@ import { map, Observable } from 'rxjs';
 
 import { ApiService } from '@core/services/api.service';
 import { AdminDashboardData } from '@features/dashboard/models/admin-dashboard.model';
+import { ReceptionDashboardData } from '@features/dashboard/models/reception-dashboard.model';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
@@ -14,9 +15,9 @@ export class DashboardService {
       .pipe(map((response) => response.data));
   }
 
-  getReceptionDashboard(): Observable<Record<string, number | string>> {
+  getReceptionDashboard(): Observable<ReceptionDashboardData> {
     return this.api
-      .get<Record<string, number | string>>('dashboard/reception')
+      .get<ReceptionDashboardData>('dashboard/reception')
       .pipe(map((response) => response.data));
   }
 

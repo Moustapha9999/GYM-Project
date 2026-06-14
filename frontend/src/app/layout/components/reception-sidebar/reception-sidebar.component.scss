@@ -1,0 +1,138 @@
+:host {
+  --rec-green: #0d5c3b;
+  --rec-green-soft: #e8f5ee;
+  --rec-text-muted: #94a3b8;
+}
+
+.rec-sidebar {
+  width: 240px;
+  min-height: 100vh;
+  background: #fff;
+  border-right: 1px solid #eef0f3;
+  padding: 1.25rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.rec-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.25rem 0.5rem 1.5rem;
+}
+
+.rec-sidebar__logo {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--rec-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.rec-sidebar__logo-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.rec-sidebar__brand strong {
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+.rec-sidebar__section {
+  margin: 0.75rem 0 0.5rem 0.75rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--rec-text-muted);
+}
+
+.rec-sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rec-sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 999px;
+  text-decoration: none;
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  width: 100%;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rec-sidebar__link svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+}
+
+.rec-sidebar__icon {
+  width: 1.25rem;
+  text-align: center;
+  flex-shrink: 0;
+  font-size: 0.95rem;
+}
+
+.rec-sidebar__link span:not(.rec-sidebar__badge) {
+  flex: 1;
+}
+
+.rec-sidebar__link:hover {
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+.rec-sidebar__link.is-active {
+  background: var(--rec-green);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(13, 92, 59, 0.25);
+}
+
+.rec-sidebar__badge {
+  min-width: 1.75rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: var(--rec-green);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.rec-sidebar__link.is-active .rec-sidebar__badge {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.rec-sidebar__footer {
+  margin-top: auto;
+  padding: 1rem 0.75rem 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.rec-sidebar__footer small {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.rec-sidebar__footer span {
+  font-size: 0.75rem;
+  color: var(--rec-text-muted);
+}

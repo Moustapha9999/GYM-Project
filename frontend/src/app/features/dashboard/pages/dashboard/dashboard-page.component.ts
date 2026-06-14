@@ -108,7 +108,7 @@ export class DashboardPageComponent implements OnInit {
     if (role === 'receptionniste') {
       this.dashboardService.getReceptionDashboard().subscribe({
         next: (data) => {
-          this.kpis.set(data);
+          this.kpis.set(data as unknown as Record<string, number | string>);
           this.loading.set(false);
         },
         error: () => {
