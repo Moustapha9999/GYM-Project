@@ -2,7 +2,6 @@
  * Client WhatsApp basé sur Baileys (WhatsApp Web multi-device).
  */
 
-
 import {
   makeWASocket,
   useMultiFileAuthState,
