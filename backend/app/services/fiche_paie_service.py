@@ -71,6 +71,11 @@ def marquer_payee(db: Session, fiche: FichePaie) -> FichePaie:
     fiche.date_paiement = date.today()
     db.commit()
     db.refresh(fiche)
+    # Notification (non bloquante)
+    from app.services import notification_triggers
+    employe = db.query(Employe).filter(Employe.id == fiche.employe_id).first()
+    if employe:
+        notification_triggers.notifier_salaire_paye(db, employe, fiche)
     return fiche
 
 

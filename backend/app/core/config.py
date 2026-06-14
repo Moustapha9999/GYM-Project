@@ -24,6 +24,7 @@ class Settings(BaseSettings):
 
     # ── Service de notifications ─────────────────────────────
     NOTIFICATION_SERVICE_URL: str = "http://localhost:3001"
+    NOTIFICATION_API_SECRET: str = ""   # ← AJOUTE CETTE LIGNE
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
