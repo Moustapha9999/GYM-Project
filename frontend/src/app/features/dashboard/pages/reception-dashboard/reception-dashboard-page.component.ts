@@ -8,7 +8,7 @@ import { DashboardService } from '@features/dashboard/services/dashboard.service
 
 @Component({
   selector: 'app-reception-dashboard-page',
-  imports: [LoadingSpinnerComponent, MruCurrencyPipe],
+  imports: [LoadingSpinnerComponent],
   templateUrl: './reception-dashboard-page.component.html',
   styleUrl: './reception-dashboard-page.component.scss',
 })
