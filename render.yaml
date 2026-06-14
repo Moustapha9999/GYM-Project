@@ -1,6 +1,4 @@
 # Configuration de déploiement Render — TOTAL FITNESS
-# 3 services : API backend, micro-service notifications, cron jobs
-
 services:
   # ── API Backend (FastAPI) ─────────────────────────────────
   - type: web
@@ -11,9 +9,9 @@ services:
     plan: free
     envVars:
       - key: DATABASE_URL
-        sync: false          # à renseigner dans le dashboard Render (Supabase Session Pooler)
+        sync: false
       - key: SECRET_KEY
-        generateValue: true  # Render génère une clé aléatoire
+        generateValue: true
       - key: APP_ENV
         value: production
       - key: CORS_ORIGINS
@@ -34,10 +32,6 @@ services:
         value: 3001
       - key: API_SECRET
         sync: false
-    disk:
-      name: whatsapp-session
-      mountPath: /app/auth_info_baileys
-      sizeGB: 1
 
   # ── Cron : expiration quotidienne (00h05) ─────────────────
   - type: cron
