@@ -161,12 +161,26 @@ def souscrire(
 
 
 def lister(db: Session, client_id: uuid.UUID | None = None, statut: str | None = None):
-    query = db.query(Abonnement)
+    from sqlalchemy.orm import joinedload
+
+    query = db.query(Abonnement).options(
+        joinedload(Abonnement.client),
+        joinedload(Abonnement.type_abonnement),
+    )
     if client_id:
         query = query.filter(Abonnement.client_id == client_id)
     if statut:
         query = query.filter(Abonnement.statut == statut)
     return query.order_by(Abonnement.created_at.desc())
+
+
+def lister_types(db: Session):
+    return (
+        db.query(TypeAbonnement)
+        .filter(TypeAbonnement.actif == True)  # noqa: E712
+        .order_by(TypeAbonnement.nom)
+        .all()
+    )
 
 
 def obtenir(db: Session, abonnement_id: uuid.UUID) -> Abonnement | None:

@@ -11,6 +11,16 @@ from app.models.moyen_paiement import MoyenPaiement
 from app.models.paiement import Paiement
 
 
+class PaiementError(Exception):
+    """Erreur métier lors de la création d'un paiement."""
+
+
+def _generer_reference_paiement() -> str:
+    horodatage = datetime.now(timezone.utc).strftime("%Y%m")
+    suffixe = uuid.uuid4().hex[:8]
+    return f"PAY-{horodatage}-{suffixe}"
+
+
 def lister_detail(
     db: Session,
     date_debut: date | None = None,
@@ -33,7 +43,6 @@ def lister_detail(
             Paiement.date_paiement >= datetime(date_debut.year, date_debut.month, date_debut.day, tzinfo=timezone.utc)
         )
     if date_fin:
-        # inclure toute la journée date_fin
         fin = datetime(date_fin.year, date_fin.month, date_fin.day, 23, 59, 59, tzinfo=timezone.utc)
         query = query.filter(Paiement.date_paiement <= fin)
     if moyen_paiement_id:
@@ -87,7 +96,6 @@ def caisse_du_jour(db: Session, jour: date | None = None) -> dict:
         Decimal("0"),
     )
 
-    # Répartition par moyen de paiement
     repartition_query = (
         db.query(
             MoyenPaiement.libelle,
@@ -121,3 +129,95 @@ def caisse_du_jour(db: Session, jour: date | None = None) -> dict:
 
 def obtenir(db: Session, paiement_id: uuid.UUID) -> Paiement | None:
     return db.query(Paiement).filter(Paiement.id == paiement_id).first()
+
+
+def creer(
+    db: Session,
+    type_paiement: str,
+    moyen_paiement_id: uuid.UUID,
+    encaisse_par: uuid.UUID,
+    client_id: uuid.UUID | None = None,
+    nom_client_occasionnel: str | None = None,
+    montant: Decimal | None = None,
+) -> dict:
+    """
+    Crée un paiement selon le type :
+    - Abonnement / Séance journalière : délègue aux services métier
+    - Service supplémentaire / Autre : encaissement direct
+    """
+    if type_paiement == "Abonnement":
+        if not client_id:
+            raise PaiementError("Un client est requis pour un abonnement.")
+        from app.services.abonnement_service import AbonnementError, souscrire
+
+        try:
+            result = souscrire(
+                db,
+                client_id=client_id,
+                moyen_paiement_id=moyen_paiement_id,
+                encaisse_par=encaisse_par,
+            )
+        except AbonnementError as e:
+            raise PaiementError(str(e)) from e
+        return {
+            "paiement_reference": result["paiement_reference"],
+            "montant": result["montant_paye"],
+            "type_paiement": "Abonnement",
+        }
+
+    if type_paiement == "Séance journalière":
+        from app.services.seance_service import SeanceError, enregistrer
+
+        try:
+            result = enregistrer(
+                db,
+                moyen_paiement_id=moyen_paiement_id,
+                encaisse_par=encaisse_par,
+                client_id=client_id,
+                nom_client_occasionnel=nom_client_occasionnel,
+            )
+        except SeanceError as e:
+            raise PaiementError(str(e)) from e
+        return {
+            "paiement_reference": result["paiement_reference"],
+            "montant": result["montant_paye"],
+            "type_paiement": "Séance journalière",
+        }
+
+    if montant is None or montant <= 0:
+        raise PaiementError("Montant invalide.")
+
+    moyen = (
+        db.query(MoyenPaiement)
+        .filter(
+            MoyenPaiement.id == moyen_paiement_id,
+            MoyenPaiement.actif == True,  # noqa: E712
+        )
+        .first()
+    )
+    if moyen is None:
+        raise PaiementError("Moyen de paiement invalide ou inactif.")
+
+    if client_id:
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if client is None:
+            raise PaiementError("Client introuvable.")
+
+    reference = _generer_reference_paiement()
+    paiement = Paiement(
+        reference=reference,
+        client_id=client_id,
+        type_paiement=type_paiement,
+        montant=montant,
+        moyen_paiement_id=moyen_paiement_id,
+        statut="Validé",
+        encaisse_par=encaisse_par,
+    )
+    db.add(paiement)
+    db.commit()
+
+    return {
+        "paiement_reference": reference,
+        "montant": montant,
+        "type_paiement": type_paiement,
+    }

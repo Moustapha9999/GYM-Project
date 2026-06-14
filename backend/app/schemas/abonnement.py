@@ -44,3 +44,30 @@ class SouscriptionResult(BaseModel):
     paiement_reference: str
     montant_paye: Decimal
     type_tarif: str  # "inscription" ou "renouvellement"
+
+
+class AbonnementListItem(BaseModel):
+    """Abonnement enrichi pour la liste (client + formule lisibles)."""
+    id: uuid.UUID
+    client_id: uuid.UUID
+    client_nom: str
+    type_abonnement: str
+    date_debut: date
+    date_fin: date
+    montant: Decimal
+    statut: str
+    est_inscription: bool
+    created_at: datetime
+
+
+class TypeAbonnementRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    nom: str
+    sexe: str | None
+    duree_jours: int
+    montant: Decimal
+    montant_inscription: Decimal
+    description: str | None
+    actif: bool

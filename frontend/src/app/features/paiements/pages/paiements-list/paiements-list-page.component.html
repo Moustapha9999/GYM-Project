@@ -1,0 +1,223 @@
+<section class="pay-page">
+  <div class="pay-page__head">
+    <div>
+      <h1>Paiements</h1>
+      <p>Journal des encaissements, caisse du jour et moyens locaux.</p>
+    </div>
+    <button type="button" class="pay-btn pay-btn--ghost" (click)="resetFilters()">
+      Réinitialiser filtres
+    </button>
+  </div>
+
+  @if (caisse()) {
+    <div class="pay-kpis">
+      <article class="pay-kpi pay-kpi--highlight">
+        <span>Total caisse</span>
+        <strong>{{ caisse()!.total_encaisse | mruCurrency }}</strong>
+        <small>{{ caisse()!.nombre_paiements }} paiement(s)</small>
+      </article>
+      <article class="pay-kpi">
+        <span>Abonnements</span>
+        <strong>{{ caisse()!.total_abonnements | mruCurrency }}</strong>
+      </article>
+      <article class="pay-kpi">
+        <span>Séances</span>
+        <strong>{{ caisse()!.total_seances | mruCurrency }}</strong>
+      </article>
+      <article class="pay-kpi">
+        <span>Journal filtré</span>
+        <strong>{{ totalJournal() | mruCurrency }}</strong>
+        <small>{{ paiements().length }} ligne(s)</small>
+      </article>
+    </div>
+  }
+
+  <div class="pay-page__grid">
+    <article class="pay-card pay-card--main">
+      <div class="pay-card__head">
+        <h2>Journal des paiements</h2>
+      </div>
+
+      <form class="pay-filters" [formGroup]="filters" (ngSubmit)="applyFilters()">
+        <label>
+          Date début
+          <input type="date" formControlName="date_debut" />
+        </label>
+        <label>
+          Date fin
+          <input type="date" formControlName="date_fin" />
+        </label>
+        <label>
+          Moyen
+          <select formControlName="moyen_paiement_id">
+            <option value="">Tous</option>
+            @for (m of moyens(); track m.id) {
+              <option [value]="m.id">{{ m.libelle }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Type
+          <select formControlName="type_paiement">
+            @for (opt of filterTypeOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </label>
+        <button type="submit" class="pay-btn pay-btn--primary">Filtrer</button>
+      </form>
+
+      @if (loading()) {
+        <app-loading-spinner label="Chargement des paiements..." />
+      } @else if (error()) {
+        <p class="pay-alert pay-alert--error">{{ error() }}</p>
+      } @else {
+        <div class="pay-table-wrap">
+          <table class="pay-table">
+            <thead>
+              <tr>
+                <th>Référence</th>
+                <th>Client</th>
+                <th>Type</th>
+                <th>Moyen</th>
+                <th>Montant</th>
+                <th>Date</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of paiements(); track p.id) {
+                <tr>
+                  <td class="pay-table__ref">{{ p.reference }}</td>
+                  <td>{{ p.client_nom ?? '—' }}</td>
+                  <td>{{ p.type_paiement }}</td>
+                  <td>{{ p.moyen_paiement }}</td>
+                  <td class="pay-table__amount">{{ p.montant | mruCurrency }}</td>
+                  <td>{{ p.date_paiement | date: 'dd/MM/yyyy HH:mm' }}</td>
+                  <td>
+                    <span class="pay-status" [class.is-valid]="p.statut === 'Validé'">
+                      {{ p.statut }}
+                    </span>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="pay-table__empty">Aucun paiement pour ces filtres.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </article>
+
+    <aside class="pay-side">
+      <article class="pay-card pay-card--create">
+        <h2>Nouveau paiement</h2>
+        <p class="pay-card__hint">Abonnement, séance ou encaissement manuel.</p>
+
+        @if (createSuccess()) {
+          <p class="pay-alert pay-alert--success">{{ createSuccess() }}</p>
+        }
+        @if (createError()) {
+          <p class="pay-alert pay-alert--error">{{ createError() }}</p>
+        }
+
+        <form class="pay-create-form" [formGroup]="createForm" (ngSubmit)="submitCreate()">
+          <label>
+            Type
+            <select formControlName="type_paiement">
+              @for (opt of createTypeOptions; track opt.value) {
+                <option [value]="opt.value">{{ opt.label }}</option>
+              }
+            </select>
+          </label>
+
+          <label>
+            Moyen de paiement
+            <select formControlName="moyen_paiement_id">
+              <option value="">Choisir...</option>
+              @for (m of moyens(); track m.id) {
+                <option [value]="m.id">{{ m.libelle }}</option>
+              }
+            </select>
+          </label>
+
+          <label>
+            @if (createType() === 'Abonnement' || createType() === 'Séance journalière') {
+              Rechercher client
+            } @else {
+              Client (optionnel)
+            }
+            <input type="text" formControlName="client_search" placeholder="Nom ou téléphone" />
+          </label>
+
+          @if (selectedClient()) {
+            <div class="pay-client-selected">
+              <span>{{ selectedClient()!.prenom }} {{ selectedClient()!.nom }}</span>
+              <button type="button" class="pay-link-btn" (click)="clearClient()">Changer</button>
+            </div>
+          }
+
+          @if (clientResults().length > 0) {
+            <ul class="pay-client-results">
+              @for (c of clientResults(); track c.id) {
+                <li>
+                  <button type="button" (click)="selectClient(c)">
+                    {{ c.prenom }} {{ c.nom }} — {{ c.telephone }}
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+
+          @if (showOccasionnel()) {
+            <label>
+              Client occasionnel
+              <input type="text" formControlName="nom_client_occasionnel" placeholder="Nom du visiteur" />
+            </label>
+          }
+
+          @if (showMontant()) {
+            <label>
+              Montant (MRU)
+              <input type="number" formControlName="montant" min="1" step="1" placeholder="Ex: 500" />
+            </label>
+          }
+
+          <button type="submit" class="pay-btn pay-btn--primary pay-btn--block" [disabled]="submitting()">
+            {{ submitting() ? 'Enregistrement...' : 'Enregistrer le paiement' }}
+          </button>
+        </form>
+      </article>
+
+      @if (caisse()) {
+        <article class="pay-card">
+          <h2>Caisse du {{ caisse()!.jour | date: 'dd/MM/yyyy' }}</h2>
+          <ul class="pay-repartition">
+            @for (item of caisse()!.repartition; track item.moyen_paiement) {
+              <li>
+                <div>
+                  <strong>{{ item.moyen_paiement }}</strong>
+                  <span>{{ item.nombre }} paiement(s)</span>
+                </div>
+                <strong>{{ item.total | mruCurrency }}</strong>
+              </li>
+            } @empty {
+              <li class="pay-repartition__empty">Aucun encaissement ce jour.</li>
+            }
+          </ul>
+        </article>
+
+        <article class="pay-card pay-card--info">
+          <h3>Moyens de paiement</h3>
+          <ul class="pay-moyens">
+            @for (m of moyens(); track m.id) {
+              <li>{{ m.libelle }}</li>
+            }
+          </ul>
+        </article>
+      }
+    </aside>
+  </div>
+</section>

@@ -1,0 +1,385 @@
+.abo-page__head {
+  margin-bottom: 1.25rem;
+}
+
+.abo-page__head h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.abo-page__head p {
+  margin: 0.35rem 0 0;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.abo-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.abo-kpi {
+  background: #fff;
+  border: 1px solid #eef0f3;
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+}
+
+.abo-kpi--highlight {
+  background: linear-gradient(135deg, #ea580c, #f97316);
+  border-color: transparent;
+  color: #fff;
+}
+
+.abo-kpi span {
+  display: block;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.abo-kpi strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.35rem;
+}
+
+.abo-kpi:not(.abo-kpi--highlight) span {
+  color: #94a3b8;
+}
+
+.abo-kpi:not(.abo-kpi--highlight) strong {
+  color: #0f172a;
+}
+
+.abo-page__grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+}
+
+.abo-card {
+  background: #fff;
+  border: 1px solid #eef0f3;
+  border-radius: 14px;
+  padding: 1.15rem 1.25rem;
+}
+
+.abo-card__head h2,
+.abo-card h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.abo-card__hint {
+  margin: 0 0 1rem;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.abo-filters {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  align-items: end;
+}
+
+.abo-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.abo-filters select {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font: inherit;
+  background: #fff;
+}
+
+.abo-btn {
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.abo-btn--primary {
+  background: #ea580c;
+  color: #fff;
+}
+
+.abo-btn--ghost {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+.abo-btn--block {
+  width: 100%;
+}
+
+.abo-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.abo-table-wrap {
+  overflow-x: auto;
+}
+
+.abo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.abo-table th {
+  text-align: left;
+  padding: 0.65rem 0.5rem;
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.abo-table td {
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid #f8fafc;
+  color: #334155;
+}
+
+.abo-table__amount {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.abo-table__actions {
+  display: flex;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.abo-table__empty {
+  text-align: center;
+  color: #94a3b8;
+  padding: 2rem;
+}
+
+.abo-tag {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.abo-badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.abo-badge.is-active {
+  background: #ecfdf5;
+  color: #16a34a;
+}
+
+.abo-badge--expired {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.abo-link-btn {
+  background: none;
+  border: none;
+  color: #ea580c;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.abo-link-btn--danger {
+  color: #dc2626;
+}
+
+.abo-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.abo-pagination__btns {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.abo-alert {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.abo-alert--error {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.abo-alert--success {
+  background: #ecfdf5;
+  color: #16a34a;
+}
+
+.abo-side {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.abo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.abo-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.abo-form input,
+.abo-form select {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font: inherit;
+  background: #fff;
+}
+
+.abo-client-selected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  background: #fff7ed;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #c2410c;
+}
+
+.abo-client-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.abo-client-results li button {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: none;
+  background: #fff;
+  text-align: left;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.abo-client-results li button:hover {
+  background: #f8fafc;
+}
+
+.abo-eligibilite {
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  background: #ecfdf5;
+  color: #16a34a;
+}
+
+.abo-eligibilite.is-warning {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.abo-types {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.abo-types li {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.abo-types li div span {
+  display: block;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 0.2rem;
+}
+
+.abo-types__tarifs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.abo-types__empty {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 1100px) {
+  .abo-kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .abo-page__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .abo-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .abo-filters {
+    grid-template-columns: 1fr;
+  }
+}

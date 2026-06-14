@@ -1,0 +1,101 @@
+<section class="admin-page">
+  <div class="admin-page__head">
+    <div>
+      <h1>Administration</h1>
+      <p>Créer et gérer les comptes utilisateurs (réceptionniste, coach).</p>
+    </div>
+  </div>
+
+  <div class="admin-page__grid">
+    <article class="admin-card">
+      <h2>Créer un réceptionniste</h2>
+      <p class="admin-card__hint">Le compte pourra se connecter et accéder à l'interface réception.</p>
+
+      @if (successMessage()) {
+        <p class="admin-alert admin-alert--success">{{ successMessage() }}</p>
+      }
+      @if (errorMessage()) {
+        <p class="admin-alert admin-alert--error">{{ errorMessage() }}</p>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="admin-form">
+        <div class="admin-form__row">
+          <label>
+            Prénom
+            <input type="text" formControlName="prenom" placeholder="Aïssata" />
+          </label>
+          <label>
+            Nom
+            <input type="text" formControlName="nom" placeholder="Ba" />
+          </label>
+        </div>
+
+        <label>
+          Email
+          <input type="email" formControlName="email" placeholder="reception@totalfitness.mr" />
+        </label>
+
+        <label>
+          Téléphone
+          <input type="tel" formControlName="telephone" placeholder="22200000000" />
+        </label>
+
+        <label>
+          Mot de passe
+          <input type="password" formControlName="password" placeholder="Mot de passe" />
+        </label>
+
+        <label>
+          Rôle
+          <select formControlName="role_nom">
+            <option value="receptionniste">Réceptionniste</option>
+            <option value="coach">Coach</option>
+          </select>
+        </label>
+
+        <button type="submit" class="admin-btn" [disabled]="form.invalid || submitting()">
+          {{ submitting() ? 'Création...' : 'Créer le compte' }}
+        </button>
+      </form>
+    </article>
+
+    <article class="admin-card">
+      <h2>Utilisateurs existants</h2>
+
+      @if (loading()) {
+        <app-loading-spinner label="Chargement des utilisateurs..." />
+      } @else {
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of utilisateurs(); track user.id) {
+                <tr>
+                  <td>{{ user.prenom }} {{ user.nom }}</td>
+                  <td>{{ user.email }}</td>
+                  <td>{{ user.role.libelle }}</td>
+                  <td>
+                    <span class="admin-badge" [class.is-active]="user.actif">
+                      {{ user.actif ? 'Actif' : 'Inactif' }}
+                    </span>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="admin-table__empty">Aucun utilisateur.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </article>
+  </div>
+</section>

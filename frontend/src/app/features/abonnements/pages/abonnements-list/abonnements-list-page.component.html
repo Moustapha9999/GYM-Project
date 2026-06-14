@@ -1,0 +1,222 @@
+<section class="abo-page">
+  <div class="abo-page__head">
+    <div>
+      <h1>Abonnements</h1>
+      <p>Formules, souscriptions, renouvellements et gestion des statuts.</p>
+    </div>
+  </div>
+
+  <div class="abo-kpis">
+    <article class="abo-kpi abo-kpi--highlight">
+      <span>Abonnements actifs</span>
+      <strong>{{ actifsCount() }}</strong>
+    </article>
+    <article class="abo-kpi">
+      <span>Suspendus</span>
+      <strong>{{ suspendusCount() }}</strong>
+    </article>
+    <article class="abo-kpi">
+      <span>Résultats filtrés</span>
+      <strong>{{ meta()?.total ?? 0 }}</strong>
+    </article>
+    <article class="abo-kpi">
+      <span>Formules</span>
+      <strong>{{ types().length }}</strong>
+    </article>
+  </div>
+
+  <div class="abo-page__grid">
+    <article class="abo-card abo-card--main">
+      <div class="abo-card__head">
+        <h2>Liste des abonnements</h2>
+      </div>
+
+      <form class="abo-filters" [formGroup]="filters" (ngSubmit)="applyFilters()">
+        <label>
+          Statut
+          <select formControlName="statut">
+            @for (opt of statutFilterOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </label>
+        <button type="submit" class="abo-btn abo-btn--primary">Filtrer</button>
+        <button type="button" class="abo-btn abo-btn--ghost" (click)="resetFilters()">Réinitialiser</button>
+      </form>
+
+      @if (loading()) {
+        <app-loading-spinner label="Chargement des abonnements..." />
+      } @else if (error()) {
+        <p class="abo-alert abo-alert--error">{{ error() }}</p>
+      } @else {
+        <div class="abo-table-wrap">
+          <table class="abo-table">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Formule</th>
+                <th>Début</th>
+                <th>Fin</th>
+                <th>Montant</th>
+                <th>Statut</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of abonnements(); track a.id) {
+                <tr>
+                  <td>{{ a.client_nom }}</td>
+                  <td>
+                    {{ a.type_abonnement }}
+                    @if (a.est_inscription) {
+                      <span class="abo-tag">Inscription</span>
+                    }
+                  </td>
+                  <td>{{ a.date_debut | date: 'dd/MM/yyyy' }}</td>
+                  <td>{{ a.date_fin | date: 'dd/MM/yyyy' }}</td>
+                  <td class="abo-table__amount">{{ a.montant | mruCurrency }}</td>
+                  <td>
+                    @if (isExpired(a)) {
+                      <span class="abo-badge abo-badge--expired">Expiré</span>
+                    } @else {
+                      <span class="abo-badge" [class.is-active]="a.statut === 'Actif'">
+                        {{ a.statut }}
+                      </span>
+                    }
+                  </td>
+                  <td class="abo-table__actions">
+                    @if (a.statut === 'Actif') {
+                      <button type="button" class="abo-link-btn" (click)="suspendre(a)">Suspendre</button>
+                      <button type="button" class="abo-link-btn abo-link-btn--danger" (click)="resilier(a)">
+                        Résilier
+                      </button>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="abo-table__empty">Aucun abonnement.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (meta(); as pagination) {
+          <div class="abo-pagination">
+            <span>
+              Page {{ pagination.current_page }} / {{ pagination.last_page }}
+              ({{ pagination.total }} abonnement(s))
+            </span>
+            <div class="abo-pagination__btns">
+              <button
+                type="button"
+                class="abo-btn abo-btn--ghost"
+                [disabled]="pagination.current_page <= 1"
+                (click)="goToPage(pagination.current_page - 1)"
+              >
+                Précédent
+              </button>
+              <button
+                type="button"
+                class="abo-btn abo-btn--ghost"
+                [disabled]="pagination.current_page >= pagination.last_page"
+                (click)="goToPage(pagination.current_page + 1)"
+              >
+                Suivant
+              </button>
+            </div>
+          </div>
+        }
+      }
+    </article>
+
+    <aside class="abo-side">
+      <article class="abo-card abo-card--form">
+        <h2>Souscrire / Renouveler</h2>
+        <p class="abo-card__hint">Type et tarif déterminés selon le sexe du client.</p>
+
+        @if (formSuccess()) {
+          <p class="abo-alert abo-alert--success">{{ formSuccess() }}</p>
+        }
+        @if (formError()) {
+          <p class="abo-alert abo-alert--error">{{ formError() }}</p>
+        }
+
+        <form class="abo-form" [formGroup]="souscriptionForm" (ngSubmit)="submitSouscription()">
+          <label>
+            Rechercher client
+            <input type="search" formControlName="client_search" placeholder="Nom ou téléphone" />
+          </label>
+
+          @if (selectedClient()) {
+            <div class="abo-client-selected">
+              <span>{{ selectedClient()!.prenom }} {{ selectedClient()!.nom }}</span>
+              <button type="button" class="abo-link-btn" (click)="clearClient()">Changer</button>
+            </div>
+          }
+
+          @if (clientResults().length > 0) {
+            <ul class="abo-client-results">
+              @for (c of clientResults(); track c.id) {
+                <li>
+                  <button type="button" (click)="selectClient(c)">
+                    {{ c.prenom }} {{ c.nom }} — {{ c.telephone }}
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+
+          @if (eligibilite(); as elig) {
+            <div class="abo-eligibilite" [class.is-warning]="!elig.tarif_normal">
+              @if (elig.premiere_inscription) {
+                <span>Première inscription — tarif inscription appliqué.</span>
+              } @else if (elig.tarif_normal) {
+                <span>Renouvellement au tarif normal.</span>
+              } @else {
+                <span>
+                  Retard de {{ elig.jours_retard }} jour(s) — séance journalière requise avant renouvellement.
+                </span>
+              }
+            </div>
+          }
+
+          <label>
+            Moyen de paiement
+            <select formControlName="moyen_paiement_id">
+              <option value="">Choisir...</option>
+              @for (m of moyens(); track m.id) {
+                <option [value]="m.id">{{ m.libelle }}</option>
+              }
+            </select>
+          </label>
+
+          <button type="submit" class="abo-btn abo-btn--primary abo-btn--block" [disabled]="submitting()">
+            {{ submitting() ? 'Traitement...' : 'Souscrire / Renouveler' }}
+          </button>
+        </form>
+      </article>
+
+      <article class="abo-card">
+        <h2>Formules disponibles</h2>
+        <ul class="abo-types">
+          @for (t of types(); track t.id) {
+            <li>
+              <div>
+                <strong>{{ t.nom }}</strong>
+                <span>{{ t.duree_jours }} jours — {{ t.sexe ?? 'Mixte' }}</span>
+              </div>
+              <div class="abo-types__tarifs">
+                <span>Inscription : {{ t.montant_inscription | mruCurrency }}</span>
+                <span>Renouvellement : {{ t.montant | mruCurrency }}</span>
+              </div>
+            </li>
+          } @empty {
+            <li class="abo-types__empty">Aucune formule configurée.</li>
+          }
+        </ul>
+      </article>
+    </aside>
+  </div>
+</section>

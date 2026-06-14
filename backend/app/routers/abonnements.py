@@ -7,16 +7,40 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_permission
 from app.models.utilisateur import Utilisateur
-from app.schemas.abonnement import AbonnementCreate, AbonnementRead, SouscriptionResult
+from app.schemas.abonnement import (
+    AbonnementCreate,
+    AbonnementListItem,
+    AbonnementRead,
+    CarteInfo,
+    SouscriptionResult,
+    TypeAbonnementRead,
+)
 from app.schemas.common import ApiResponse, PaginatedResponse
 from app.services import abonnement_service
 from app.services.abonnement_service import AbonnementError
 from app.utils.pagination import paginate
 
 router = APIRouter(prefix="/abonnements", tags=["Abonnements"])
+types_router = APIRouter(prefix="/types-abonnements", tags=["Types abonnements"])
 
 
-@router.get("", response_model=PaginatedResponse[AbonnementRead])
+def _to_list_item(abonnement) -> AbonnementListItem:
+    client_nom = f"{abonnement.client.prenom} {abonnement.client.nom}"
+    return AbonnementListItem(
+        id=abonnement.id,
+        client_id=abonnement.client_id,
+        client_nom=client_nom,
+        type_abonnement=abonnement.type_abonnement.nom,
+        date_debut=abonnement.date_debut,
+        date_fin=abonnement.date_fin,
+        montant=abonnement.montant,
+        statut=abonnement.statut,
+        est_inscription=abonnement.est_inscription,
+        created_at=abonnement.created_at,
+    )
+
+
+@router.get("", response_model=PaginatedResponse[AbonnementListItem])
 def lister_abonnements(
     db: Session = Depends(get_db),
     _: Utilisateur = Depends(require_permission("abonnements.lecture")),
@@ -30,7 +54,7 @@ def lister_abonnements(
     items, meta = paginate(query, page, per_page)
     return PaginatedResponse(
         success=True,
-        data=[AbonnementRead.model_validate(a) for a in items],
+        data=[_to_list_item(a) for a in items],
         meta=meta,
     )
 
@@ -62,7 +86,13 @@ def souscrire(
 
     return ApiResponse(
         success=True,
-        data=result,
+        data=SouscriptionResult(
+            abonnement=AbonnementRead.model_validate(result["abonnement"]),
+            carte=CarteInfo.model_validate(result["carte"]),
+            paiement_reference=result["paiement_reference"],
+            montant_paye=result["montant_paye"],
+            type_tarif=result["type_tarif"],
+        ),
         message=f"Abonnement {result['type_tarif']} créé — {result['montant_paye']} MRU",
     )
 
@@ -118,3 +148,17 @@ def resilier(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Abonnement introuvable.")
     abo = abonnement_service.resilier(db, abo)
     return ApiResponse(success=True, data=AbonnementRead.model_validate(abo), message="Abonnement résilié.")
+
+
+@types_router.get("", response_model=ApiResponse[list[TypeAbonnementRead]])
+def lister_types_abonnements(
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("abonnements.lecture")),
+):
+    """Liste des formules d'abonnement actives avec tarifs."""
+    types = abonnement_service.lister_types(db)
+    return ApiResponse(
+        success=True,
+        data=[TypeAbonnementRead.model_validate(t) for t in types],
+        message=None,
+    )

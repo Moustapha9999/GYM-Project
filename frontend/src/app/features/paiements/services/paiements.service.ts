@@ -1,34 +1,48 @@
 import { Injectable, inject } from '@angular/core';
 import { map, Observable } from 'rxjs';
 
-import { PaginatedApiResponse } from '@core/models/api-response.model';
 import { ApiService } from '@core/services/api.service';
-
-export interface Paiement {
-  id: string;
-  montant: number;
-  date_paiement: string;
-}
-
-export interface MoyenPaiement {
-  id: string;
-  nom: string;
-  code: string;
-}
+import {
+  CaisseJour,
+  MoyenPaiement,
+  PaiementCreatePayload,
+  PaiementCreateResult,
+  PaiementDetail,
+  PaiementFilters,
+} from '@features/paiements/models/paiement.model';
 
 @Injectable({ providedIn: 'root' })
 export class PaiementsService {
   private readonly api = inject(ApiService);
 
-  list(params?: Record<string, string | number | boolean>): Observable<PaginatedApiResponse<Paiement>> {
-    return this.api.getPaginated<Paiement>('paiements', params);
+  listJournal(filters?: PaiementFilters): Observable<PaiementDetail[]> {
+    const params: Record<string, string> = {};
+    if (filters?.date_debut) params['date_debut'] = filters.date_debut;
+    if (filters?.date_fin) params['date_fin'] = filters.date_fin;
+    if (filters?.moyen_paiement_id) params['moyen_paiement_id'] = filters.moyen_paiement_id;
+    if (filters?.type_paiement) params['type_paiement'] = filters.type_paiement;
+
+    return this.api
+      .get<PaiementDetail[]>('paiements', params)
+      .pipe(map((response) => response.data));
   }
 
-  getCaisseJour(): Observable<unknown> {
-    return this.api.get('paiements/caisse-jour').pipe(map((response) => response.data));
+  getCaisseJour(jour?: string): Observable<CaisseJour> {
+    const params = jour ? { jour } : undefined;
+    return this.api
+      .get<CaisseJour>('paiements/caisse-jour', params)
+      .pipe(map((response) => response.data));
   }
 
   listMoyensPaiement(): Observable<MoyenPaiement[]> {
-    return this.api.get<MoyenPaiement[]>('moyens-paiement').pipe(map((response) => response.data));
+    return this.api
+      .get<MoyenPaiement[]>('paiements/moyens-paiement')
+      .pipe(map((response) => response.data));
+  }
+
+  create(payload: PaiementCreatePayload): Observable<PaiementCreateResult> {
+    return this.api
+      .post<PaiementCreateResult>('paiements', payload)
+      .pipe(map((response) => response.data));
   }
 }
