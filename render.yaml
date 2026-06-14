@@ -1,0 +1,70 @@
+# Configuration de déploiement Render — TOTAL FITNESS
+# 3 services : API backend, micro-service notifications, cron jobs
+
+services:
+  # ── API Backend (FastAPI) ─────────────────────────────────
+  - type: web
+    name: total-fitness-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        sync: false          # à renseigner dans le dashboard Render (Supabase Session Pooler)
+      - key: SECRET_KEY
+        generateValue: true  # Render génère une clé aléatoire
+      - key: APP_ENV
+        value: production
+      - key: CORS_ORIGINS
+        value: https://total-fitness.netlify.app
+      - key: NOTIFICATION_SERVICE_URL
+        value: https://total-fitness-notifications.onrender.com
+    healthCheckPath: /health
+
+  # ── Micro-service Notifications (Node.js + Baileys) ───────
+  - type: web
+    name: total-fitness-notifications
+    runtime: docker
+    dockerfilePath: ./notification-service/Dockerfile
+    dockerContext: ./notification-service
+    plan: free
+    envVars:
+      - key: PORT
+        value: 3001
+      - key: API_SECRET
+        sync: false
+    disk:
+      name: whatsapp-session
+      mountPath: /app/auth_info_baileys
+      sizeGB: 1
+
+  # ── Cron : expiration quotidienne (00h05) ─────────────────
+  - type: cron
+    name: total-fitness-cron-expiration
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "5 0 * * *"
+    dockerCommand: python -m scripts.run_cron expirer
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+
+  # ── Cron : rappels d'expiration (08h00) ───────────────────
+  - type: cron
+    name: total-fitness-cron-rappels
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "0 8 * * *"
+    dockerCommand: python -m scripts.run_cron rappels
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: NOTIFICATION_SERVICE_URL
+        value: https://total-fitness-notifications.onrender.com
