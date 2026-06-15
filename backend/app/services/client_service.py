@@ -102,6 +102,17 @@ def modifier(db: Session, client: Client, data: ClientUpdate) -> Client:
     return client
 
 
+def modifier_photo(db: Session, client: Client, photo_base64: str) -> Client:
+    """Met à jour la photo du client (stockée en data URL base64)."""
+    photo = photo_base64.strip()
+    if photo and not photo.startswith("data:"):
+        photo = f"data:image/jpeg;base64,{photo}"
+    client.photo_url = photo or None
+    db.commit()
+    db.refresh(client)
+    return client
+
+
 def supprimer(db: Session, client: Client) -> None:
     """Supprime définitivement un client (hard delete)."""
     db.delete(client)

@@ -34,21 +34,31 @@ import { SuperAdminLayoutComponent } from '@layout/components/super-admin-layout
     }
   `,
   styles: `
+    :host {
+      display: block;
+      height: 100%;
+      overflow: hidden;
+    }
+
     .layout {
       display: flex;
-      min-height: 100vh;
+      height: 100%;
       background: var(--color-bg);
     }
 
     .layout__main {
       flex: 1;
       min-width: 0;
+      min-height: 0;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
 
     .layout__content {
       flex: 1;
+      min-height: 0;
+      overflow-y: auto;
       padding: 1.5rem;
     }
   `,

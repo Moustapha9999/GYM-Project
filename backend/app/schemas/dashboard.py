@@ -1,5 +1,5 @@
 """Schémas Pydantic pour les dashboards (3 rôles)."""
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 from pydantic import BaseModel
@@ -8,6 +8,23 @@ from pydantic import BaseModel
 class PointGraphe(BaseModel):
     label: str
     valeur: Decimal | int
+
+
+class AlerteItem(BaseModel):
+    """Alerte métier affichée dans le centre de notifications."""
+    id: str
+    type: str
+    severity: str  # info | warning | danger
+    titre: str
+    message: str
+    route: str | None = None
+    entity_id: str | None = None
+    created_at: datetime
+
+
+class AlertesDashboard(BaseModel):
+    total: int
+    items: list[AlerteItem]
 
 
 class DashboardAdmin(BaseModel):

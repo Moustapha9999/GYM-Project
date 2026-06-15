@@ -14,7 +14,9 @@ from app.models.paiement import Paiement
 from app.models.planning_coach import PlanningCoach
 from app.models.presence import Presence
 from app.models.programme_sportif import ProgrammeSportif
+from app.models.role import Role
 from app.models.seance_journaliere import SeanceJournaliere
+from app.models.utilisateur import Utilisateur
 
 
 def _bornes_jour(jour: date):
@@ -200,3 +202,155 @@ def dashboard_coach(db: Session, coach_employe_id: uuid.UUID | None = None) -> d
         "seances_planifiees_semaine": q_sem.scalar(),
         "clients_suivis": q_clients.scalar(),
     }
+
+
+# ────────────────────────────────────────────────────────────
+# ALERTES / NOTIFICATIONS IN-APP
+# ────────────────────────────────────────────────────────────
+def _format_auteur(utilisateur: Utilisateur | None, role: Role | None) -> str | None:
+    if utilisateur is None:
+        return None
+    nom = f"{utilisateur.prenom} {utilisateur.nom}".strip()
+    if role is not None:
+        return f"{nom} ({role.libelle})"
+    return nom
+
+
+def alertes(db: Session, limit: int = 30) -> dict:
+    """Agrège les alertes métier pour le centre de notifications."""
+    auj = date.today()
+    dans_7j = auj + timedelta(days=7)
+    debut_jour, fin_jour = _bornes_jour(auj)
+    depuis_7j = datetime.now(timezone.utc) - timedelta(days=7)
+    items: list[dict] = []
+
+    abos_expirant = (
+        db.query(Abonnement, Client)
+        .join(Client, Abonnement.client_id == Client.id)
+        .filter(
+            Abonnement.statut == "Actif",
+            Abonnement.date_fin >= auj,
+            Abonnement.date_fin <= dans_7j,
+        )
+        .order_by(Abonnement.date_fin.asc())
+        .limit(15)
+        .all()
+    )
+    for abo, client in abos_expirant:
+        jours = (abo.date_fin - auj).days
+        if jours == 0:
+            msg = f"{client.prenom} {client.nom} — expire aujourd'hui"
+            severity = "danger"
+        elif jours <= 3:
+            msg = f"{client.prenom} {client.nom} — expire dans {jours} jour(s)"
+            severity = "warning"
+        else:
+            msg = f"{client.prenom} {client.nom} — expire le {abo.date_fin.strftime('%d/%m/%Y')}"
+            severity = "warning"
+        items.append({
+            "id": f"abo-exp-{abo.id}",
+            "type": "abonnement_expiration",
+            "severity": severity,
+            "titre": "Abonnement bientôt expiré",
+            "message": msg,
+            "route": "/abonnements",
+            "entity_id": str(abo.id),
+            "created_at": datetime.combine(abo.date_fin, datetime.min.time(), tzinfo=timezone.utc),
+        })
+
+    abos_expires = (
+        db.query(Abonnement, Client)
+        .join(Client, Abonnement.client_id == Client.id)
+        .filter(Abonnement.statut == "Actif", Abonnement.date_fin < auj)
+        .order_by(Abonnement.date_fin.desc())
+        .limit(10)
+        .all()
+    )
+    for abo, client in abos_expires:
+        retard = (auj - abo.date_fin).days
+        items.append({
+            "id": f"abo-late-{abo.id}",
+            "type": "abonnement_expire",
+            "severity": "danger",
+            "titre": "Abonnement expiré",
+            "message": f"{client.prenom} {client.nom} — expiré depuis {retard} jour(s)",
+            "route": "/abonnements",
+            "entity_id": str(abo.id),
+            "created_at": datetime.combine(abo.date_fin, datetime.min.time(), tzinfo=timezone.utc),
+        })
+
+    nouveaux_clients = (
+        db.query(Client, Utilisateur, Role)
+        .outerjoin(Utilisateur, Client.created_by == Utilisateur.id)
+        .outerjoin(Role, Utilisateur.role_id == Role.id)
+        .filter(Client.created_at >= depuis_7j)
+        .order_by(Client.created_at.desc())
+        .limit(10)
+        .all()
+    )
+    for client, auteur, role in nouveaux_clients:
+        auteur_label = _format_auteur(auteur, role)
+        suffix = f" — par {auteur_label}" if auteur_label else ""
+        items.append({
+            "id": f"client-new-{client.id}",
+            "type": "nouveau_client",
+            "severity": "info",
+            "titre": "Nouveau client",
+            "message": f"{client.prenom} {client.nom} (N° {client.numero_membre}){suffix}",
+            "route": "/clients",
+            "entity_id": str(client.id),
+            "created_at": client.created_at,
+        })
+
+    nouveaux_abos = (
+        db.query(Abonnement, Client, Utilisateur, Role)
+        .join(Client, Abonnement.client_id == Client.id)
+        .outerjoin(Utilisateur, Abonnement.created_by == Utilisateur.id)
+        .outerjoin(Role, Utilisateur.role_id == Role.id)
+        .filter(Abonnement.created_at >= debut_jour, Abonnement.created_at <= fin_jour)
+        .order_by(Abonnement.created_at.desc())
+        .limit(10)
+        .all()
+    )
+    for abo, client, auteur, role in nouveaux_abos:
+        auteur_label = _format_auteur(auteur, role)
+        suffix = f" — par {auteur_label}" if auteur_label else ""
+        items.append({
+            "id": f"abo-new-{abo.id}",
+            "type": "nouvel_abonnement",
+            "severity": "info",
+            "titre": "Nouvel abonnement",
+            "message": f"{client.prenom} {client.nom} — souscrit aujourd'hui{suffix}",
+            "route": "/abonnements",
+            "entity_id": str(abo.id),
+            "created_at": abo.created_at,
+        })
+
+    nouveaux_paiements = (
+        db.query(Paiement, Client)
+        .outerjoin(Client, Paiement.client_id == Client.id)
+        .filter(
+            Paiement.date_paiement >= debut_jour,
+            Paiement.date_paiement <= fin_jour,
+            Paiement.statut == "Validé",
+        )
+        .order_by(Paiement.date_paiement.desc())
+        .limit(8)
+        .all()
+    )
+    for paiement, client in nouveaux_paiements:
+        client_nom = f"{client.prenom} {client.nom}" if client else "Client occasionnel"
+        items.append({
+            "id": f"pay-new-{paiement.id}",
+            "type": "nouveau_paiement",
+            "severity": "info",
+            "titre": "Paiement encaissé",
+            "message": f"{paiement.reference} — {client_nom} — {paiement.montant} MRU",
+            "route": "/paiements",
+            "entity_id": str(paiement.id),
+            "created_at": paiement.date_paiement,
+        })
+
+    items.sort(key=lambda item: item["created_at"], reverse=True)
+    limited = items[:limit]
+    return {"total": len(limited), "items": limited}

@@ -6,20 +6,20 @@
   } @else if (data()) {
     <div class="rec-dash__head">
       <div>
-        <h1>Tableau de bord</h1>
-        <p>Bienvenue {{ greeting() }}, voici l'activité de la réception aujourd'hui.</p>
+        <h1>{{ 'dashboard.reception.title' | translate }}</h1>
+        <p>{{ 'dashboard.reception.subtitle' | translate: { name: greeting() } }}</p>
       </div>
       <div class="rec-dash__head-actions">
-        <button type="button" class="rec-btn rec-btn--primary">+ Nouveau paiement</button>
-        <button type="button" class="rec-btn rec-btn--ghost">Importer données</button>
+        <button type="button" class="rec-btn rec-btn--primary">{{ 'dashboard.reception.newPayment' | translate }}</button>
+        <button type="button" class="rec-btn rec-btn--ghost">{{ 'dashboard.reception.importData' | translate }}</button>
       </div>
     </div>
 
     <div class="rec-dash__stats">
-      @for (card of statCards(); track card.label) {
+      @for (card of statCards(); track card.labelKey) {
         <article class="rec-stat" [class.rec-stat--highlight]="card.highlight">
           <div class="rec-stat__top">
-            <span>{{ card.label }}</span>
+            <span>{{ card.labelKey | translate }}</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M7 17L17 7M17 7H9M17 7v8" />
             </svg>
@@ -33,8 +33,8 @@
       <article class="rec-card rec-card--main">
         <div class="rec-card__head">
           <div>
-            <h2>Activité de la réception</h2>
-            <p>Encaissements du jour : <strong>{{ revenusFormatted() }}</strong></p>
+            <h2>{{ 'dashboard.reception.activity' | translate }}</h2>
+            <p>{{ 'dashboard.reception.activityHint' | translate }} <strong>{{ revenusFormatted() }}</strong></p>
           </div>
         </div>
         <div class="rec-week-chart">
@@ -46,14 +46,14 @@
           }
         </div>
         <div class="rec-card__footer">
-          <span>Présents : {{ data()!.presents_actuellement }}</span>
-          <span>Abonnements du jour : {{ data()!.abonnements_souscrits_jour }}</span>
+          <span>{{ 'dashboard.reception.presentToday' | translate }} {{ data()!.presents_actuellement }}</span>
+          <span>{{ 'dashboard.reception.subscriptionsToday' | translate }} {{ data()!.abonnements_souscrits_jour }}</span>
         </div>
       </article>
 
       <div class="rec-dash__side">
         <article class="rec-card rec-card--reminder">
-          <h2>Rappels</h2>
+          <h2>{{ 'dashboard.reception.reminders' | translate }}</h2>
           <p class="rec-reminder__text">
             {{ data()!.abonnements_expirant_7j }} abonnement(s) expirent dans les 7 prochains jours.
           </p>
@@ -63,7 +63,7 @@
         </article>
 
         <article class="rec-card">
-          <h2>Occupation salle</h2>
+          <h2>{{ 'dashboard.reception.occupancy' | translate }}</h2>
           <div class="rec-progress-ring">
             <svg viewBox="0 0 120 120">
               <circle cx="60" cy="60" r="48" class="rec-progress-ring__bg" />
@@ -77,7 +77,7 @@
             </svg>
             <div class="rec-progress-ring__label">
               <strong>{{ progressPct() }}%</strong>
-              <span>en salle</span>
+              <span>{{ 'common.inRoom' | translate }}</span>
             </div>
           </div>
         </article>

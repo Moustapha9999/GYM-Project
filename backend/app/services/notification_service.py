@@ -45,6 +45,35 @@ def _envoyer_whatsapp(service_url: str, numero: str, message: str) -> dict:
         return {"success": False, "erreur": str(e)}
 
 
+def _envoyer_document_whatsapp(
+    service_url: str,
+    numero: str,
+    filename: str,
+    document_bytes: bytes,
+    caption: str,
+) -> dict:
+    """Envoie un document PDF via le micro-service Baileys."""
+    import base64
+
+    try:
+        with httpx.Client(timeout=30.0) as client:
+            resp = client.post(
+                f"{service_url}/send-document",
+                json={
+                    "numero": numero,
+                    "filename": filename,
+                    "document_base64": base64.b64encode(document_bytes).decode(),
+                    "caption": caption,
+                },
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                return {"success": True, "message_id": data.get("message_id")}
+            return {"success": False, "erreur": f"HTTP {resp.status_code}"}
+    except Exception as e:
+        return {"success": False, "erreur": str(e)}
+
+
 def _envoyer_sms(numero: str, message: str) -> dict:
     """
     STUB SMS — à brancher sur un vrai provider (Twilio, etc.).
@@ -99,6 +128,49 @@ def envoyer(
                 notif.statut = "Échoué"
         else:
             notif.statut = "Échoué"
+
+    db.commit()
+    db.refresh(notif)
+    return notif
+
+
+def envoyer_document(
+    db: Session,
+    destinataire_type: str,
+    numero_telephone: str,
+    type_notification: str,
+    message: str,
+    document_bytes: bytes,
+    filename: str,
+    client_id: uuid.UUID | None = None,
+    employe_id: uuid.UUID | None = None,
+) -> Notification:
+    """Crée la notification et envoie un document PDF via WhatsApp."""
+    notif = Notification(
+        destinataire_type=destinataire_type,
+        client_id=client_id,
+        employe_id=employe_id,
+        numero_telephone=numero_telephone,
+        canal="whatsapp",
+        type_notification=type_notification,
+        message=message,
+        statut="En attente",
+    )
+    db.add(notif)
+    db.commit()
+    db.refresh(notif)
+
+    service_url = _get_param(db, "whatsapp_service_url", "http://localhost:3001")
+    resultat = _envoyer_document_whatsapp(
+        service_url, numero_telephone, filename, document_bytes, message
+    )
+
+    if resultat["success"]:
+        notif.statut = "Envoyé"
+        notif.provider_message_id = resultat.get("message_id")
+        notif.date_envoi = datetime.now(timezone.utc)
+    else:
+        notif.statut = "Échoué"
 
     db.commit()
     db.refresh(notif)

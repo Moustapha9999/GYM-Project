@@ -12,10 +12,13 @@ export const APP_ROUTES = {
   dashboard: '/dashboard',
   clients: '/clients',
   abonnements: '/abonnements',
+  cartesMembres: '/cartes-membres',
+  finances: '/finances',
   paiements: '/paiements',
   presences: '/presences',
   seances: '/seances',
   rh: '/rh',
   coach: '/coach',
   admin: '/admin',
+  parametres: '/parametres',
 } as const;

@@ -1,29 +1,33 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 
 import { AuthService } from '@core/services/auth.service';
+import { AppIconName } from '@shared/components/app-icon/app-icon.types';
+import { AppIconComponent } from '@shared/components/app-icon/app-icon.component';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
 import { MruCurrencyPipe } from '@shared/pipes/mru-currency.pipe';
+import { TranslatePipe } from '@shared/pipes/translate.pipe';
+import { TranslationService } from '@core/services/translation.service';
 import { AdminDashboardData } from '@features/dashboard/models/admin-dashboard.model';
 import { DashboardService } from '@features/dashboard/services/dashboard.service';
 
 interface KpiCard {
-  label: string;
+  labelKey: string;
   value: string;
   trend: string;
   trendUp: boolean;
-  icon: string;
-  iconBg: string;
+  icon: AppIconName;
 }
 
 @Component({
   selector: 'app-super-admin-dashboard-page',
-  imports: [LoadingSpinnerComponent, MruCurrencyPipe],
+  imports: [LoadingSpinnerComponent, MruCurrencyPipe, TranslatePipe, AppIconComponent],
   templateUrl: './super-admin-dashboard-page.component.html',
   styleUrl: './super-admin-dashboard-page.component.scss',
 })
 export class SuperAdminDashboardPageComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly dashboardService = inject(DashboardService);
+  private readonly translation = inject(TranslationService);
   private readonly mruPipe = new MruCurrencyPipe();
 
   readonly loading = signal(true);
@@ -41,36 +45,32 @@ export class SuperAdminDashboardPageComponent implements OnInit {
 
     return [
       {
-        label: 'Revenus du mois',
+        labelKey: 'dashboard.kpi.monthlyRevenue',
         value: this.mruPipe.transform(Number(d.revenus_mois)),
         trend: `+${d.nouvelles_inscriptions_mois} inscriptions`,
         trendUp: true,
-        icon: '💰',
-        iconBg: '#fff7ed',
+        icon: 'wallet',
       },
       {
-        label: 'Abonnements actifs',
+        labelKey: 'dashboard.kpi.activeSubscriptions',
         value: String(d.abonnements_actifs),
         trend: `${d.abonnements_expirant_7j} expirent sous 7j`,
         trendUp: d.abonnements_expirant_7j === 0,
-        icon: '🎫',
-        iconBg: '#f0fdf4',
+        icon: 'ticket',
       },
       {
-        label: 'Clients actifs',
+        labelKey: 'dashboard.kpi.activeClients',
         value: String(d.clients_actifs),
         trend: `${d.presences_jour} présences aujourd'hui`,
         trendUp: true,
-        icon: '👥',
-        iconBg: '#eff6ff',
+        icon: 'users',
       },
       {
-        label: 'Bénéfice du mois',
+        labelKey: 'dashboard.kpi.monthlyProfit',
         value: this.mruPipe.transform(Number(d.benefice_mois)),
         trend: `Dépenses ${this.mruPipe.transform(Number(d.total_depenses_mois))}`,
         trendUp: Number(d.benefice_mois) >= 0,
-        icon: '📈',
-        iconBg: '#fef3c7',
+        icon: 'trending-up',
       },
     ];
   });
@@ -102,7 +102,7 @@ export class SuperAdminDashboardPageComponent implements OnInit {
 
   readonly donutGradient = computed(() => {
     const segments = this.donutSegments();
-    if (!segments.length) return '#e2e8f0';
+    if (!segments.length) return 'var(--color-border)';
     let gradient = 'conic-gradient(';
     segments.forEach((s, i) => {
       const start = s.offset;
@@ -143,7 +143,7 @@ export class SuperAdminDashboardPageComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Impossible de charger le tableau de bord.');
+        this.error.set(this.translation.translate('dashboard.loadError'));
         this.loading.set(false);
       },
     });

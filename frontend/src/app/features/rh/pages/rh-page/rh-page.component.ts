@@ -10,7 +10,7 @@ import { PageHeaderComponent } from '@shared/components/page-header/page-header.
     <app-page-header title="RH & Salaires" subtitle="Employés et fiches de paie mensuelles" />
 
     <app-empty-state
-      icon="👔"
+      icon="briefcase"
       title="Module RH prêt"
       description="Brancher ici les endpoints /employes et /fiches-paie."
     />

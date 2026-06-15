@@ -34,6 +34,16 @@ export const routes: Routes = [
           import('@features/abonnements/abonnements.routes').then((m) => m.ABONNEMENTS_ROUTES),
       },
       {
+        path: 'cartes-membres',
+        loadChildren: () =>
+          import('@features/cartes-membres/cartes-membres.routes').then((m) => m.CARTES_MEMBRES_ROUTES),
+      },
+      {
+        path: 'finances',
+        loadChildren: () =>
+          import('@features/finances/finances.routes').then((m) => m.FINANCES_ROUTES),
+      },
+      {
         path: 'paiements',
         loadChildren: () =>
           import('@features/paiements/paiements.routes').then((m) => m.PAIEMENTS_ROUTES),
@@ -59,6 +69,11 @@ export const routes: Routes = [
       {
         path: 'admin',
         loadChildren: () => import('@features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
+      },
+      {
+        path: 'parametres',
+        loadChildren: () =>
+          import('@features/parametres/parametres.routes').then((m) => m.PARAMETRES_ROUTES),
       },
     ],
   },

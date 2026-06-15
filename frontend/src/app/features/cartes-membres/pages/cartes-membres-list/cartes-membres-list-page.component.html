@@ -1,0 +1,222 @@
+<section class="cm-page">
+  <div class="cm-page__head">
+    <div>
+      <h1>{{ 'modules.cartesMembres.title' | translate }}</h1>
+      <p>{{ 'modules.cartesMembres.subtitle' | translate }}</p>
+    </div>
+  </div>
+
+  <div class="cm-kpis">
+    <article class="cm-kpi cm-kpi--highlight">
+      <span>{{ 'modules.cartesMembres.kpi.active' | translate }}</span>
+      <strong>{{ actifsCount() }}</strong>
+    </article>
+    <article class="cm-kpi">
+      <span>{{ 'modules.cartesMembres.kpi.expired' | translate }}</span>
+      <strong>{{ expiresCount() }}</strong>
+    </article>
+    <article class="cm-kpi">
+      <span>{{ 'common.filteredResults' | translate }}</span>
+      <strong>{{ meta()?.total ?? 0 }}</strong>
+    </article>
+  </div>
+
+  <div class="cm-page__grid">
+    <article class="cm-card cm-card--main">
+      <div class="cm-card__head">
+        <h2>{{ 'modules.cartesMembres.listTitle' | translate }}</h2>
+      </div>
+
+      <form class="cm-filters" [formGroup]="filters" (ngSubmit)="applyFilters()">
+        <label>
+          Recherche
+          <input type="search" formControlName="search" placeholder="Nom, n° membre, téléphone..." />
+        </label>
+        <label>
+          Statut
+          <select formControlName="statut">
+            @for (opt of statutFilterOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </label>
+        <button type="submit" class="cm-btn cm-btn--primary">Filtrer</button>
+        <button type="button" class="cm-btn cm-btn--ghost" (click)="resetFilters()">Réinitialiser</button>
+      </form>
+
+      @if (loading()) {
+        <app-loading-spinner label="Chargement des cartes..." />
+      } @else if (error()) {
+        <p class="cm-alert cm-alert--error">{{ error() }}</p>
+      } @else if (cartes().length === 0) {
+        <p class="cm-empty">Aucune carte membre trouvée. Les cartes sont générées lors de la souscription.</p>
+      } @else {
+        <div class="cm-table-wrap">
+          <table class="cm-table">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>N° membre</th>
+                <th>Formule</th>
+                <th>Expiration</th>
+                <th>Statut</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of cartes(); track c.id) {
+                <tr [class.is-selected]="selectedCarte()?.id === c.id">
+                  <td>
+                    <div class="cm-client-cell">
+                      @if (c.client_photo_url) {
+                        <img [src]="c.client_photo_url" alt="" class="cm-avatar" />
+                      } @else {
+                        <span class="cm-avatar cm-avatar--placeholder">{{ c.client_prenom.charAt(0) }}</span>
+                      }
+                      <span>{{ clientFullName(c) }}</span>
+                    </div>
+                  </td>
+                  <td>{{ c.client_numero }}</td>
+                  <td>
+                    @for (line of typeAbonnementLines(c.type_abonnement); track line) {
+                      <span class="cm-formule-line">{{ line }}</span>
+                    }
+                  </td>
+                  <td>{{ c.date_expiration | date: 'dd/MM/yyyy' }}</td>
+                  <td>
+                    <span class="cm-badge" [class]="statutClass(c.statut)">{{ c.statut }}</span>
+                  </td>
+                  <td>
+                    <button type="button" class="cm-btn cm-btn--sm" (click)="selectCarte(c)">
+                      Voir la carte
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (meta(); as pagination) {
+          @if (pagination.last_page > 1) {
+            <div class="cm-pagination">
+              <button
+                type="button"
+                class="cm-btn cm-btn--ghost"
+                [disabled]="pagination.current_page <= 1"
+                (click)="goToPage(pagination.current_page - 1)"
+              >
+                Précédent
+              </button>
+              <span>Page {{ pagination.current_page }} / {{ pagination.last_page }}</span>
+              <button
+                type="button"
+                class="cm-btn cm-btn--ghost"
+                [disabled]="pagination.current_page >= pagination.last_page"
+                (click)="goToPage(pagination.current_page + 1)"
+              >
+                Suivant
+              </button>
+            </div>
+          }
+        }
+      }
+    </article>
+
+    <aside class="cm-card cm-card--side">
+      @if (selectedCarte(); as carte) {
+        <div class="cm-card__head">
+          <h2>{{ 'modules.cartesMembres.cardTitle' | translate }}</h2>
+          <button type="button" class="cm-btn cm-btn--ghost cm-btn--sm" (click)="closeDetail()">Fermer</button>
+        </div>
+
+        <div class="cm-preview">
+          <div class="cm-preview__header">
+            <strong>TOTAL FITNESS</strong>
+            <span>{{ 'modules.cartesMembres.memberCardLabel' | translate }}</span>
+          </div>
+          <div class="cm-preview__body">
+            <div class="cm-preview__photo">
+              @if (carte.client_photo_url) {
+                <img [src]="carte.client_photo_url" alt="Photo du membre" />
+              } @else {
+                <span class="cm-preview__photo-placeholder">Photo</span>
+              }
+            </div>
+            <div class="cm-preview__info">
+              <strong>{{ clientFullName(carte) }}</strong>
+              <span>N° {{ carte.client_numero }}</span>
+              @for (line of typeAbonnementLines(carte.type_abonnement); track line) {
+                <span>{{ line }}</span>
+              }
+              <span>Expire : {{ carte.date_expiration | date: 'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="cm-preview__qr">
+              <span class="cm-preview__qr-label">QR</span>
+              <code>{{ carte.qr_code_uuid.slice(0, 8) }}…</code>
+            </div>
+          </div>
+          <div class="cm-preview__footer">
+            <span class="cm-badge" [class]="statutClass(carte.statut)">{{ carte.statut }}</span>
+          </div>
+        </div>
+
+        <div class="cm-actions">
+          <label class="cm-upload">
+            <input type="file" accept="image/*" (change)="onPhotoSelected($event)" [disabled]="uploadingPhoto()" />
+            <span class="cm-btn cm-btn--secondary">
+              @if (uploadingPhoto()) { Envoi… } @else { Ajouter / modifier la photo }
+            </span>
+          </label>
+
+          <button
+            type="button"
+            class="cm-btn cm-btn--primary"
+            (click)="downloadPdf()"
+            [disabled]="downloadingPdf()"
+          >
+            @if (downloadingPdf()) { Génération… } @else { Télécharger PDF }
+          </button>
+
+          <button
+            type="button"
+            class="cm-btn cm-btn--whatsapp"
+            (click)="sendWhatsapp()"
+            [disabled]="sendingWhatsapp()"
+          >
+            @if (sendingWhatsapp()) { Envoi… } @else { Envoyer via WhatsApp }
+          </button>
+        </div>
+
+        @if (actionSuccess()) {
+          <p class="cm-alert cm-alert--success">{{ actionSuccess() }}</p>
+        }
+        @if (actionError()) {
+          <p class="cm-alert cm-alert--error">{{ actionError() }}</p>
+        }
+
+        <div class="cm-contact">
+          <p>
+            <strong>Contact :</strong>
+            {{ carte.client_whatsapp || carte.client_telephone || 'Non renseigné' }}
+          </p>
+        </div>
+      } @else {
+        <div class="cm-card__head">
+          <h2>{{ 'modules.cartesMembres.previewTitle' | translate }}</h2>
+        </div>
+        <p class="cm-empty cm-empty--side">
+          Sélectionnez une carte dans la liste pour voir l'aperçu, ajouter une photo ou l'envoyer en PDF.
+        </p>
+      }
+    </aside>
+  </div>
+</section>
+
+@if (cropImageSrc(); as src) {
+  <app-photo-crop-modal
+    [imageSrc]="src"
+    (confirmed)="onPhotoCropped($event)"
+    (cancelled)="cancelPhotoCrop()"
+  />
+}

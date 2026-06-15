@@ -1,13 +1,23 @@
-"""Router Administration — utilisateurs et rôles."""
-from fastapi import APIRouter, Depends, status
+"""Router Administration — utilisateurs, rôles et permissions."""
+import uuid
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import require_permission
 from app.models.utilisateur import Utilisateur
 from app.schemas.common import ApiResponse
-from app.schemas.utilisateur import RoleRead, UtilisateurCreate, UtilisateurRead
-from app.services import utilisateur_service
+from app.schemas.utilisateur import (
+    PermissionRead,
+    RoleDetailRead,
+    RolePermissionsUpdate,
+    RoleRead,
+    UtilisateurCreate,
+    UtilisateurRead,
+    UtilisateurUpdate,
+)
+from app.services import role_service, utilisateur_service
 
 router = APIRouter(tags=["Administration"])
 
@@ -25,6 +35,28 @@ def lister_utilisateurs(
     return ApiResponse(
         success=True,
         data=[UtilisateurRead.model_validate(u) for u in users],
+        message=None,
+    )
+
+
+@router.get(
+    "/utilisateurs/{utilisateur_id}",
+    response_model=ApiResponse[UtilisateurRead],
+)
+def detail_utilisateur(
+    utilisateur_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("utilisateurs.lecture")),
+):
+    """Détail d'un utilisateur."""
+    utilisateur = utilisateur_service.obtenir(db, utilisateur_id)
+    if utilisateur is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur introuvable."
+        )
+    return ApiResponse(
+        success=True,
+        data=UtilisateurRead.model_validate(utilisateur),
         message=None,
     )
 
@@ -48,6 +80,49 @@ def creer_utilisateur(
     )
 
 
+@router.put(
+    "/utilisateurs/{utilisateur_id}",
+    response_model=ApiResponse[UtilisateurRead],
+)
+def modifier_utilisateur(
+    utilisateur_id: uuid.UUID,
+    payload: UtilisateurUpdate,
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("utilisateurs.modification")),
+):
+    """Modifie un utilisateur existant."""
+    utilisateur = utilisateur_service.obtenir(db, utilisateur_id)
+    if utilisateur is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur introuvable."
+        )
+    utilisateur = utilisateur_service.modifier(db, utilisateur, payload)
+    return ApiResponse(
+        success=True,
+        data=UtilisateurRead.model_validate(utilisateur),
+        message="Utilisateur modifié avec succès.",
+    )
+
+
+@router.delete(
+    "/utilisateurs/{utilisateur_id}",
+    response_model=ApiResponse[None],
+)
+def desactiver_utilisateur(
+    utilisateur_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("utilisateurs.suppression")),
+):
+    """Désactive un compte utilisateur."""
+    utilisateur = utilisateur_service.obtenir(db, utilisateur_id)
+    if utilisateur is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur introuvable."
+        )
+    utilisateur_service.desactiver(db, utilisateur)
+    return ApiResponse(success=True, data=None, message="Compte désactivé.")
+
+
 @router.get(
     "/roles",
     response_model=ApiResponse[list[RoleRead]],
@@ -61,5 +136,68 @@ def lister_roles(
     return ApiResponse(
         success=True,
         data=[RoleRead.model_validate(r) for r in roles],
+        message=None,
+    )
+
+
+@router.get(
+    "/roles/{role_id}",
+    response_model=ApiResponse[RoleDetailRead],
+)
+def detail_role(
+    role_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("roles.lecture")),
+):
+    """Détail d'un rôle avec ses permissions."""
+    role = role_service.obtenir_role(db, role_id)
+    if role is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Rôle introuvable."
+        )
+    return ApiResponse(
+        success=True,
+        data=RoleDetailRead.model_validate(role),
+        message=None,
+    )
+
+
+@router.put(
+    "/roles/{role_id}/permissions",
+    response_model=ApiResponse[RoleDetailRead],
+)
+def modifier_permissions_role(
+    role_id: uuid.UUID,
+    payload: RolePermissionsUpdate,
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("roles.modification")),
+):
+    """Attribue les permissions à un rôle."""
+    role = role_service.obtenir_role(db, role_id)
+    if role is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Rôle introuvable."
+        )
+    role = role_service.mettre_a_jour_permissions(db, role, payload.permission_ids)
+    return ApiResponse(
+        success=True,
+        data=RoleDetailRead.model_validate(role),
+        message="Permissions mises à jour.",
+    )
+
+
+@router.get(
+    "/permissions",
+    response_model=ApiResponse[list[PermissionRead]],
+)
+def lister_permissions(
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("roles.lecture")),
+):
+    """Liste toutes les permissions du système."""
+    permissions = role_service.lister_permissions(db)
+    return ApiResponse(
+        success=True,
+        data=[PermissionRead.model_validate(p) for p in permissions],
         message=None,
     )

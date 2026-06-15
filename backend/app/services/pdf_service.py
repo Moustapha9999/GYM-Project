@@ -1,5 +1,5 @@
 """
-Service de génération de PDF (reçus de paiement, fiches de paie).
+Service de génération de PDF (reçus de paiement, fiches de paie, cartes membres).
 Utilise ReportLab. Retourne les PDF sous forme de bytes (à streamer ou stocker).
 """
 import io
@@ -64,7 +64,6 @@ def generer_recu_paiement(paiement: dict) -> bytes:
     elements.append(t)
     elements.append(Spacer(1, 8 * mm))
 
-    # Montant en vedette
     montant = paiement.get("montant", "0")
     montant_table = Table([["MONTANT PAYÉ", f"{montant} MRU"]], colWidths=[80 * mm, 80 * mm])
     montant_table.setStyle(TableStyle([
@@ -119,7 +118,6 @@ def generer_fiche_paie(fiche: dict) -> bytes:
     elements.append(t)
     elements.append(Spacer(1, 8 * mm))
 
-    # Détail du salaire
     detail = [
         ["Élément", "Montant (MRU)"],
         ["Salaire de base", str(fiche.get("salaire_base", "0"))],
@@ -150,5 +148,169 @@ def generer_fiche_paie(fiche: dict) -> bytes:
     ))
 
     doc.build(elements)
+    buffer.seek(0)
+    return buffer.read()
+
+
+def _charger_image_photo(photo_url: str | None):
+    """Charge une image depuis une data URL base64 ou retourne None."""
+    if not photo_url:
+        return None
+    try:
+        import base64
+        from io import BytesIO
+
+        from PIL import Image
+
+        if photo_url.startswith("data:"):
+            _, encoded = photo_url.split(",", 1)
+            raw = base64.b64decode(encoded)
+        elif photo_url.startswith("http"):
+            return None
+        else:
+            raw = base64.b64decode(photo_url)
+
+        img = Image.open(BytesIO(raw))
+        if img.mode not in ("RGB", "RGBA"):
+            img = img.convert("RGB")
+        return img
+    except Exception:
+        return None
+
+
+def _generer_qr_image(qr_data: str):
+    """Génère une image QR code PIL."""
+    import qrcode
+
+    qr = qrcode.QRCode(version=1, box_size=6, border=2)
+    qr.add_data(qr_data)
+    qr.make(fit=True)
+    return qr.make_image(fill_color="#1A1A1A", back_color="white")
+
+
+def _lignes_type_abonnement(type_abo: str | None) -> list[str]:
+    """Découpe « Mensuel Homme » en deux lignes : « Mensuel » puis « Homme »."""
+    if not type_abo or type_abo == "—":
+        return ["—"]
+    parts = type_abo.strip().split(None, 1)
+    if len(parts) == 2:
+        return [parts[0], parts[1]]
+    return [type_abo]
+
+
+def generer_carte_membre(carte: dict) -> bytes:
+    """
+    Génère un PDF de carte membre (format 171.2 × 108 mm — CR80 ×2).
+    carte attendu :
+      numero_membre, nom_complet, type_abonnement, date_expiration,
+      qr_code_uuid, photo_url, statut
+    """
+    from reportlab.lib.utils import ImageReader
+    from reportlab.pdfgen import canvas
+
+    buffer = io.BytesIO()
+    card_w, card_h = 171.2 * mm, 108 * mm
+    c = canvas.Canvas(buffer, pagesize=(card_w, card_h))
+
+    # ── Fond & bordure ──────────────────────────────────────
+    c.setFillColor(colors.white)
+    c.rect(0, 0, card_w, card_h, fill=1, stroke=0)
+    c.setStrokeColor(NOIR)
+    c.setLineWidth(2)
+    c.roundRect(3 * mm, 3 * mm, card_w - 6 * mm, card_h - 6 * mm, 6 * mm, fill=0, stroke=1)
+
+    # ── Bandeau header ──────────────────────────────────────
+    header_h = 22 * mm
+    c.setFillColor(NOIR)
+    c.roundRect(3 * mm, card_h - header_h - 3 * mm, card_w - 6 * mm, header_h, 6 * mm, fill=1, stroke=0)
+    c.rect(3 * mm, card_h - header_h - 3 * mm, card_w - 6 * mm, 6 * mm, fill=1, stroke=0)
+
+    c.setFillColor(JAUNE)
+    c.setFont("Helvetica-Bold", 18)
+    c.drawString(10 * mm, card_h - header_h + 5 * mm, "TOTAL FITNESS")
+    c.setFont("Helvetica-Bold", 13)
+    c.drawRightString(card_w - 10 * mm, card_h - header_h + 5 * mm, "CARTE MEMBRE")
+
+    # ── Zone corps ────────────────────────────────────────────
+    photo_w, photo_h = 40 * mm, 48 * mm
+    x_photo = 10 * mm
+    y_photo = 14 * mm
+
+    photo_img = _charger_image_photo(carte.get("photo_url"))
+    if photo_img:
+        photo_buffer = io.BytesIO()
+        photo_img.save(photo_buffer, format="PNG")
+        photo_buffer.seek(0)
+        c.drawImage(
+            ImageReader(photo_buffer),
+            x_photo, y_photo,
+            width=photo_w, height=photo_h,
+            preserveAspectRatio=True, anchor="c", mask="auto",
+        )
+        c.setStrokeColor(colors.HexColor("#e2e8f0"))
+        c.setLineWidth(1)
+        c.roundRect(x_photo, y_photo, photo_w, photo_h, 4 * mm, fill=0, stroke=1)
+    else:
+        c.setFillColor(colors.HexColor("#f1f5f9"))
+        c.roundRect(x_photo, y_photo, photo_w, photo_h, 4 * mm, fill=1, stroke=0)
+        c.setFillColor(colors.HexColor("#94a3b8"))
+        c.setFont("Helvetica", 12)
+        c.drawCentredString(x_photo + photo_w / 2, y_photo + photo_h / 2 - 2 * mm, "PHOTO")
+
+    # ── Infos membre ─────────────────────────────────────────
+    x_info = 56 * mm
+    y_top = y_photo + photo_h - 4 * mm
+
+    c.setFillColor(NOIR)
+    c.setFont("Helvetica-Bold", 17)
+    nom = carte.get("nom_complet", "—")
+    if len(nom) > 28:
+        nom = nom[:26] + "…"
+    c.drawString(x_info, y_top, nom)
+
+    c.setFillColor(colors.HexColor("#64748b"))
+    c.setFont("Helvetica", 13)
+    info_lines = [
+        f"N° {carte.get('numero_membre', '—')}",
+        *_lignes_type_abonnement(carte.get("type_abonnement")),
+        f"Expire : {carte.get('date_expiration', '—')}",
+    ]
+    for i, line in enumerate(info_lines):
+        c.drawString(x_info, y_top - (i + 1) * 9 * mm, line)
+
+    # ── QR code ───────────────────────────────────────────────
+    import qrcode
+
+    qr = qrcode.QRCode(version=1, box_size=12, border=2)
+    qr.add_data(carte.get("qr_code_uuid", ""))
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="#1A1A1A", back_color="white")
+
+    qr_buffer = io.BytesIO()
+    qr_img.save(qr_buffer, format="PNG")
+    qr_buffer.seek(0)
+
+    qr_size = 40 * mm
+    x_qr = card_w - qr_size - 10 * mm
+    y_qr = y_photo + (photo_h - qr_size) / 2
+    c.drawImage(
+        ImageReader(qr_buffer),
+        x_qr, y_qr,
+        width=qr_size, height=qr_size,
+        preserveAspectRatio=True, mask="auto",
+    )
+
+    # ── Footer ────────────────────────────────────────────────
+    statut = carte.get("statut", "Actif")
+    statut_color = colors.HexColor("#166534") if statut == "Actif" else colors.HexColor("#991b1b")
+    c.setFillColor(statut_color)
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(10 * mm, 7 * mm, f"● {statut}")
+    c.setFillColor(colors.HexColor("#94a3b8"))
+    c.setFont("Helvetica", 10)
+    c.drawString(36 * mm, 7 * mm, "Discipline · Force · Résultats — Nouakchott")
+
+    c.showPage()
+    c.save()
     buffer.seek(0)
     return buffer.read()

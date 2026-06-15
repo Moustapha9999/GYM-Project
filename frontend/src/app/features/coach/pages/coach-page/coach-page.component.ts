@@ -13,7 +13,7 @@ import { PageHeaderComponent } from '@shared/components/page-header/page-header.
     />
 
     <app-empty-state
-      icon="🎯"
+      icon="target"
       title="Module Coach prêt"
       description="Brancher ici les endpoints /programmes-sportifs et /planning."
     />

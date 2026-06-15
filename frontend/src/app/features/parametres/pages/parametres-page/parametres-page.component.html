@@ -1,0 +1,231 @@
+<section class="prm-page">
+  <header class="prm-page__head">
+    <div class="prm-page__head-text">
+      <h1>{{ 'parametres.title' | translate }}</h1>
+      <p>{{ 'parametres.subtitle' | translate }}</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="prm-loading">
+      <app-loading-spinner [label]="'parametres.loading' | translate" />
+    </div>
+  } @else {
+    <form class="prm-layout" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="prm-main">
+        <!-- Identité -->
+        <article class="prm-card">
+          <div class="prm-card__header">
+            <span class="prm-card__icon" aria-hidden="true"><app-icon name="building" [size]="20" /></span>
+            <div>
+              <h2>{{ 'parametres.identityTitle' | translate }}</h2>
+              <p class="prm-card__hint">{{ 'parametres.identityHint' | translate }}</p>
+            </div>
+          </div>
+
+          <div class="prm-fields">
+            <label class="prm-field">
+              <span class="prm-field__label">{{ 'parametres.gymName' | translate }}</span>
+              <input
+                type="text"
+                class="prm-field__input"
+                formControlName="nom_salle"
+                [placeholder]="'parametres.gymNamePlaceholder' | translate"
+              />
+            </label>
+
+            <label class="prm-field">
+              <span class="prm-field__label">{{ 'parametres.slogan' | translate }}</span>
+              <input
+                type="text"
+                class="prm-field__input"
+                formControlName="slogan"
+                [placeholder]="'parametres.sloganPlaceholder' | translate"
+              />
+            </label>
+          </div>
+
+          <div class="prm-logo-block">
+            <div class="prm-logo__preview">
+              @if (logoPreview()) {
+                <img [src]="logoPreview()!" alt="Logo" />
+              } @else {
+                <span class="prm-logo__placeholder" aria-hidden="true"><app-icon name="gym" [size]="36" /></span>
+              }
+            </div>
+            <div class="prm-logo__body">
+              <p class="prm-logo__title">{{ 'parametres.logoTitle' | translate }}</p>
+              <p class="prm-logo__desc">{{ 'parametres.logoDesc' | translate }}</p>
+              <div class="prm-logo__actions">
+                <label class="prm-upload">
+                  <input type="file" accept="image/*" (change)="onLogoSelected($event)" />
+                  <span class="prm-btn prm-btn--secondary">{{ 'parametres.chooseLogo' | translate }}</span>
+                </label>
+                @if (logoPreview()) {
+                  <button type="button" class="prm-btn prm-btn--ghost" (click)="removeLogo()">
+                    {{ 'parametres.removeLogo' | translate }}
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Apparence -->
+        <article class="prm-card">
+          <div class="prm-card__header">
+            <span class="prm-card__icon" aria-hidden="true"><app-icon name="palette" [size]="20" /></span>
+            <div>
+              <h2>{{ 'parametres.themeTitle' | translate }}</h2>
+              <p class="prm-card__hint">{{ 'parametres.themeHint' | translate }}</p>
+            </div>
+          </div>
+
+          <p class="prm-section-label">{{ 'parametres.presetsLabel' | translate }}</p>
+          <div class="prm-presets">
+            @for (preset of themePresets; track preset.id) {
+              <button
+                type="button"
+                class="prm-preset"
+                [class.is-active]="form.controls.theme_couleur.value === preset.couleur"
+                [style.--preset-color]="preset.couleur"
+                (click)="selectPreset(preset.couleur)"
+              >
+                <span class="prm-preset__swatch"></span>
+                <span class="prm-preset__name">{{ preset.labelKey | translate }}</span>
+                @if (form.controls.theme_couleur.value === preset.couleur) {
+                  <span class="prm-preset__check" aria-hidden="true"><app-icon name="check" [size]="12" /></span>
+                }
+              </button>
+            }
+          </div>
+
+          <label class="prm-field">
+            <span class="prm-field__label">{{ 'parametres.customColor' | translate }}</span>
+            <div class="prm-color-row">
+              <input type="color" class="prm-color-picker" formControlName="theme_couleur" />
+              <input type="text" class="prm-field__input prm-field__input--mono" formControlName="theme_couleur" maxlength="7" />
+            </div>
+          </label>
+
+          <p class="prm-section-label">{{ 'parametres.displayMode' | translate }}</p>
+          <div class="prm-segment">
+            <label class="prm-segment__item">
+              <input type="radio" formControlName="theme_mode" value="light" />
+              <span class="prm-segment__content">
+                <span class="prm-segment__icon" aria-hidden="true"><app-icon name="sun" [size]="18" /></span>
+                {{ 'parametres.light' | translate }}
+              </span>
+            </label>
+            <label class="prm-segment__item">
+              <input type="radio" formControlName="theme_mode" value="dark" />
+              <span class="prm-segment__content">
+                <span class="prm-segment__icon" aria-hidden="true"><app-icon name="moon" [size]="18" /></span>
+                {{ 'parametres.dark' | translate }}
+              </span>
+            </label>
+          </div>
+
+          <button type="button" class="prm-btn prm-btn--ghost prm-btn--preview" (click)="previewTheme()">
+            <app-icon name="eye" [size]="18" aria-hidden="true" />
+            {{ 'parametres.instantPreview' | translate }}
+          </button>
+        </article>
+
+        <!-- Langue -->
+        <article class="prm-card">
+          <div class="prm-card__header">
+            <span class="prm-card__icon" aria-hidden="true"><app-icon name="globe" [size]="20" /></span>
+            <div>
+              <h2>{{ 'parametres.languageTitle' | translate }}</h2>
+              <p class="prm-card__hint">{{ 'parametres.languageHint' | translate }}</p>
+            </div>
+          </div>
+
+          <div class="prm-lang-grid">
+            @for (opt of languageOptions; track opt.code) {
+              <label class="prm-lang-card" [class.is-active]="form.controls.langue.value === opt.code">
+                <input type="radio" formControlName="langue" [value]="opt.code" />
+                <span class="prm-lang-card__badge" aria-hidden="true">{{ opt.code | uppercase }}</span>
+              </label>
+            }
+          </div>
+        </article>
+
+        <footer class="prm-footer">
+          <div class="prm-footer__alerts">
+            @if (success()) {
+              <p class="prm-alert prm-alert--success">
+                <app-icon name="check" [size]="16" aria-hidden="true" />
+                {{ success() }}
+              </p>
+            }
+            @if (error()) {
+              <p class="prm-alert prm-alert--error">
+                <app-icon name="alert-triangle" [size]="16" aria-hidden="true" />
+                {{ error() }}
+              </p>
+            }
+          </div>
+          <button type="submit" class="prm-btn prm-btn--primary prm-btn--save" [disabled]="saving()">
+            @if (saving()) {
+              {{ 'common.saving' | translate }}
+            } @else {
+              {{ 'parametres.saveSettings' | translate }}
+            }
+          </button>
+        </footer>
+      </div>
+
+      <!-- Aperçu live -->
+      <aside class="prm-aside">
+        <article class="prm-card prm-card--sticky">
+          <div class="prm-card__header prm-card__header--compact">
+            <span class="prm-card__icon" aria-hidden="true"><app-icon name="sparkles" [size]="20" /></span>
+            <h2>{{ 'parametres.previewTitle' | translate }}</h2>
+          </div>
+
+          <div
+            class="prm-mock"
+            [class.prm-mock--dark]="form.controls.theme_mode.value === 'dark'"
+            [style.--mock-primary]="form.controls.theme_couleur.value"
+          >
+            <div class="prm-mock__header">
+              @if (logoPreview()) {
+                <img [src]="logoPreview()!" alt="" class="prm-mock__logo" />
+              } @else {
+                <span class="prm-mock__logo-fallback" aria-hidden="true"><app-icon name="gym" [size]="22" /></span>
+              }
+              <strong>{{ form.controls.nom_salle.value || ('parametres.gymNamePlaceholder' | translate) }}</strong>
+            </div>
+
+            <nav class="prm-mock__nav">
+              <span class="is-active">{{ 'nav.dashboard' | translate }}</span>
+              <span>{{ 'nav.clients' | translate }}</span>
+              <span>{{ 'nav.paiements' | translate }}</span>
+            </nav>
+
+            <div class="prm-mock__body">
+              <p class="prm-mock__slogan">
+                {{ form.controls.slogan.value || ('parametres.sloganPlaceholder' | translate) }}
+              </p>
+              <div class="prm-mock__kpis">
+                <div class="prm-mock__kpi prm-mock__kpi--accent">
+                  <small>KPI</small>
+                  <strong>128</strong>
+                </div>
+                <div class="prm-mock__kpi">
+                  <small>KPI</small>
+                  <strong>42</strong>
+                </div>
+              </div>
+              <button type="button" class="prm-mock__btn">{{ 'common.exampleButton' | translate }}</button>
+            </div>
+          </div>
+
+          <p class="prm-aside__note">{{ 'parametres.previewNote' | translate }}</p>
+        </article>
+      </aside>
+    </form>
+  }
+</section>

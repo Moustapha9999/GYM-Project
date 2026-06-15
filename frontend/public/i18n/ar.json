@@ -1,0 +1,285 @@
+{
+  "common": {
+    "save": "حفظ",
+    "saving": "جاري الحفظ…",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "logout": "تسجيل الخروج",
+    "loading": "جاري التحميل…",
+    "search": "بحث",
+    "resetFilters": "إعادة تعيين الفلاتر",
+    "apply": "تطبيق",
+    "preview": "معاينة",
+    "exampleButton": "زر تجريبي",
+    "notifications": "الإشعارات",
+    "messages": "الرسائل",
+    "menu": "القائمة",
+    "general": "عام",
+    "exportReport": "تصدير التقرير",
+    "thisWeek": "هذا الأسبوع",
+    "thisMonth": "هذا الشهر",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "filteredResults": "نتائج مفلترة",
+    "all": "الكل",
+    "total": "المجموع",
+    "details": "التفاصيل",
+    "new": "جديد",
+    "edit": "تعديل",
+    "inRoom": "في القاعة",
+    "activeLabel": "نشط"
+  },
+  "languages": {
+    "fr": "Français",
+    "en": "English",
+    "ar": "العربية"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "paiements": "المدفوعات",
+    "clients": "العملاء",
+    "abonnements": "الاشتراكات",
+    "cartesMembres": "بطاقات الأعضاء",
+    "finances": "المالية",
+    "admin": "الإدارة",
+    "parametres": "الإعدادات",
+    "presences": "الحضور",
+    "seances": "الحصص اليومية"
+  },
+  "roles": {
+    "superAdmin": "المشرف العام",
+    "receptionist": "موظف الاستقبال"
+  },
+  "notifications": {
+    "panelTitle": "الإشعارات",
+    "panelSubtitle": "الاشتراكات والعملاء والمدفوعات الأخيرة",
+    "markAllRead": "تعليم الكل كمقروء",
+    "loading": "جاري التحميل…",
+    "empty": "لا توجد إشعارات حالياً."
+  },
+  "auth": {
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "login": "تسجيل الدخول",
+    "loggingIn": "جاري تسجيل الدخول...",
+    "loginError": "بيانات الدخول غير صحيحة أو الخادم غير متاح.",
+    "searchClient": "البحث عن عميل..."
+  },
+  "parametres": {
+    "title": "الإعدادات",
+    "subtitle": "هوية النادي، الشعار، المظهر ولغة الواجهة.",
+    "loading": "جاري تحميل الإعدادات...",
+    "identityTitle": "هوية النادي",
+    "identityHint": "الاسم والشعار المعروضان في التطبيق.",
+    "gymName": "اسم النادي",
+    "gymNamePlaceholder": "TOTAL FITNESS",
+    "slogan": "الشعار",
+    "sloganPlaceholder": "انضباط · قوة · نتائج",
+    "chooseLogo": "اختيار شعار",
+    "removeLogo": "حذف",
+    "themeTitle": "المظهر والألوان",
+    "themeHint": "اللون الرئيسي ووضع العرض.",
+    "customColor": "لون مخصص",
+    "displayMode": "وضع العرض",
+    "light": "فاتح",
+    "dark": "داكن",
+    "instantPreview": "معاينة فورية",
+    "languageTitle": "اللغة",
+    "languageHint": "لغة الواجهة (فرنسية، إنجليزية أو عربية).",
+    "previewTitle": "معاينة",
+    "logoTitle": "شعار النادي",
+    "logoDesc": "PNG أو JPG أو SVG — حد أقصى 1 ميغابايت",
+    "presetsLabel": "ألوان جاهزة",
+    "previewNote": "تعكس المعاينة الاسم والشعار واللون والوضع المختار. انقر « معاينة فورية » لتطبيقها على التطبيق.",
+    "saveSettings": "حفظ الإعدادات",
+    "saveSuccess": "تم حفظ الإعدادات.",
+    "loadError": "تعذر تحميل الإعدادات.",
+    "saveError": "حدث خطأ أثناء الحفظ.",
+    "logoImageError": "يرجى اختيار ملف صورة.",
+    "logoSizeError": "يجب ألا يتجاوز الشعار 1 ميغابايت.",
+    "presets": {
+      "orange": "برتقالي",
+      "green": "أخضر",
+      "blue": "أزرق",
+      "purple": "بنفسجي",
+      "red": "أحمر"
+    }
+  },
+  "dashboard": {
+    "welcome": "مرحباً، {{name}}",
+    "superAdminSubtitle": "نظرة عامة على النادي — الإيرادات والاشتراكات والنشاط.",
+    "revenueOverview": "نظرة على الإيرادات",
+    "total7Days": "مجموع 7 أيام:",
+    "financialSummary": "الملخص المالي",
+    "loadError": "تعذر تحميل لوحة التحكم.",
+    "presencesToday": "حضور اليوم",
+    "presencesTodayHint": "{{count}} دخول مسجل",
+    "subscriptionsByGender": "الاشتراكات حسب الجنس",
+    "dailyRevenue": "إيرادات اليوم",
+    "monthlySubscriptions": "الاشتراكات (الشهر)",
+    "monthlySessions": "الحصص (الشهر)",
+    "monthlyExpenses": "المصاريف (الشهر)",
+    "legendSessions": "الحصص",
+    "legendSubscriptions": "الاشتراكات",
+    "kpi": {
+      "monthlyRevenue": "إيرادات الشهر",
+      "activeSubscriptions": "الاشتراكات النشطة",
+      "activeClients": "الأعضاء النشطون",
+      "monthlyProfit": "ربح الشهر"
+    },
+    "reception": {
+      "title": "لوحة التحكم",
+      "subtitle": "مرحباً {{name}}، إليك نشاط الاستقبال اليوم.",
+      "newPayment": "+ دفعة جديدة",
+      "importData": "استيراد البيانات",
+      "activity": "نشاط الاستقبال",
+      "activityHint": "تحصيلات اليوم:",
+      "presentToday": "الحاضرون:",
+      "subscriptionsToday": "اشتراكات اليوم:",
+      "reminders": "تذكيرات",
+      "occupancy": "إشغال القاعة",
+      "kpi": {
+        "paymentsToday": "مدفوعات اليوم",
+        "presencesToday": "حضور اليوم",
+        "sessionsCollected": "حصص محصّلة",
+        "expiringSubscriptions": "اشتراكات تنتهي"
+      }
+    }
+  },
+  "modules": {
+    "abonnements": {
+      "title": "الاشتراكات",
+      "subtitle": "الخطط والتسجيلات والتجديدات وإدارة الحالات.",
+      "listTitle": "قائمة الاشتراكات",
+      "detailsTitle": "تفاصيل الاشتراك",
+      "subscribeTitle": "اشتراك / تجديد",
+      "formulasTitle": "الخطط المتاحة",
+      "kpi": {
+        "active": "اشتراكات نشطة",
+        "suspended": "معلّقة",
+        "formulas": "الخطط"
+      }
+    },
+    "clients": {
+      "title": "العملاء",
+      "subtitle": "ملفات الأعضاء والتسجيلات ومتابعة الاشتراكات.",
+      "listTitle": "قائمة العملاء",
+      "detailsTitle": "تفاصيل العميل",
+      "newClient": "عميل جديد",
+      "editClient": "تعديل العميل",
+      "kpi": {
+        "total": "إجمالي الأعضاء"
+      }
+    },
+    "paiements": {
+      "title": "المدفوعات",
+      "subtitle": "سجل المدفوعات وصندوق اليوم ووسائل الدفع المحلية.",
+      "listTitle": "سجل المدفوعات",
+      "detailsTitle": "تفاصيل الدفع",
+      "newPayment": "دفعة جديدة",
+      "cashRegisterTitle": "صندوق {{date}}",
+      "kpi": {
+        "cashTotal": "مجموع الصندوق",
+        "subscriptions": "الاشتراكات",
+        "sessions": "الحصص",
+        "filteredJournal": "سجل مفلتر"
+      }
+    },
+    "cartesMembres": {
+      "title": "بطاقات الأعضاء",
+      "subtitle": "إنشاء وطباعة وإرسال بطاقات الدخول.",
+      "listTitle": "قائمة البطاقات",
+      "cardTitle": "بطاقة العضو",
+      "previewTitle": "معاينة",
+      "memberCardLabel": "بطاقة العضو",
+      "kpi": {
+        "active": "بطاقات نشطة",
+        "expired": "منتهية"
+      }
+    },
+    "admin": {
+      "title": "الإدارة",
+      "subtitle": "المستخدمون والأدوار والصلاحيات والموظفون.",
+      "tabs": {
+        "users": "حسابات المستخدمين",
+        "employees": "الموظفون",
+        "roles": "الأدوار والصلاحيات"
+      },
+      "usersListTitle": "حسابات المستخدمين",
+      "userDetailsTitle": "تفاصيل الحساب",
+      "newAccount": "حساب جديد",
+      "editAccount": "تعديل الحساب",
+      "employeesTitle": "الموظفون (الموارد البشرية)",
+      "employeeDetailsTitle": "تفاصيل الموظف",
+      "newEmployee": "موظف جديد",
+      "editEmployee": "تعديل الموظف",
+      "rolesTitle": "تعيين الأدوار والصلاحيات",
+      "rolesAdminSection": "الإدارة — المستخدمون والموظفون",
+      "rolesBusinessSection": "وحدات العمل الأخرى",
+      "systemRolesTitle": "أدوار النظام",
+      "roleSummary": "ملخص — {{role}}",
+      "kpi": {
+        "totalAccounts": "إجمالي الحسابات"
+      }
+    },
+    "presences": {
+      "title": "الحضور",
+      "subtitle": "متابعة الدخول والحضور اليومي."
+    },
+    "seances": {
+      "title": "الحصص اليومية",
+      "subtitle": "جدولة وإدارة حصص اليوم."
+    },
+    "finances": {
+      "title": "المالية",
+      "subtitle": "المصاريف والملخص المالي ومتابعة تكاليف الصالة.",
+      "listTitle": "سجل المصاريف",
+      "detailsTitle": "تفاصيل المصروف",
+      "newExpense": "مصروف جديد",
+      "editExpense": "تعديل المصروف",
+      "saveExpense": "حفظ المصروف",
+      "loading": "جاري تحميل البيانات المالية...",
+      "empty": "لا توجد مصاريف للفترة المحددة.",
+      "breakdownTitle": "التوزيع حسب الفئة",
+      "readOnlyHint": "لديك صلاحية القراءة فقط على هذه الوحدة.",
+      "filters": {
+        "startDate": "تاريخ البداية",
+        "endDate": "تاريخ النهاية",
+        "category": "الفئة"
+      },
+      "columns": {
+        "reference": "المرجع",
+        "label": "الوصف",
+        "category": "الفئة",
+        "amount": "المبلغ",
+        "date": "التاريخ"
+      },
+      "form": {
+        "category": "الفئة",
+        "selectCategory": "اختر فئة",
+        "label": "الوصف",
+        "amount": "المبلغ (أوقية)",
+        "date": "تاريخ المصروف",
+        "receipt": "إثبات (رابط)",
+        "createdAt": "تاريخ التسجيل"
+      },
+      "kpi": {
+        "revenue": "الإيرادات (الفترة)",
+        "expenses": "المصاريف (الفترة)",
+        "profit": "الربح",
+        "filteredTotal": "المجموع المفلتر"
+      },
+      "charts": {
+        "comparisonTitle": "الإيرادات مقابل المصاريف",
+        "comparisonHint": "مقارنة على الفترة المحددة",
+        "categoryTitle": "توزيع المصاريف",
+        "categoryHint": "حصة كل فئة",
+        "trendTitle": "تطور المصاريف",
+        "trendHint": "المجموع المعروض:",
+        "categoryBarsTitle": "المصاريف حسب الفئة",
+        "noCategoryData": "لا توجد مصاريف حسب الفئة لهذه الفترة.",
+        "noTrendData": "لا توجد بيانات كافية لرسم التطور."
+      }
+    }
+  }
+}

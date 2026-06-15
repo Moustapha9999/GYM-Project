@@ -13,7 +13,7 @@ import { PageHeaderComponent } from '@shared/components/page-header/page-header.
     />
 
     <app-empty-state
-      icon="✅"
+      icon="user-check"
       title="Module Présences prêt"
       description="Brancher ici le scan QR et l'historique via PresencesService."
     />

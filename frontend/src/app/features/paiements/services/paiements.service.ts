@@ -9,6 +9,7 @@ import {
   PaiementCreateResult,
   PaiementDetail,
   PaiementFilters,
+  PaiementRead,
 } from '@features/paiements/models/paiement.model';
 
 @Injectable({ providedIn: 'root' })
@@ -25,6 +26,10 @@ export class PaiementsService {
     return this.api
       .get<PaiementDetail[]>('paiements', params)
       .pipe(map((response) => response.data));
+  }
+
+  getById(id: string): Observable<PaiementRead> {
+    return this.api.get<PaiementRead>(`paiements/${id}`).pipe(map((response) => response.data));
   }
 
   getCaisseJour(jour?: string): Observable<CaisseJour> {

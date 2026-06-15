@@ -1,0 +1,285 @@
+{
+  "common": {
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "logout": "Déconnexion",
+    "loading": "Chargement…",
+    "search": "Rechercher",
+    "resetFilters": "Réinitialiser filtres",
+    "apply": "Appliquer",
+    "preview": "Aperçu",
+    "exampleButton": "Bouton exemple",
+    "notifications": "Notifications",
+    "messages": "Messages",
+    "menu": "MENU",
+    "general": "GÉNÉRAL",
+    "exportReport": "Exporter rapport",
+    "thisWeek": "Cette semaine",
+    "thisMonth": "Ce mois",
+    "active": "Actifs",
+    "inactive": "Inactifs",
+    "filteredResults": "Résultats filtrés",
+    "all": "Tous",
+    "total": "Total",
+    "details": "Détails",
+    "new": "Nouveau",
+    "edit": "Modifier",
+    "inRoom": "en salle",
+    "activeLabel": "actifs"
+  },
+  "languages": {
+    "fr": "Français",
+    "en": "English",
+    "ar": "العربية"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "paiements": "Paiements",
+    "clients": "Clients",
+    "abonnements": "Abonnements",
+    "cartesMembres": "Cartes membres",
+    "finances": "Finances",
+    "admin": "Administration",
+    "parametres": "Paramètres",
+    "presences": "Présences",
+    "seances": "Séances journalières"
+  },
+  "roles": {
+    "superAdmin": "Super Admin",
+    "receptionist": "Réceptionniste"
+  },
+  "notifications": {
+    "panelTitle": "Notifications",
+    "panelSubtitle": "Abonnements, clients, paiements récents",
+    "markAllRead": "Tout marquer lu",
+    "loading": "Chargement…",
+    "empty": "Aucune notification pour le moment."
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Mot de passe",
+    "login": "Se connecter",
+    "loggingIn": "Connexion en cours...",
+    "loginError": "Identifiants invalides ou serveur indisponible.",
+    "searchClient": "Rechercher un client..."
+  },
+  "parametres": {
+    "title": "Paramètres",
+    "subtitle": "Identité de la salle, logo, apparence et langue de l'interface.",
+    "loading": "Chargement des paramètres...",
+    "identityTitle": "Identité de la salle",
+    "identityHint": "Nom et logo affichés dans l'application.",
+    "gymName": "Nom du gym",
+    "gymNamePlaceholder": "TOTAL FITNESS",
+    "slogan": "Slogan",
+    "sloganPlaceholder": "Discipline · Force · Résultats",
+    "chooseLogo": "Choisir un logo",
+    "removeLogo": "Supprimer",
+    "themeTitle": "Thème & couleurs",
+    "themeHint": "Couleur principale et mode d'affichage.",
+    "customColor": "Couleur personnalisée",
+    "displayMode": "Mode d'affichage",
+    "light": "Clair",
+    "dark": "Sombre",
+    "instantPreview": "Aperçu instantané",
+    "languageTitle": "Langue",
+    "languageHint": "Langue de l'interface (français, anglais ou arabe).",
+    "previewTitle": "Aperçu",
+    "logoTitle": "Logo de la salle",
+    "logoDesc": "PNG, JPG ou SVG — max. 1 Mo",
+    "presetsLabel": "Couleurs prédéfinies",
+    "previewNote": "L'aperçu reflète le nom, le slogan, la couleur et le mode choisis. Cliquez sur « Aperçu instantané » pour appliquer à toute l'application.",
+    "saveSettings": "Enregistrer les paramètres",
+    "saveSuccess": "Paramètres enregistrés.",
+    "loadError": "Impossible de charger les paramètres.",
+    "saveError": "Erreur lors de l'enregistrement.",
+    "logoImageError": "Veuillez sélectionner une image.",
+    "logoSizeError": "Le logo ne doit pas dépasser 1 Mo.",
+    "presets": {
+      "orange": "Orange",
+      "green": "Vert",
+      "blue": "Bleu",
+      "purple": "Violet",
+      "red": "Rouge"
+    }
+  },
+  "dashboard": {
+    "welcome": "Bienvenue, {{name}}",
+    "superAdminSubtitle": "Vue d'ensemble de la salle — revenus, abonnements et activité.",
+    "revenueOverview": "Aperçu des revenus",
+    "total7Days": "Total 7 jours :",
+    "financialSummary": "Résumé financier",
+    "loadError": "Impossible de charger le tableau de bord.",
+    "presencesToday": "Présences du jour",
+    "presencesTodayHint": "{{count}} entrées enregistrées",
+    "subscriptionsByGender": "Abonnements par sexe",
+    "dailyRevenue": "Revenus du jour",
+    "monthlySubscriptions": "Abonnements (mois)",
+    "monthlySessions": "Séances (mois)",
+    "monthlyExpenses": "Dépenses (mois)",
+    "legendSessions": "Séances",
+    "legendSubscriptions": "Abonnements",
+    "kpi": {
+      "monthlyRevenue": "Revenus du mois",
+      "activeSubscriptions": "Abonnements actifs",
+      "activeClients": "Clients actifs",
+      "monthlyProfit": "Bénéfice du mois"
+    },
+    "reception": {
+      "title": "Tableau de bord",
+      "subtitle": "Bienvenue {{name}}, voici l'activité de la réception aujourd'hui.",
+      "newPayment": "+ Nouveau paiement",
+      "importData": "Importer données",
+      "activity": "Activité de la réception",
+      "activityHint": "Encaissements du jour :",
+      "presentToday": "Présents :",
+      "subscriptionsToday": "Abonnements du jour :",
+      "reminders": "Rappels",
+      "occupancy": "Occupation salle",
+      "kpi": {
+        "paymentsToday": "Paiements du jour",
+        "presencesToday": "Présences du jour",
+        "sessionsCollected": "Séances encaissées",
+        "expiringSubscriptions": "Abonnements expirant"
+      }
+    }
+  },
+  "modules": {
+    "abonnements": {
+      "title": "Abonnements",
+      "subtitle": "Formules, souscriptions, renouvellements et gestion des statuts.",
+      "listTitle": "Liste des abonnements",
+      "detailsTitle": "Détails de l'abonnement",
+      "subscribeTitle": "Souscrire / Renouveler",
+      "formulasTitle": "Formules disponibles",
+      "kpi": {
+        "active": "Abonnements actifs",
+        "suspended": "Suspendus",
+        "formulas": "Formules"
+      }
+    },
+    "clients": {
+      "title": "Clients",
+      "subtitle": "Fiches membres, inscriptions et suivi des abonnements.",
+      "listTitle": "Liste des clients",
+      "detailsTitle": "Détails du client",
+      "newClient": "Nouveau client",
+      "editClient": "Modifier le client",
+      "kpi": {
+        "total": "Total adhérents"
+      }
+    },
+    "paiements": {
+      "title": "Paiements",
+      "subtitle": "Journal des encaissements, caisse du jour et moyens locaux.",
+      "listTitle": "Journal des paiements",
+      "detailsTitle": "Détails du paiement",
+      "newPayment": "Nouveau paiement",
+      "cashRegisterTitle": "Caisse du {{date}}",
+      "kpi": {
+        "cashTotal": "Total caisse",
+        "subscriptions": "Abonnements",
+        "sessions": "Séances",
+        "filteredJournal": "Journal filtré"
+      }
+    },
+    "cartesMembres": {
+      "title": "Cartes membres",
+      "subtitle": "Génération, impression et envoi des cartes d'accès.",
+      "listTitle": "Liste des cartes",
+      "cardTitle": "Carte membre",
+      "previewTitle": "Aperçu",
+      "memberCardLabel": "CARTE MEMBRE",
+      "kpi": {
+        "active": "Cartes actives",
+        "expired": "Expirées"
+      }
+    },
+    "admin": {
+      "title": "Administration",
+      "subtitle": "Utilisateurs, rôles, permissions et employés.",
+      "tabs": {
+        "users": "Comptes utilisateurs",
+        "employees": "Employés",
+        "roles": "Rôles & privilèges"
+      },
+      "usersListTitle": "Comptes utilisateurs",
+      "userDetailsTitle": "Détail du compte",
+      "newAccount": "Nouveau compte",
+      "editAccount": "Modifier le compte",
+      "employeesTitle": "Personnel (RH)",
+      "employeeDetailsTitle": "Détail employé",
+      "newEmployee": "Nouvel employé",
+      "editEmployee": "Modifier l'employé",
+      "rolesTitle": "Attribution des rôles et privilèges",
+      "rolesAdminSection": "Administration — Utilisateurs & Employés",
+      "rolesBusinessSection": "Autres modules métier",
+      "systemRolesTitle": "Rôles du système",
+      "roleSummary": "Résumé — {{role}}",
+      "kpi": {
+        "totalAccounts": "Total comptes"
+      }
+    },
+    "presences": {
+      "title": "Présences",
+      "subtitle": "Suivi des entrées et fréquentation quotidienne."
+    },
+    "seances": {
+      "title": "Séances journalières",
+      "subtitle": "Planning et gestion des séances du jour."
+    },
+    "finances": {
+      "title": "Finances",
+      "subtitle": "Dépenses, bilan financier et suivi des charges de la salle.",
+      "listTitle": "Journal des dépenses",
+      "detailsTitle": "Détails de la dépense",
+      "newExpense": "Nouvelle dépense",
+      "editExpense": "Modifier la dépense",
+      "saveExpense": "Enregistrer la dépense",
+      "loading": "Chargement des finances...",
+      "empty": "Aucune dépense sur la période sélectionnée.",
+      "breakdownTitle": "Répartition par catégorie",
+      "readOnlyHint": "Vous disposez uniquement de l'accès lecture sur ce module.",
+      "filters": {
+        "startDate": "Date début",
+        "endDate": "Date fin",
+        "category": "Catégorie"
+      },
+      "columns": {
+        "reference": "Référence",
+        "label": "Libellé",
+        "category": "Catégorie",
+        "amount": "Montant",
+        "date": "Date"
+      },
+      "form": {
+        "category": "Catégorie",
+        "selectCategory": "Sélectionner une catégorie",
+        "label": "Libellé",
+        "amount": "Montant (MRU)",
+        "date": "Date de dépense",
+        "receipt": "Justificatif (URL)",
+        "createdAt": "Enregistrée le"
+      },
+      "kpi": {
+        "revenue": "Revenus (période)",
+        "expenses": "Dépenses (période)",
+        "profit": "Bénéfice",
+        "filteredTotal": "Total filtré"
+      },
+      "charts": {
+        "comparisonTitle": "Revenus vs dépenses",
+        "comparisonHint": "Comparaison sur la période filtrée",
+        "categoryTitle": "Répartition des dépenses",
+        "categoryHint": "Part de chaque catégorie",
+        "trendTitle": "Évolution des dépenses",
+        "trendHint": "Total affiché :",
+        "categoryBarsTitle": "Dépenses par catégorie",
+        "noCategoryData": "Aucune dépense par catégorie sur cette période.",
+        "noTrendData": "Pas assez de données pour tracer l'évolution."
+      }
+    }
+  }
+}

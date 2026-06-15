@@ -56,3 +56,10 @@ export interface ClientFilters {
   page?: number;
   per_page?: number;
 }
+
+export interface ClientImportResult {
+  total_lignes: number;
+  crees: number;
+  echecs: number;
+  erreurs: { ligne: number; message: string }[];
+}

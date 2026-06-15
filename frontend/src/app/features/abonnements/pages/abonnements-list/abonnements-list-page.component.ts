@@ -6,6 +6,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PaginationMeta } from '@core/models/api-response.model';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
 import { MruCurrencyPipe } from '@shared/pipes/mru-currency.pipe';
+import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import {
   AbonnementListItem,
   Eligibilite,
@@ -17,9 +18,11 @@ import { ClientsService } from '@features/clients/services/clients.service';
 import { MoyenPaiement } from '@features/paiements/models/paiement.model';
 import { PaiementsService } from '@features/paiements/services/paiements.service';
 
+type SidePanelMode = 'subscribe' | 'view';
+
 @Component({
   selector: 'app-abonnements-list-page',
-  imports: [ReactiveFormsModule, LoadingSpinnerComponent, MruCurrencyPipe, DatePipe],
+  imports: [ReactiveFormsModule, LoadingSpinnerComponent, MruCurrencyPipe, DatePipe, TranslatePipe],
   templateUrl: './abonnements-list-page.component.html',
   styleUrl: './abonnements-list-page.component.scss',
 })
@@ -43,6 +46,16 @@ export class AbonnementsListPageComponent implements OnInit {
   readonly clientResults = signal<Client[]>([]);
   readonly selectedClient = signal<Client | null>(null);
   readonly eligibilite = signal<Eligibilite | null>(null);
+  readonly sidePanelMode = signal<SidePanelMode>('subscribe');
+  readonly viewingAbonnement = signal<AbonnementListItem | null>(null);
+  readonly viewEligibilite = signal<Eligibilite | null>(null);
+  readonly detailSuccess = signal<string | null>(null);
+  readonly detailError = signal<string | null>(null);
+  readonly renewing = signal(false);
+
+  readonly renewForm = this.fb.nonNullable.group({
+    moyen_paiement_id: [''],
+  });
 
   readonly perPage = 15;
   readonly today = new Date();
@@ -120,6 +133,77 @@ export class AbonnementsListPageComponent implements OnInit {
   isExpired(abo: AbonnementListItem): boolean {
     const fin = new Date(abo.date_fin);
     return fin < this.today && abo.statut === 'Actif';
+  }
+
+  viewAbonnement(abonnement: AbonnementListItem): void {
+    this.sidePanelMode.set('view');
+    this.viewingAbonnement.set(abonnement);
+    this.viewEligibilite.set(null);
+    this.detailSuccess.set(null);
+    this.detailError.set(null);
+    this.renewForm.reset({ moyen_paiement_id: '' });
+
+    this.abonnementsService.getEligibilite(abonnement.client_id).subscribe({
+      next: (data) => this.viewEligibilite.set(data),
+      error: () => this.viewEligibilite.set(null),
+    });
+  }
+
+  closeView(): void {
+    this.sidePanelMode.set('subscribe');
+    this.viewingAbonnement.set(null);
+    this.viewEligibilite.set(null);
+    this.detailSuccess.set(null);
+    this.detailError.set(null);
+  }
+
+  submitRenew(): void {
+    const abonnement = this.viewingAbonnement();
+    if (!abonnement) return;
+
+    this.detailSuccess.set(null);
+    this.detailError.set(null);
+
+    const moyenId = this.renewForm.controls.moyen_paiement_id.value;
+    if (!moyenId) {
+      this.detailError.set('Sélectionnez un moyen de paiement.');
+      return;
+    }
+
+    const elig = this.viewEligibilite();
+    if (elig && !elig.tarif_normal && !elig.premiere_inscription) {
+      this.detailError.set(
+        `Délai de grâce expiré (${elig.jours_retard} j.). Le client doit passer par une séance journalière.`,
+      );
+      return;
+    }
+
+    this.renewing.set(true);
+
+    this.abonnementsService
+      .souscrire({ client_id: abonnement.client_id, moyen_paiement_id: moyenId })
+      .subscribe({
+        next: (result) => {
+          this.renewing.set(false);
+          this.detailSuccess.set(
+            `Renouvellement — ${result.montant_paye} MRU (réf. ${result.paiement_reference})`,
+          );
+          this.formSuccess.set(this.detailSuccess());
+          this.loadStats();
+          this.loadAbonnements(this.meta()?.current_page ?? 1);
+        },
+        error: (err) => {
+          this.renewing.set(false);
+          this.handleDetailError(err);
+        },
+      });
+  }
+
+  private handleDetailError(err: { error?: { message?: string; detail?: string } }): void {
+    const detail = err.error?.detail;
+    this.detailError.set(
+      err.error?.message ?? (typeof detail === 'string' ? detail : 'Erreur lors du renouvellement.'),
+    );
   }
 
   submitSouscription(): void {

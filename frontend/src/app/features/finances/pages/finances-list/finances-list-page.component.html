@@ -1,0 +1,352 @@
+<section class="fin-page">
+  <div class="fin-page__head">
+    <div>
+      <h1>{{ 'modules.finances.title' | translate }}</h1>
+      <p>{{ 'modules.finances.subtitle' | translate }}</p>
+    </div>
+    @if (canCreate()) {
+      <button type="button" class="fin-btn fin-btn--primary" (click)="startCreate()">
+        + {{ 'modules.finances.newExpense' | translate }}
+      </button>
+    }
+  </div>
+
+  @if (bilan(); as b) {
+    <div class="fin-kpis">
+      <article class="fin-kpi fin-kpi--highlight">
+        <span>{{ 'modules.finances.kpi.revenue' | translate }}</span>
+        <strong>{{ b.total_revenus | mruCurrency }}</strong>
+      </article>
+      <article class="fin-kpi">
+        <span>{{ 'modules.finances.kpi.expenses' | translate }}</span>
+        <strong>{{ b.total_depenses | mruCurrency }}</strong>
+      </article>
+      <article class="fin-kpi">
+        <span>{{ 'modules.finances.kpi.profit' | translate }}</span>
+        <strong [class.is-negative]="b.benefice < 0">{{ b.benefice | mruCurrency }}</strong>
+      </article>
+      <article class="fin-kpi">
+        <span>{{ 'modules.finances.kpi.filteredTotal' | translate }}</span>
+        <strong>{{ totalFiltered() | mruCurrency }}</strong>
+        <small>{{ depenses().length }} ligne(s)</small>
+      </article>
+    </div>
+
+    <div class="fin-charts">
+      <article class="fin-chart-card">
+        <div class="fin-chart-card__head">
+          <h2>{{ 'modules.finances.charts.comparisonTitle' | translate }}</h2>
+          <p>{{ 'modules.finances.charts.comparisonHint' | translate }}</p>
+        </div>
+        <div class="fin-comparison-chart">
+          @for (bar of comparisonChart(); track bar.labelKey) {
+            <div class="fin-comparison-chart__group">
+              <strong class="fin-comparison-chart__value" [class.is-negative]="bar.negative">
+                {{ bar.value | mruCurrency }}
+              </strong>
+              <div class="fin-comparison-chart__bar-wrap">
+                <div
+                  class="fin-comparison-chart__bar"
+                  [class.is-revenue]="bar.tone === 'revenue'"
+                  [class.is-expense]="bar.tone === 'expense'"
+                  [class.is-profit]="bar.tone === 'profit'"
+                  [class.is-negative]="bar.negative"
+                  [style.height.%]="bar.height"
+                ></div>
+              </div>
+              <span>{{ bar.labelKey | translate }}</span>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="fin-chart-card">
+        <div class="fin-chart-card__head">
+          <h2>{{ 'modules.finances.charts.categoryTitle' | translate }}</h2>
+          <p>{{ 'modules.finances.charts.categoryHint' | translate }}</p>
+        </div>
+        @if (categoryDonutSegments().length) {
+          <div class="fin-donut-wrap">
+            <div class="fin-donut" [style.background]="categoryDonutGradient()">
+              <div class="fin-donut__hole">
+                <strong>{{ b.total_depenses | mruCurrency }}</strong>
+                <span>{{ 'modules.finances.kpi.expenses' | translate }}</span>
+              </div>
+            </div>
+            <ul class="fin-donut-legend">
+              @for (seg of categoryDonutSegments(); track seg.label) {
+                <li>
+                  <i [style.background]="seg.color"></i>
+                  <span>{{ seg.label }}</span>
+                  <strong>{{ seg.value | mruCurrency }}</strong>
+                </li>
+              }
+            </ul>
+          </div>
+        } @else {
+          <p class="fin-chart-empty">{{ 'modules.finances.charts.noCategoryData' | translate }}</p>
+        }
+      </article>
+
+      <article class="fin-chart-card fin-chart-card--wide">
+        <div class="fin-chart-card__head">
+          <div>
+            <h2>{{ 'modules.finances.charts.trendTitle' | translate }}</h2>
+            <p>
+              {{ 'modules.finances.charts.trendHint' | translate }}
+              <strong>{{ expenseTrend().total | mruCurrency }}</strong>
+            </p>
+          </div>
+        </div>
+        @if (expenseTrend().hasData) {
+          <div class="fin-area-chart">
+            <svg viewBox="0 0 100 60" preserveAspectRatio="none">
+              @if (expenseTrend().area) {
+                <polygon [attr.points]="expenseTrend().area" class="fin-area-fill" />
+                <polyline [attr.points]="expenseTrend().line" class="fin-area-line" />
+              }
+            </svg>
+          </div>
+          <div class="fin-area-labels">
+            @for (label of expenseTrend().labels; track label) {
+              <span>{{ label }}</span>
+            }
+          </div>
+        } @else {
+          <p class="fin-chart-empty">{{ 'modules.finances.charts.noTrendData' | translate }}</p>
+        }
+      </article>
+    </div>
+  }
+
+  <div class="fin-page__grid">
+    <article class="fin-card fin-card--main">
+      <div class="fin-card__head">
+        <h2>{{ 'modules.finances.listTitle' | translate }}</h2>
+      </div>
+
+      <form class="fin-filters" [formGroup]="filters" (ngSubmit)="applyFilters()">
+        <label>
+          {{ 'modules.finances.filters.startDate' | translate }}
+          <input type="date" formControlName="date_debut" />
+        </label>
+        <label>
+          {{ 'modules.finances.filters.endDate' | translate }}
+          <input type="date" formControlName="date_fin" />
+        </label>
+        <label>
+          {{ 'modules.finances.filters.category' | translate }}
+          <select formControlName="categorie_id">
+            <option value="">{{ 'common.all' | translate }}</option>
+            @for (c of categories(); track c.id) {
+              <option [value]="c.id">{{ c.nom }}</option>
+            }
+          </select>
+        </label>
+        <button type="submit" class="fin-btn fin-btn--primary">{{ 'common.apply' | translate }}</button>
+        <button type="button" class="fin-btn fin-btn--ghost" (click)="resetFilters()">
+          {{ 'common.resetFilters' | translate }}
+        </button>
+      </form>
+
+      @if (loading()) {
+        <app-loading-spinner [label]="'modules.finances.loading' | translate" />
+      } @else if (error()) {
+        <p class="fin-alert fin-alert--error">{{ error() }}</p>
+      } @else {
+        <div class="fin-table-wrap">
+          <table class="fin-table">
+            <thead>
+              <tr>
+                <th>{{ 'modules.finances.columns.reference' | translate }}</th>
+                <th>{{ 'modules.finances.columns.label' | translate }}</th>
+                <th>{{ 'modules.finances.columns.category' | translate }}</th>
+                <th>{{ 'modules.finances.columns.amount' | translate }}</th>
+                <th>{{ 'modules.finances.columns.date' | translate }}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (d of depenses(); track d.id) {
+                <tr>
+                  <td class="fin-table__ref">{{ d.reference }}</td>
+                  <td>{{ d.libelle }}</td>
+                  <td>{{ categoryLabel(d.categorie_id) }}</td>
+                  <td class="fin-table__amount">{{ d.montant | mruCurrency }}</td>
+                  <td>{{ d.date_depense | date: 'dd/MM/yyyy' }}</td>
+                  <td>
+                    <div class="fin-table__actions">
+                      <button type="button" class="fin-link-btn" (click)="viewDepense(d)">
+                        {{ 'common.details' | translate }}
+                      </button>
+                      @if (canEdit()) {
+                        <button type="button" class="fin-link-btn" (click)="startEdit(d)">
+                          {{ 'common.edit' | translate }}
+                        </button>
+                      }
+                      @if (canDelete()) {
+                        <button type="button" class="fin-link-btn fin-link-btn--danger" (click)="deleteDepense(d)">
+                          {{ 'common.delete' | translate }}
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="fin-table__empty">
+                    {{ 'modules.finances.empty' | translate }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (meta(); as pagination) {
+          <div class="fin-pagination">
+            <span>{{ pagination.total }} dépense(s)</span>
+            <div class="fin-pagination__btns">
+              <button
+                type="button"
+                class="fin-btn fin-btn--ghost"
+                [disabled]="pagination.current_page <= 1"
+                (click)="goToPage(pagination.current_page - 1)"
+              >
+                ‹
+              </button>
+              <span>{{ pagination.current_page }} / {{ pagination.last_page }}</span>
+              <button
+                type="button"
+                class="fin-btn fin-btn--ghost"
+                [disabled]="pagination.current_page >= pagination.last_page"
+                (click)="goToPage(pagination.current_page + 1)"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+        }
+      }
+
+    </article>
+
+    <aside class="fin-card fin-card--side">
+      @if (formMode() === 'view' && viewingDepense(); as d) {
+        <h2>{{ 'modules.finances.detailsTitle' | translate }}</h2>
+        <dl class="fin-details">
+          <div>
+            <dt>{{ 'modules.finances.columns.reference' | translate }}</dt>
+            <dd>{{ d.reference }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'modules.finances.columns.label' | translate }}</dt>
+            <dd>{{ d.libelle }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'modules.finances.columns.category' | translate }}</dt>
+            <dd>{{ categoryLabel(d.categorie_id) }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'modules.finances.columns.amount' | translate }}</dt>
+            <dd>{{ d.montant | mruCurrency }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'modules.finances.columns.date' | translate }}</dt>
+            <dd>{{ d.date_depense | date: 'dd/MM/yyyy' }}</dd>
+          </div>
+          @if (d.justificatif_url) {
+            <div>
+              <dt>{{ 'modules.finances.form.receipt' | translate }}</dt>
+              <dd><a [href]="d.justificatif_url" target="_blank" rel="noopener">{{ d.justificatif_url }}</a></dd>
+            </div>
+          }
+          <div>
+            <dt>{{ 'modules.finances.form.createdAt' | translate }}</dt>
+            <dd>{{ d.created_at | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          </div>
+        </dl>
+        <div class="fin-side-actions">
+          @if (canEdit()) {
+            <button type="button" class="fin-btn fin-btn--primary fin-btn--block" (click)="startEdit(d)">
+              {{ 'common.edit' | translate }}
+            </button>
+          }
+          <button type="button" class="fin-btn fin-btn--ghost fin-btn--block" (click)="startCreate()">
+            {{ 'common.cancel' | translate }}
+          </button>
+        </div>
+      } @else {
+        <h2>
+          {{
+            formMode() === 'edit'
+              ? ('modules.finances.editExpense' | translate)
+              : ('modules.finances.newExpense' | translate)
+          }}
+        </h2>
+
+        @if (formSuccess()) {
+          <p class="fin-alert fin-alert--success">{{ formSuccess() }}</p>
+        }
+        @if (formError()) {
+          <p class="fin-alert fin-alert--error">{{ formError() }}</p>
+        }
+
+        @if (canCreate() || canEdit()) {
+          <form [formGroup]="depenseForm" (ngSubmit)="submitDepense()" class="fin-form">
+            <label>
+              {{ 'modules.finances.form.category' | translate }}
+              <select formControlName="categorie_id">
+                <option value="">{{ 'modules.finances.form.selectCategory' | translate }}</option>
+                @for (c of categories(); track c.id) {
+                  <option [value]="c.id">{{ c.nom }}</option>
+                }
+              </select>
+            </label>
+
+            <label>
+              {{ 'modules.finances.form.label' | translate }}
+              <input type="text" formControlName="libelle" />
+            </label>
+
+            <label>
+              {{ 'modules.finances.form.amount' | translate }}
+              <input type="number" formControlName="montant" min="0.01" step="0.01" />
+            </label>
+
+            <label>
+              {{ 'modules.finances.form.date' | translate }}
+              <input type="date" formControlName="date_depense" />
+            </label>
+
+            <label>
+              {{ 'modules.finances.form.receipt' | translate }}
+              <input type="url" formControlName="justificatif_url" placeholder="https://..." />
+            </label>
+
+            <div class="fin-form__actions">
+              <button
+                type="submit"
+                class="fin-btn fin-btn--primary fin-btn--block"
+                [disabled]="submitting() || depenseForm.invalid"
+              >
+                {{
+                  submitting()
+                    ? ('common.saving' | translate)
+                    : formMode() === 'edit'
+                      ? ('common.save' | translate)
+                      : ('modules.finances.saveExpense' | translate)
+                }}
+              </button>
+              <button type="button" class="fin-btn fin-btn--ghost fin-btn--block" (click)="startCreate()">
+                {{ 'common.cancel' | translate }}
+              </button>
+            </div>
+          </form>
+        } @else {
+          <p class="fin-readonly-hint">{{ 'modules.finances.readOnlyHint' | translate }}</p>
+        }
+      }
+    </aside>
+  </div>
+</section>

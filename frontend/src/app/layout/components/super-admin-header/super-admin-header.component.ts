@@ -2,20 +2,25 @@ import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService } from '@core/services/auth.service';
+import { ThemeService } from '@core/services/theme.service';
 import { SUPER_ADMIN_NAV } from '@layout/config/super-admin-nav.config';
+import { AppIconComponent } from '@shared/components/app-icon/app-icon.component';
+import { NotificationBellComponent } from '@shared/components/notification-bell/notification-bell.component';
+import { TranslatePipe } from '@shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-super-admin-header',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, TranslatePipe, AppIconComponent, NotificationBellComponent],
   template: `
     <header class="sa-header">
       <div class="sa-header__left">
-        <button type="button" class="sa-header__menu" aria-label="Menu">
-          <span></span><span></span><span></span>
-        </button>
         <a routerLink="/dashboard" class="sa-header__brand">
-          <span class="sa-header__logo">🏋️</span>
-          <strong>GYM SYLLA</strong>
+          @if (logoUrl()) {
+            <img [src]="logoUrl()!" alt="" class="sa-header__logo-img" />
+          } @else {
+            <span class="sa-header__logo"><app-icon name="gym" [size]="26" /></span>
+          }
+          <strong>{{ gymName() }}</strong>
         </a>
       </div>
 
@@ -27,40 +32,42 @@ import { SUPER_ADMIN_NAV } from '@layout/config/super-admin-nav.config';
             [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
             class="sa-header__nav-link"
           >
-            {{ item.label }}
+            {{ item.labelKey | translate }}
           </a>
         }
       </nav>
 
       <div class="sa-header__right">
-        <button type="button" class="sa-header__icon-btn" aria-label="Notifications">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-          </svg>
-        </button>
+        <app-notification-bell />
 
         <div class="sa-header__user">
           <div class="sa-header__avatar">{{ avatarLetter() }}</div>
           <div>
             <strong>{{ fullName() }}</strong>
-            <span>Super Admin</span>
+            <span>{{ 'roles.superAdmin' | translate }}</span>
           </div>
         </div>
 
-        <button type="button" class="sa-header__logout" (click)="logout()">Déconnexion</button>
+        <button type="button" class="sa-header__logout" (click)="logout()">{{ 'common.logout' | translate }}</button>
       </div>
     </header>
   `,
   styles: `
+    :host {
+      display: block;
+      flex-shrink: 0;
+    }
+
     .sa-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
+      width: 100%;
       padding: 0.85rem 1.5rem;
-      background: #fff;
-      border-bottom: 1px solid #eef0f3;
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border-light);
+      flex-shrink: 0;
     }
 
     .sa-header__left {
@@ -70,35 +77,25 @@ import { SUPER_ADMIN_NAV } from '@layout/config/super-admin-nav.config';
       min-width: 0;
     }
 
-    .sa-header__menu {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      padding: 0.4rem;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-    }
-
-    .sa-header__menu span {
-      display: block;
-      width: 18px;
-      height: 2px;
-      background: #334155;
-      border-radius: 2px;
-    }
-
     .sa-header__brand {
       display: flex;
       align-items: center;
       gap: 0.5rem;
       text-decoration: none;
-      color: #0f172a;
+      color: var(--color-text);
       font-size: 1.05rem;
     }
 
     .sa-header__logo {
-      font-size: 1.35rem;
+      display: flex;
+      align-items: center;
+      color: var(--color-primary);
+    }
+
+    .sa-header__logo-img {
+      width: 2rem;
+      height: 2rem;
+      object-fit: contain;
     }
 
     .sa-header__nav {
@@ -106,7 +103,7 @@ import { SUPER_ADMIN_NAV } from '@layout/config/super-admin-nav.config';
       align-items: center;
       gap: 0.35rem;
       padding: 0.25rem;
-      background: #f4f6f8;
+      background: var(--color-bg-alt);
       border-radius: 999px;
       flex-shrink: 0;
     }
@@ -117,17 +114,17 @@ import { SUPER_ADMIN_NAV } from '@layout/config/super-admin-nav.config';
       text-decoration: none;
       font-size: 0.875rem;
       font-weight: 500;
-      color: #64748b;
+      color: var(--color-text-muted);
       transition: background 0.15s ease, color 0.15s ease;
     }
 
     .sa-header__nav-link:hover {
-      color: #0f172a;
+      color: var(--color-text);
     }
 
     .sa-header__nav-link.is-active {
-      background: #e8f7ef;
-      color: #0f172a;
+      background: var(--color-primary-soft);
+      color: var(--color-text);
       font-weight: 600;
     }
 
@@ -140,10 +137,10 @@ import { SUPER_ADMIN_NAV } from '@layout/config/super-admin-nav.config';
     .sa-header__icon-btn {
       width: 2.25rem;
       height: 2.25rem;
-      border: 1px solid #eef0f3;
+      border: 1px solid var(--color-border-light);
       border-radius: 50%;
-      background: #fff;
-      color: #64748b;
+      background: var(--color-surface);
+      color: var(--color-text-muted);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -165,7 +162,7 @@ import { SUPER_ADMIN_NAV } from '@layout/config/super-admin-nav.config';
       width: 2.25rem;
       height: 2.25rem;
       border-radius: 50%;
-      background: linear-gradient(135deg, #fb923c, #ea580c);
+      background: linear-gradient(135deg, var(--color-primary-end), var(--color-primary));
       color: #fff;
       display: flex;
       align-items: center;
@@ -177,19 +174,19 @@ import { SUPER_ADMIN_NAV } from '@layout/config/super-admin-nav.config';
     .sa-header__user strong {
       display: block;
       font-size: 0.875rem;
-      color: #0f172a;
+      color: var(--color-text);
     }
 
     .sa-header__user span {
       display: block;
       font-size: 0.75rem;
-      color: #94a3b8;
+      color: var(--color-text-muted);
     }
 
     .sa-header__logout {
-      border: 1px solid #eef0f3;
-      background: #fff;
-      color: #64748b;
+      border: 1px solid var(--color-border-light);
+      background: var(--color-surface);
+      color: var(--color-text-muted);
       padding: 0.45rem 0.75rem;
       border-radius: 0.5rem;
       font-size: 0.8rem;
@@ -197,7 +194,7 @@ import { SUPER_ADMIN_NAV } from '@layout/config/super-admin-nav.config';
     }
 
     .sa-header__logout:hover {
-      background: #f8fafc;
+      background: var(--color-bg-alt);
     }
 
     @media (max-width: 1100px) {
@@ -209,8 +206,12 @@ import { SUPER_ADMIN_NAV } from '@layout/config/super-admin-nav.config';
 })
 export class SuperAdminHeaderComponent {
   private readonly auth = inject(AuthService);
+  private readonly theme = inject(ThemeService);
 
   readonly navItems = SUPER_ADMIN_NAV;
+
+  readonly gymName = computed(() => this.theme.settings()?.nom_salle ?? 'GYM SYLLA');
+  readonly logoUrl = computed(() => this.theme.settings()?.logo_url ?? null);
 
   readonly fullName = computed(() => {
     const user = this.auth.currentUser();

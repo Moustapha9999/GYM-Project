@@ -1,17 +1,19 @@
 import { APP_ROUTES } from '@core/config/app.constants';
+import { AppIconName } from '@shared/components/app-icon/app-icon.types';
 
 export interface ReceptionNavItem {
-  label: string;
+  labelKey: string;
   route: string;
-  icon: 'dashboard' | 'clients' | 'abonnements' | 'paiements' | 'presences' | 'seances';
+  icon: AppIconName;
   badge?: number;
 }
 
 export const RECEPTION_MENU_NAV: ReceptionNavItem[] = [
-  { label: 'Tableau de bord', route: APP_ROUTES.dashboard, icon: 'dashboard' },
-  { label: 'Clients', route: APP_ROUTES.clients, icon: 'clients' },
-  { label: 'Abonnements', route: APP_ROUTES.abonnements, icon: 'abonnements' },
-  { label: 'Paiements', route: APP_ROUTES.paiements, icon: 'paiements' },
-  { label: 'Présences', route: APP_ROUTES.presences, icon: 'presences' },
-  { label: 'Séances journalières', route: APP_ROUTES.seances, icon: 'seances' },
+  { labelKey: 'nav.dashboard', route: APP_ROUTES.dashboard, icon: 'dashboard' },
+  { labelKey: 'nav.clients', route: APP_ROUTES.clients, icon: 'users' },
+  { labelKey: 'nav.abonnements', route: APP_ROUTES.abonnements, icon: 'ticket' },
+  { labelKey: 'nav.cartesMembres', route: APP_ROUTES.cartesMembres, icon: 'id-card' },
+  { labelKey: 'nav.paiements', route: APP_ROUTES.paiements, icon: 'credit-card' },
+  { labelKey: 'nav.presences', route: APP_ROUTES.presences, icon: 'user-check' },
+  { labelKey: 'nav.seances', route: APP_ROUTES.seances, icon: 'dumbbell' },
 ];

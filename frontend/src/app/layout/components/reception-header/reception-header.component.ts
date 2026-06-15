@@ -1,9 +1,12 @@
 import { Component, computed, inject } from '@angular/core';
 
 import { AuthService } from '@core/services/auth.service';
+import { NotificationBellComponent } from '@shared/components/notification-bell/notification-bell.component';
+import { TranslatePipe } from '@shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-reception-header',
+  imports: [TranslatePipe, NotificationBellComponent],
   template: `
     <header class="rec-header">
       <div class="rec-header__search">
@@ -11,22 +14,16 @@ import { AuthService } from '@core/services/auth.service';
           <circle cx="11" cy="11" r="8" />
           <path d="m21 21-4.3-4.3" />
         </svg>
-        <input type="search" placeholder="Rechercher un client..." />
+        <input type="search" [placeholder]="'auth.searchClient' | translate" />
       </div>
 
       <div class="rec-header__actions">
-        <button type="button" class="rec-header__icon" aria-label="Messages">
+        <button type="button" class="rec-header__icon" [attr.aria-label]="'common.messages' | translate">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M4 4h16v12H5.17L4 17.17V4z" />
           </svg>
         </button>
-        <button type="button" class="rec-header__icon" aria-label="Notifications">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-          </svg>
-          <span class="rec-header__dot"></span>
-        </button>
+        <app-notification-bell />
 
         <div class="rec-header__user">
           <div class="rec-header__avatar">{{ avatarLetter() }}</div>
@@ -39,14 +36,21 @@ import { AuthService } from '@core/services/auth.service';
     </header>
   `,
   styles: `
+    :host {
+      display: block;
+      flex-shrink: 0;
+    }
+
     .rec-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
+      width: 100%;
       padding: 1rem 1.5rem;
-      background: #fff;
-      border-bottom: 1px solid #eef0f3;
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border-light);
+      flex-shrink: 0;
     }
 
     .rec-header__search {
@@ -56,15 +60,15 @@ import { AuthService } from '@core/services/auth.service';
       align-items: center;
       gap: 0.6rem;
       padding: 0.65rem 1rem;
-      border: 1px solid #eef0f3;
+      border: 1px solid var(--color-border-light);
       border-radius: 999px;
-      background: #f8fafc;
+      background: var(--color-bg-alt);
     }
 
     .rec-header__search svg {
       width: 1rem;
       height: 1rem;
-      color: #94a3b8;
+      color: var(--color-text-muted);
       flex-shrink: 0;
     }
 
@@ -74,7 +78,7 @@ import { AuthService } from '@core/services/auth.service';
       background: transparent;
       outline: none;
       font-size: 0.875rem;
-      color: #334155;
+      color: var(--color-text);
     }
 
     .rec-header__actions {
@@ -87,10 +91,10 @@ import { AuthService } from '@core/services/auth.service';
       position: relative;
       width: 2.5rem;
       height: 2.5rem;
-      border: 1px solid #eef0f3;
+      border: 1px solid var(--color-border-light);
       border-radius: 50%;
-      background: #fff;
-      color: #64748b;
+      background: var(--color-surface);
+      color: var(--color-text-muted);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -110,7 +114,7 @@ import { AuthService } from '@core/services/auth.service';
       height: 8px;
       border-radius: 50%;
       background: #ef4444;
-      border: 2px solid #fff;
+      border: 2px solid var(--color-surface);
     }
 
     .rec-header__user {
@@ -135,13 +139,13 @@ import { AuthService } from '@core/services/auth.service';
     .rec-header__user strong {
       display: block;
       font-size: 0.875rem;
-      color: #0f172a;
+      color: var(--color-text);
     }
 
     .rec-header__user span {
       display: block;
       font-size: 0.75rem;
-      color: #94a3b8;
+      color: var(--color-text-muted);
     }
   `,
 })

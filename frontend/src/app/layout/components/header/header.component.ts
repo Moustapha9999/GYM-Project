@@ -16,14 +16,21 @@ import { AuthService } from '@core/services/auth.service';
     </header>
   `,
   styles: `
+    :host {
+      display: block;
+      flex-shrink: 0;
+    }
+
     .header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
+      width: 100%;
       padding: 1.25rem 1.5rem;
       background: var(--color-surface);
       border-bottom: 1px solid var(--color-border);
+      flex-shrink: 0;
     }
 
     .header__welcome {

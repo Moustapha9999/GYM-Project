@@ -9,6 +9,20 @@ export interface PaiementDetail {
   date_paiement: string;
 }
 
+export interface PaiementRead {
+  id: string;
+  reference: string;
+  client_id: string | null;
+  abonnement_id: string | null;
+  seance_journaliere_id: string | null;
+  type_paiement: string;
+  montant: number;
+  moyen_paiement_id: string;
+  statut: string;
+  date_paiement: string;
+  created_at: string;
+}
+
 export interface RepartitionMoyen {
   moyen_paiement: string;
   nombre: number;

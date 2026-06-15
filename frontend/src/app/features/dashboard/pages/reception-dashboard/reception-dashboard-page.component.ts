@@ -2,13 +2,14 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 
 import { AuthService } from '@core/services/auth.service';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
+import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { MruCurrencyPipe } from '@shared/pipes/mru-currency.pipe';
 import { ReceptionDashboardData } from '@features/dashboard/models/reception-dashboard.model';
 import { DashboardService } from '@features/dashboard/services/dashboard.service';
 
 @Component({
   selector: 'app-reception-dashboard-page',
-  imports: [LoadingSpinnerComponent],
+  imports: [LoadingSpinnerComponent, TranslatePipe],
   templateUrl: './reception-dashboard-page.component.html',
   styleUrl: './reception-dashboard-page.component.scss',
 })
@@ -29,22 +30,22 @@ export class ReceptionDashboardPageComponent implements OnInit {
 
     return [
       {
-        label: 'Paiements du jour',
+        labelKey: 'dashboard.reception.kpi.paymentsToday',
         value: String(d.nombre_paiements_jour),
         highlight: true,
       },
       {
-        label: 'Présences du jour',
+        labelKey: 'dashboard.reception.kpi.presencesToday',
         value: String(d.presences_jour),
         highlight: false,
       },
       {
-        label: 'Séances encaissées',
+        labelKey: 'dashboard.reception.kpi.sessionsCollected',
         value: String(d.seances_jour),
         highlight: false,
       },
       {
-        label: 'Abonnements expirant',
+        labelKey: 'dashboard.reception.kpi.expiringSubscriptions',
         value: String(d.abonnements_expirant_7j),
         highlight: false,
       },

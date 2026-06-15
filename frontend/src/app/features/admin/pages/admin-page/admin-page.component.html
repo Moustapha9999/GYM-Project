@@ -1,101 +1,715 @@
-<section class="admin-page">
-  <div class="admin-page__head">
+<section class="adm-page">
+  <div class="adm-page__head">
     <div>
-      <h1>Administration</h1>
-      <p>Créer et gérer les comptes utilisateurs (réceptionniste, coach).</p>
+      <h1>{{ 'modules.admin.title' | translate }}</h1>
+      <p>{{ 'modules.admin.subtitle' | translate }}</p>
     </div>
   </div>
 
-  <div class="admin-page__grid">
-    <article class="admin-card">
-      <h2>Créer un réceptionniste</h2>
-      <p class="admin-card__hint">Le compte pourra se connecter et accéder à l'interface réception.</p>
+  <nav class="adm-tabs">
+    <button
+      type="button"
+      class="adm-tabs__btn"
+      [class.is-active]="activeTab() === 'utilisateurs'"
+      (click)="setTab('utilisateurs')"
+    >
+      {{ 'modules.admin.tabs.users' | translate }}
+    </button>
+    <button
+      type="button"
+      class="adm-tabs__btn"
+      [class.is-active]="activeTab() === 'employes'"
+      (click)="setTab('employes')"
+    >
+      {{ 'modules.admin.tabs.employees' | translate }}
+    </button>
+    <button
+      type="button"
+      class="adm-tabs__btn"
+      [class.is-active]="activeTab() === 'roles'"
+      (click)="setTab('roles')"
+    >
+      {{ 'modules.admin.tabs.roles' | translate }}
+    </button>
+  </nav>
 
-      @if (successMessage()) {
-        <p class="admin-alert admin-alert--success">{{ successMessage() }}</p>
-      }
-      @if (errorMessage()) {
-        <p class="admin-alert admin-alert--error">{{ errorMessage() }}</p>
-      }
+  @if (formSuccess()) {
+    <p class="adm-alert adm-alert--success">{{ formSuccess() }}</p>
+  }
+  @if (formError()) {
+    <p class="adm-alert adm-alert--error">{{ formError() }}</p>
+  }
 
-      <form [formGroup]="form" (ngSubmit)="submit()" class="admin-form">
-        <div class="admin-form__row">
-          <label>
-            Prénom
-            <input type="text" formControlName="prenom" placeholder="Aïssata" />
-          </label>
-          <label>
-            Nom
-            <input type="text" formControlName="nom" placeholder="Ba" />
-          </label>
+  <!-- ── Onglet Utilisateurs ─────────────────────────────── -->
+  @if (activeTab() === 'utilisateurs') {
+    <div class="adm-kpis">
+      <article class="adm-kpi adm-kpi--highlight">
+        <span>{{ 'modules.admin.kpi.totalAccounts' | translate }}</span>
+        <strong>{{ utilisateurs().length }}</strong>
+      </article>
+      <article class="adm-kpi">
+        <span>{{ 'common.active' | translate }}</span>
+        <strong>{{ actifsUsersCount() }}</strong>
+      </article>
+      <article class="adm-kpi">
+        <span>{{ 'common.filteredResults' | translate }}</span>
+        <strong>{{ filteredUsers().length }}</strong>
+      </article>
+    </div>
+
+    <div class="adm-page__grid">
+      <article class="adm-card adm-card--main">
+        <div class="adm-card__head">
+          <h2>{{ 'modules.admin.usersListTitle' | translate }}</h2>
+          <button type="button" class="adm-btn adm-btn--ghost" (click)="startCreateUser()">
+            {{ 'modules.admin.newAccount' | translate }}
+          </button>
         </div>
 
-        <label>
-          Email
-          <input type="email" formControlName="email" placeholder="reception@totalfitness.mr" />
-        </label>
-
-        <label>
-          Téléphone
-          <input type="tel" formControlName="telephone" placeholder="22200000000" />
-        </label>
-
-        <label>
-          Mot de passe
-          <input type="password" formControlName="password" placeholder="Mot de passe" />
-        </label>
-
-        <label>
-          Rôle
-          <select formControlName="role_nom">
-            <option value="receptionniste">Réceptionniste</option>
-            <option value="coach">Coach</option>
-          </select>
-        </label>
-
-        <button type="submit" class="admin-btn" [disabled]="form.invalid || submitting()">
-          {{ submitting() ? 'Création...' : 'Créer le compte' }}
-        </button>
-      </form>
-    </article>
-
-    <article class="admin-card">
-      <h2>Utilisateurs existants</h2>
-
-      @if (loading()) {
-        <app-loading-spinner label="Chargement des utilisateurs..." />
-      } @else {
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Nom</th>
-                <th>Email</th>
-                <th>Rôle</th>
-                <th>Statut</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (user of utilisateurs(); track user.id) {
-                <tr>
-                  <td>{{ user.prenom }} {{ user.nom }}</td>
-                  <td>{{ user.email }}</td>
-                  <td>{{ user.role.libelle }}</td>
-                  <td>
-                    <span class="admin-badge" [class.is-active]="user.actif">
-                      {{ user.actif ? 'Actif' : 'Inactif' }}
-                    </span>
-                  </td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="4" class="admin-table__empty">Aucun utilisateur.</td>
-                </tr>
+        <form class="adm-filters" [formGroup]="userFilters">
+          <label>
+            Recherche
+            <input type="search" formControlName="search" placeholder="Nom, email..." />
+          </label>
+          <label>
+            Rôle
+            <select formControlName="role">
+              <option value="">Tous</option>
+              @for (r of roles(); track r.id) {
+                <option [value]="r.nom">{{ r.libelle }}</option>
               }
-            </tbody>
-          </table>
+            </select>
+          </label>
+          <label>
+            Statut
+            <select formControlName="actif">
+              <option value="">Tous</option>
+              <option value="true">Actifs</option>
+              <option value="false">Inactifs</option>
+            </select>
+          </label>
+          <button type="button" class="adm-btn adm-btn--ghost" (click)="resetUserFilters()">
+            Réinitialiser
+          </button>
+        </form>
+
+        @if (loading()) {
+          <app-loading-spinner label="Chargement..." />
+        } @else {
+          <div class="adm-table-wrap">
+            <table class="adm-table">
+              <thead>
+                <tr>
+                  <th>Nom</th>
+                  <th>Email</th>
+                  <th>Téléphone</th>
+                  <th>Rôle</th>
+                  <th>Statut</th>
+                  <th>Créé le</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (user of filteredUsers(); track user.id) {
+                  <tr>
+                    <td>{{ user.prenom }} {{ user.nom }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.telephone ?? '—' }}</td>
+                    <td>{{ user.role.libelle }}</td>
+                    <td>
+                      <span class="adm-badge" [class.is-active]="user.actif">
+                        {{ user.actif ? 'Actif' : 'Inactif' }}
+                      </span>
+                    </td>
+                    <td>{{ user.created_at | date: 'dd/MM/yyyy' }}</td>
+                    <td class="adm-table__actions">
+                      <button type="button" class="adm-link-btn" (click)="viewUser(user)">Voir</button>
+                      @if (!isSystemUser(user)) {
+                        <button type="button" class="adm-link-btn" (click)="startEditUser(user)">
+                          Modifier
+                        </button>
+                        @if (user.actif) {
+                          <button
+                            type="button"
+                            class="adm-link-btn adm-link-btn--danger"
+                            (click)="deactivateUser(user)"
+                          >
+                            Désactiver
+                          </button>
+                        }
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="7" class="adm-table__empty">Aucun utilisateur.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </article>
+
+      <aside class="adm-card adm-card--form">
+        @if (formMode() === 'view' && viewingUser(); as user) {
+          <h2>{{ 'modules.admin.userDetailsTitle' | translate }}</h2>
+          <dl class="adm-detail">
+            <dt>Nom</dt>
+            <dd>{{ user.prenom }} {{ user.nom }}</dd>
+            <dt>Email</dt>
+            <dd>{{ user.email }}</dd>
+            <dt>Téléphone</dt>
+            <dd>{{ user.telephone ?? '—' }}</dd>
+            <dt>Rôle</dt>
+            <dd>{{ user.role.libelle }}</dd>
+            <dt>Statut</dt>
+            <dd>
+              <span class="adm-badge" [class.is-active]="user.actif">
+                {{ user.actif ? 'Actif' : 'Inactif' }}
+              </span>
+            </dd>
+            <dt>Créé le</dt>
+            <dd>{{ user.created_at | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          </dl>
+          <button type="button" class="adm-btn adm-btn--ghost" (click)="startCreateUser()">Fermer</button>
+        } @else {
+          <h2>{{ formMode() === 'edit' ? ('modules.admin.editAccount' | translate) : ('modules.admin.newAccount' | translate) }}</h2>
+          <p class="adm-card__hint">
+            Comptes réceptionniste, coach ou direction. Le super administrateur est protégé.
+          </p>
+
+          <form [formGroup]="userForm" (ngSubmit)="submitUser()" class="adm-form">
+            <div class="adm-form__row">
+              <label>
+                Prénom
+                <input type="text" formControlName="prenom" />
+              </label>
+              <label>
+                Nom
+                <input type="text" formControlName="nom" />
+              </label>
+            </div>
+
+            <label>
+              Email
+              <input type="email" formControlName="email" />
+            </label>
+
+            <label>
+              Téléphone
+              <input type="tel" formControlName="telephone" />
+            </label>
+
+            <label>
+              Mot de passe
+              @if (formMode() === 'edit') {
+                <span class="adm-label-hint">(laisser vide pour ne pas changer)</span>
+              }
+              <input type="password" formControlName="password" />
+            </label>
+
+            <label>
+              Rôle
+              <select formControlName="role_nom">
+                @for (r of assignableRoles(); track r.id) {
+                  <option [value]="r.nom">{{ r.libelle }}</option>
+                }
+              </select>
+            </label>
+
+            @if (formMode() === 'edit') {
+              <label class="adm-checkbox">
+                <input type="checkbox" formControlName="actif" />
+                Compte actif
+              </label>
+            }
+
+            <div class="adm-form__actions">
+              <button type="submit" class="adm-btn" [disabled]="userForm.invalid || submitting()">
+                {{ submitting() ? 'Enregistrement...' : (formMode() === 'edit' ? 'Enregistrer' : 'Créer le compte') }}
+              </button>
+              @if (formMode() === 'edit') {
+                <button type="button" class="adm-btn adm-btn--ghost" (click)="startCreateUser()">
+                  Annuler
+                </button>
+              }
+            </div>
+          </form>
+        }
+      </aside>
+    </div>
+  }
+
+  <!-- ── Onglet Employés ─────────────────────────────────── -->
+  @if (activeTab() === 'employes') {
+    <div class="adm-page__grid">
+      <article class="adm-card adm-card--main">
+        <div class="adm-card__head">
+          <h2>{{ 'modules.admin.employeesTitle' | translate }}</h2>
+          <button type="button" class="adm-btn adm-btn--ghost" (click)="startCreateEmploye()">
+            Nouvel employé
+          </button>
         </div>
-      }
-    </article>
-  </div>
+
+        <form class="adm-filters" [formGroup]="employeFilters" (ngSubmit)="applyEmployeFilters()">
+          <label>
+            Recherche
+            <input type="search" formControlName="search" placeholder="Nom, prénom..." />
+          </label>
+          <label>
+            Statut
+            <select formControlName="statut">
+              <option value="">Tous</option>
+              @for (s of statutEmployeOptions; track s) {
+                <option [value]="s">{{ s }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            Fonction
+            <select formControlName="fonction">
+              <option value="">Toutes</option>
+              @for (f of fonctionOptions; track f) {
+                <option [value]="f">{{ f }}</option>
+              }
+            </select>
+          </label>
+          <button type="submit" class="adm-btn adm-btn--primary">Filtrer</button>
+          <button type="button" class="adm-btn adm-btn--ghost" (click)="resetEmployeFilters()">
+            Réinitialiser
+          </button>
+        </form>
+
+        @if (loading()) {
+          <app-loading-spinner label="Chargement des employés..." />
+        } @else {
+          <div class="adm-table-wrap">
+            <table class="adm-table">
+              <thead>
+                <tr>
+                  <th>Nom</th>
+                  <th>Fonction</th>
+                  <th>Téléphone</th>
+                  <th>Embauche</th>
+                  <th>Salaire base</th>
+                  <th>Statut</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (e of employes(); track e.id) {
+                  <tr>
+                    <td>{{ e.prenom }} {{ e.nom }}</td>
+                    <td>{{ e.fonction }}</td>
+                    <td>{{ e.telephone ?? '—' }}</td>
+                    <td>{{ e.date_embauche | date: 'dd/MM/yyyy' }}</td>
+                    <td>{{ e.salaire_base | number: '1.0-0' }} MRU</td>
+                    <td>
+                      <span class="adm-badge" [class.is-active]="e.statut === 'Actif'">
+                        {{ e.statut }}
+                      </span>
+                    </td>
+                    <td class="adm-table__actions">
+                      <button type="button" class="adm-link-btn" (click)="viewEmploye(e)">Voir</button>
+                      <button type="button" class="adm-link-btn" (click)="startEditEmploye(e)">
+                        Modifier
+                      </button>
+                      <button
+                        type="button"
+                        class="adm-link-btn adm-link-btn--danger"
+                        (click)="deleteEmploye(e)"
+                      >
+                        Supprimer
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="7" class="adm-table__empty">Aucun employé.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @if (employesMeta(); as pagination) {
+            <div class="adm-pagination">
+              <span>
+                Page {{ pagination.current_page }} / {{ pagination.last_page }}
+                ({{ pagination.total }} employé(s))
+              </span>
+              <div class="adm-pagination__btns">
+                <button
+                  type="button"
+                  class="adm-btn adm-btn--ghost"
+                  [disabled]="pagination.current_page <= 1"
+                  (click)="goToEmployePage(pagination.current_page - 1)"
+                >
+                  Précédent
+                </button>
+                <button
+                  type="button"
+                  class="adm-btn adm-btn--ghost"
+                  [disabled]="pagination.current_page >= pagination.last_page"
+                  (click)="goToEmployePage(pagination.current_page + 1)"
+                >
+                  Suivant
+                </button>
+              </div>
+            </div>
+          }
+        }
+      </article>
+
+      <aside class="adm-card adm-card--form">
+        @if (formMode() === 'view' && viewingEmploye(); as e) {
+          <h2>{{ 'modules.admin.employeeDetailsTitle' | translate }}</h2>
+          <dl class="adm-detail">
+            <dt>Nom</dt>
+            <dd>{{ e.prenom }} {{ e.nom }}</dd>
+            <dt>Fonction</dt>
+            <dd>{{ e.fonction }}</dd>
+            <dt>Email</dt>
+            <dd>{{ e.email ?? '—' }}</dd>
+            <dt>Téléphone</dt>
+            <dd>{{ e.telephone ?? '—' }}</dd>
+            <dt>Adresse</dt>
+            <dd>{{ e.adresse ?? '—' }}</dd>
+            <dt>Date d'embauche</dt>
+            <dd>{{ e.date_embauche | date: 'dd/MM/yyyy' }}</dd>
+            <dt>Type de contrat</dt>
+            <dd>{{ e.type_contrat ?? '—' }}</dd>
+            <dt>Salaire de base</dt>
+            <dd>{{ e.salaire_base | number: '1.0-0' }} MRU</dd>
+            <dt>Statut</dt>
+            <dd>{{ e.statut }}</dd>
+          </dl>
+          <button type="button" class="adm-btn adm-btn--ghost" (click)="startCreateEmploye()">Fermer</button>
+        } @else {
+          <h2>{{ formMode() === 'edit' ? ('modules.admin.editEmployee' | translate) : ('modules.admin.newEmployee' | translate) }}</h2>
+
+          <form [formGroup]="employeForm" (ngSubmit)="submitEmploye()" class="adm-form">
+            <div class="adm-form__row">
+              <label>
+                Prénom
+                <input type="text" formControlName="prenom" />
+              </label>
+              <label>
+                Nom
+                <input type="text" formControlName="nom" />
+              </label>
+            </div>
+
+            <label>
+              Fonction
+              <select formControlName="fonction">
+                <option value="">— Choisir —</option>
+                @for (f of fonctionOptions; track f) {
+                  <option [value]="f">{{ f }}</option>
+                }
+              </select>
+            </label>
+
+            <div class="adm-form__row">
+              <label>
+                Téléphone
+                <input type="tel" formControlName="telephone" />
+              </label>
+              <label>
+                Email
+                <input type="email" formControlName="email" />
+              </label>
+            </div>
+
+            <label>
+              Adresse
+              <input type="text" formControlName="adresse" />
+            </label>
+
+            <div class="adm-form__row">
+              <label>
+                Date d'embauche
+                <input type="date" formControlName="date_embauche" />
+              </label>
+              <label>
+                Type de contrat
+                <input type="text" formControlName="type_contrat" placeholder="CDI, CDD..." />
+              </label>
+            </div>
+
+            <div class="adm-form__row">
+              <label>
+                Salaire de base (MRU)
+                <input type="number" formControlName="salaire_base" min="0" step="1" />
+              </label>
+              @if (formMode() === 'edit') {
+                <label>
+                  Statut
+                  <select formControlName="statut">
+                    @for (s of statutEmployeOptions; track s) {
+                      <option [value]="s">{{ s }}</option>
+                    }
+                  </select>
+                </label>
+              }
+            </div>
+
+            <div class="adm-form__actions">
+              <button type="submit" class="adm-btn" [disabled]="employeForm.invalid || submitting()">
+                {{ submitting() ? 'Enregistrement...' : (formMode() === 'edit' ? 'Enregistrer' : 'Créer') }}
+              </button>
+              @if (formMode() === 'edit') {
+                <button type="button" class="adm-btn adm-btn--ghost" (click)="startCreateEmploye()">
+                  Annuler
+                </button>
+              }
+            </div>
+          </form>
+        }
+      </aside>
+    </div>
+  }
+
+  <!-- ── Onglet Rôles & privilèges ───────────────────────── -->
+  @if (activeTab() === 'roles') {
+    <div class="adm-page__grid adm-page__grid--roles">
+      <article class="adm-card adm-card--main">
+        <div class="adm-card__head">
+          <h2>{{ 'modules.admin.rolesTitle' | translate }}</h2>
+        </div>
+
+        @if (canViewFullPrivilegesCatalog()) {
+          <p class="adm-card__hint">
+            Le PDG et le super administrateur consultent ici le référentiel complet des privilèges
+            (lecture, création, modification, suppression, validation, export) par module,
+            notamment pour les <strong>comptes utilisateurs</strong> et les <strong>employés</strong>.
+          </p>
+
+          <div class="adm-role-toolbar">
+            <label class="adm-role-select">
+              Rôle à configurer
+              <select
+                [value]="selectedRoleId() ?? ''"
+                (change)="selectRole($any($event.target).value)"
+              >
+                <option value="" disabled>— Choisir un rôle —</option>
+                @for (r of roles(); track r.id) {
+                  <option [value]="r.id">{{ r.libelle }}</option>
+                }
+              </select>
+            </label>
+
+            @if (selectedRole(); as role) {
+              <div class="adm-role-stats">
+                <span class="adm-badge" [class.is-active]="selectedRoleGrantedCount() > 0">
+                  {{ selectedRoleGrantedCount() }} / {{ permissions().length }} privilèges
+                </span>
+                @if (role.nom === 'super_admin') {
+                  <span class="adm-badge adm-badge--info">Accès total — lecture seule</span>
+                } @else if (!canEditRolePermissions()) {
+                  <span class="adm-badge">Consultation seule</span>
+                }
+              </div>
+            }
+          </div>
+
+          @if (rolesLoading()) {
+            <app-loading-spinner label="Chargement des permissions..." />
+          } @else if (selectedRole(); as role) {
+            <section class="adm-perm-section">
+              <header class="adm-perm-section__head">
+                <h3>{{ 'modules.admin.rolesAdminSection' | translate }}</h3>
+                <p>CRUD complet et droits associés sur la gestion des comptes et du personnel.</p>
+              </header>
+
+              <div class="adm-table-wrap">
+                <table class="adm-matrix">
+                  <thead>
+                    <tr>
+                      <th>Module</th>
+                      @for (action of permissionActions; track action) {
+                        <th>{{ formatActionLabel(action) }}</th>
+                      }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (mod of adminModulesMatrix(); track mod.key) {
+                      <tr>
+                        <td class="adm-matrix__module">
+                          @if (canEditRolePermissions()) {
+                            <label class="adm-checkbox adm-checkbox--module">
+                              <input
+                                type="checkbox"
+                                [checked]="isModuleRowFullyGranted(mod.key)"
+                                (change)="toggleModuleRow(mod.key, $any($event.target).checked)"
+                              />
+                              <strong>{{ mod.label }}</strong>
+                            </label>
+                          } @else {
+                            <strong>{{ mod.label }}</strong>
+                            <small>{{ grantedActionsForModule(mod.key).join(', ') || 'Aucun' }}</small>
+                          }
+                        </td>
+                        @for (action of permissionActions; track action) {
+                          <td class="adm-matrix__cell">
+                            @if (isActionAvailable(mod.key, action)) {
+                              @if (canEditRolePermissions()) {
+                                <label class="adm-matrix__check">
+                                  <input
+                                    type="checkbox"
+                                    [checked]="isPermissionGranted(mod.key, action)"
+                                    (change)="togglePermissionCell(mod.key, action, $any($event.target).checked)"
+                                  />
+                                </label>
+                              } @else {
+                                <span
+                                  class="adm-matrix__tick"
+                                  [class.is-granted]="isPermissionGranted(mod.key, action)"
+                                  [attr.title]="formatActionLabel(action)"
+                                >
+                                  @if (isPermissionGranted(mod.key, action)) {
+                                    <app-icon name="check" [size]="12" />
+                                  } @else {
+                                    <app-icon name="minus" [size]="12" />
+                                  }
+                                </span>
+                              }
+                            } @else {
+                              <span class="adm-matrix__na">—</span>
+                            }
+                          </td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="adm-perm-section">
+              <header class="adm-perm-section__head">
+                <h3>{{ 'modules.admin.rolesBusinessSection' | translate }}</h3>
+                <p>Clients, abonnements, paiements, planning, rapports, etc.</p>
+              </header>
+
+              <div class="adm-table-wrap">
+                <table class="adm-matrix">
+                  <thead>
+                    <tr>
+                      <th>Module</th>
+                      @for (action of permissionActions; track action) {
+                        <th>{{ formatActionLabel(action) }}</th>
+                      }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (mod of otherModulesMatrix(); track mod.key) {
+                      <tr>
+                        <td class="adm-matrix__module">
+                          @if (canEditRolePermissions()) {
+                            <label class="adm-checkbox adm-checkbox--module">
+                              <input
+                                type="checkbox"
+                                [checked]="isModuleRowFullyGranted(mod.key)"
+                                (change)="toggleModuleRow(mod.key, $any($event.target).checked)"
+                              />
+                              <strong>{{ mod.label }}</strong>
+                            </label>
+                          } @else {
+                            <strong>{{ mod.label }}</strong>
+                          }
+                        </td>
+                        @for (action of permissionActions; track action) {
+                          <td class="adm-matrix__cell">
+                            @if (isActionAvailable(mod.key, action)) {
+                              @if (canEditRolePermissions()) {
+                                <label class="adm-matrix__check">
+                                  <input
+                                    type="checkbox"
+                                    [checked]="isPermissionGranted(mod.key, action)"
+                                    (change)="togglePermissionCell(mod.key, action, $any($event.target).checked)"
+                                  />
+                                </label>
+                              } @else {
+                                <span
+                                  class="adm-matrix__tick"
+                                  [class.is-granted]="isPermissionGranted(mod.key, action)"
+                                >
+                                  @if (isPermissionGranted(mod.key, action)) {
+                                    <app-icon name="check" [size]="12" />
+                                  } @else {
+                                    <app-icon name="minus" [size]="12" />
+                                  }
+                                </span>
+                              }
+                            } @else {
+                              <span class="adm-matrix__na">—</span>
+                            }
+                          </td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            @if (canEditRolePermissions()) {
+              <button
+                type="button"
+                class="adm-btn"
+                [disabled]="submitting()"
+                (click)="saveRolePermissions()"
+              >
+                {{ submitting() ? 'Enregistrement...' : 'Enregistrer les privilèges de ' + role.libelle }}
+              </button>
+            }
+          }
+        } @else {
+          <p class="adm-alert adm-alert--error">
+            Seuls le PDG et le super administrateur peuvent consulter le référentiel complet des privilèges.
+          </p>
+        }
+      </article>
+
+      <aside class="adm-card">
+        <h2>{{ 'modules.admin.systemRolesTitle' | translate }}</h2>
+        <p class="adm-card__hint">Sélectionnez un rôle pour afficher ses privilèges par module.</p>
+        <ul class="adm-role-list">
+          @for (r of roles(); track r.id) {
+            <li>
+              <button
+                type="button"
+                class="adm-role-list__item"
+                [class.is-active]="selectedRoleId() === r.id"
+                (click)="selectRole(r.id)"
+              >
+                <span>{{ r.libelle }}</span>
+                <small>{{ r.nom }}</small>
+              </button>
+            </li>
+          }
+        </ul>
+
+        @if (selectedRole(); as role) {
+          <div class="adm-role-summary">
+            <h3>{{ 'modules.admin.roleSummary' | translate: { role: role.libelle } }}</h3>
+            @for (mod of adminModulesMatrix(); track mod.key) {
+              <div class="adm-role-summary__row">
+                <span>{{ mod.label }}</span>
+                <small>
+                  @if (grantedActionsForModule(mod.key).length) {
+                    {{ grantedActionsForModule(mod.key).join(' · ') }}
+                  } @else {
+                    Aucun privilège
+                  }
+                </small>
+              </div>
+            }
+          </div>
+        }
+      </aside>
+    </div>
+  }
 </section>

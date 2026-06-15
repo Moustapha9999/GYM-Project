@@ -1,10 +1,16 @@
 import { Component, input } from '@angular/core';
 
+import { AppIconComponent } from '@shared/components/app-icon/app-icon.component';
+import { AppIconName } from '@shared/components/app-icon/app-icon.types';
+
 @Component({
   selector: 'app-empty-state',
+  imports: [AppIconComponent],
   template: `
     <div class="empty-state">
-      <div class="empty-state__icon" aria-hidden="true">{{ icon() }}</div>
+      <div class="empty-state__icon" aria-hidden="true">
+        <app-icon [name]="icon()" [size]="40" />
+      </div>
       <h2>{{ title() }}</h2>
       @if (description()) {
         <p>{{ description() }}</p>
@@ -26,8 +32,15 @@ import { Component, input } from '@angular/core';
     }
 
     .empty-state__icon {
-      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 4rem;
+      height: 4rem;
       margin-bottom: 0.75rem;
+      border-radius: 50%;
+      background: var(--color-bg-alt);
+      color: var(--color-text-muted);
     }
 
     h2 {
@@ -44,7 +57,7 @@ import { Component, input } from '@angular/core';
   `,
 })
 export class EmptyStateComponent {
-  readonly icon = input('📋');
+  readonly icon = input<AppIconName>('clipboard');
   readonly title = input.required<string>();
   readonly description = input<string>();
 }

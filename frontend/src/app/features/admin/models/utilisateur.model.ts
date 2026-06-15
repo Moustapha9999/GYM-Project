@@ -4,6 +4,20 @@ export interface Role {
   libelle: string;
 }
 
+export interface Permission {
+  id: string;
+  code: string;
+  module: string;
+  action: string;
+  libelle?: string | null;
+}
+
+export interface RoleDetail extends Role {
+  description?: string | null;
+  systeme: boolean;
+  permissions: Permission[];
+}
+
 export interface Utilisateur {
   id: string;
   nom: string;
@@ -25,4 +39,14 @@ export interface CreateUtilisateurRequest {
   password: string;
   telephone?: string;
   role_nom: string;
+}
+
+export interface UpdateUtilisateurRequest {
+  nom?: string;
+  prenom?: string;
+  email?: string;
+  password?: string;
+  telephone?: string;
+  role_nom?: string;
+  actif?: boolean;
 }

@@ -53,6 +53,23 @@ class ClientUpdate(BaseModel):
     actif: bool | None = None
 
 
+class ClientPhotoUpdate(BaseModel):
+    """Photo encodée en base64 (data URL ou brut)."""
+    photo_base64: str
+
+
+class ImportLigneErreur(BaseModel):
+    ligne: int
+    message: str
+
+
+class ClientImportResult(BaseModel):
+    total_lignes: int
+    crees: int
+    echecs: int
+    erreurs: list[ImportLigneErreur]
+
+
 # ── Sortie : lecture ────────────────────────────────────────
 class ClientRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)

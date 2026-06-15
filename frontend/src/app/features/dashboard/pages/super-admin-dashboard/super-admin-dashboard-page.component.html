@@ -6,13 +6,13 @@
   } @else if (data()) {
     <div class="sa-dash__welcome">
       <div>
-        <h1>Bienvenue, {{ greeting() }} 👋</h1>
-        <p>Vue d'ensemble de la salle — revenus, abonnements et activité.</p>
+        <h1>{{ 'dashboard.welcome' | translate: { name: greeting() } }}</h1>
+        <p>{{ 'dashboard.superAdminSubtitle' | translate }}</p>
       </div>
       <div class="sa-dash__actions">
         <select class="sa-dash__select">
-          <option>Cette semaine</option>
-          <option>Ce mois</option>
+          <option>{{ 'common.thisWeek' | translate }}</option>
+          <option>{{ 'common.thisMonth' | translate }}</option>
         </select>
         <button type="button" class="sa-dash__export">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -20,17 +20,17 @@
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
-          Exporter rapport
+          {{ 'common.exportReport' | translate }}
         </button>
       </div>
     </div>
 
     <div class="sa-dash__kpis">
-      @for (kpi of kpiCards(); track kpi.label) {
+      @for (kpi of kpiCards(); track kpi.labelKey) {
         <article class="sa-kpi">
           <div class="sa-kpi__top">
-            <span class="sa-kpi__label">{{ kpi.label }}</span>
-            <span class="sa-kpi__icon" [style.background]="kpi.iconBg">{{ kpi.icon }}</span>
+            <span class="sa-kpi__label">{{ kpi.labelKey | translate }}</span>
+            <span class="sa-kpi__icon"><app-icon [name]="kpi.icon" [size]="18" /></span>
           </div>
           <strong class="sa-kpi__value">{{ kpi.value }}</strong>
           <span class="sa-kpi__trend" [class.is-down]="!kpi.trendUp">{{ kpi.trend }}</span>
@@ -42,9 +42,9 @@
       <article class="sa-card sa-card--large">
         <div class="sa-card__head">
           <div>
-            <h2>Aperçu des revenus</h2>
+            <h2>{{ 'dashboard.revenueOverview' | translate }}</h2>
             <p class="sa-card__subtitle">
-              Total 7 jours :
+              {{ 'dashboard.total7Days' | translate }}
               <strong>{{ areaPoints().total | mruCurrency }}</strong>
             </p>
           </div>
@@ -64,30 +64,30 @@
         </div>
 
         <div class="sa-legend">
-          <span><i class="sa-legend__dot sa-legend__dot--muted"></i> Séances</span>
-          <span><i class="sa-legend__dot sa-legend__dot--primary"></i> Abonnements</span>
+          <span><i class="sa-legend__dot sa-legend__dot--muted"></i> {{ 'dashboard.legendSessions' | translate }}</span>
+          <span><i class="sa-legend__dot sa-legend__dot--primary"></i> {{ 'dashboard.legendSubscriptions' | translate }}</span>
         </div>
       </article>
 
       <article class="sa-card">
         <div class="sa-card__head">
-          <h2>Résumé financier</h2>
+          <h2>{{ 'dashboard.financialSummary' | translate }}</h2>
         </div>
         <ul class="sa-summary">
           <li>
-            <span>Revenus du jour</span>
+            <span>{{ 'dashboard.dailyRevenue' | translate }}</span>
             <strong>{{ data()!.revenus_jour | mruCurrency }}</strong>
           </li>
           <li>
-            <span>Abonnements (mois)</span>
+            <span>{{ 'dashboard.monthlySubscriptions' | translate }}</span>
             <strong>{{ data()!.total_abonnements_mois | mruCurrency }}</strong>
           </li>
           <li>
-            <span>Séances (mois)</span>
+            <span>{{ 'dashboard.monthlySessions' | translate }}</span>
             <strong>{{ data()!.total_seances_mois | mruCurrency }}</strong>
           </li>
           <li>
-            <span>Dépenses (mois)</span>
+            <span>{{ 'dashboard.monthlyExpenses' | translate }}</span>
             <strong>{{ data()!.total_depenses_mois | mruCurrency }}</strong>
           </li>
         </ul>
@@ -98,8 +98,8 @@
       <article class="sa-card">
         <div class="sa-card__head">
           <div>
-            <h2>Présences du jour</h2>
-            <p class="sa-card__subtitle">{{ data()!.presences_jour }} entrées enregistrées</p>
+            <h2>{{ 'dashboard.presencesToday' | translate }}</h2>
+            <p class="sa-card__subtitle">{{ 'dashboard.presencesTodayHint' | translate: { count: data()!.presences_jour } }}</p>
           </div>
         </div>
         <div class="sa-area-chart">
@@ -119,13 +119,13 @@
 
       <article class="sa-card">
         <div class="sa-card__head">
-          <h2>Abonnements par sexe</h2>
+          <h2>{{ 'dashboard.subscriptionsByGender' | translate }}</h2>
         </div>
         <div class="sa-donut-wrap">
           <div class="sa-donut" [style.background]="donutGradient()">
             <div class="sa-donut__hole">
               <strong>{{ data()!.abonnements_actifs }}</strong>
-              <span>actifs</span>
+              <span>{{ 'common.activeLabel' | translate }}</span>
             </div>
           </div>
           <ul class="sa-donut-legend">

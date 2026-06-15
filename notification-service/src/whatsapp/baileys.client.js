@@ -62,3 +62,21 @@ export async function sendMessage(numero, message) {
     return { success: false, erreur: e.message };
   }
 }
+
+export async function sendDocument(numero, documentBuffer, filename, caption = "") {
+  if (!sock || !connected) {
+    return { success: false, erreur: "WhatsApp non connecté" };
+  }
+  try {
+    const jid = `${numero.replace(/\D/g, "")}@s.whatsapp.net`;
+    const sent = await sock.sendMessage(jid, {
+      document: documentBuffer,
+      mimetype: "application/pdf",
+      fileName: filename,
+      caption: caption || undefined,
+    });
+    return { success: true, message_id: sent?.key?.id };
+  } catch (e) {
+    return { success: false, erreur: e.message };
+  }
+}

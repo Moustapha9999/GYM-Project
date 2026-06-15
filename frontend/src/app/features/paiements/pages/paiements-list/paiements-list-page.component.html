@@ -1,31 +1,31 @@
 <section class="pay-page">
   <div class="pay-page__head">
     <div>
-      <h1>Paiements</h1>
-      <p>Journal des encaissements, caisse du jour et moyens locaux.</p>
+      <h1>{{ 'modules.paiements.title' | translate }}</h1>
+      <p>{{ 'modules.paiements.subtitle' | translate }}</p>
     </div>
     <button type="button" class="pay-btn pay-btn--ghost" (click)="resetFilters()">
-      Réinitialiser filtres
+      {{ 'common.resetFilters' | translate }}
     </button>
   </div>
 
   @if (caisse()) {
     <div class="pay-kpis">
       <article class="pay-kpi pay-kpi--highlight">
-        <span>Total caisse</span>
+        <span>{{ 'modules.paiements.kpi.cashTotal' | translate }}</span>
         <strong>{{ caisse()!.total_encaisse | mruCurrency }}</strong>
         <small>{{ caisse()!.nombre_paiements }} paiement(s)</small>
       </article>
       <article class="pay-kpi">
-        <span>Abonnements</span>
+        <span>{{ 'modules.paiements.kpi.subscriptions' | translate }}</span>
         <strong>{{ caisse()!.total_abonnements | mruCurrency }}</strong>
       </article>
       <article class="pay-kpi">
-        <span>Séances</span>
+        <span>{{ 'modules.paiements.kpi.sessions' | translate }}</span>
         <strong>{{ caisse()!.total_seances | mruCurrency }}</strong>
       </article>
       <article class="pay-kpi">
-        <span>Journal filtré</span>
+        <span>{{ 'modules.paiements.kpi.filteredJournal' | translate }}</span>
         <strong>{{ totalJournal() | mruCurrency }}</strong>
         <small>{{ paiements().length }} ligne(s)</small>
       </article>
@@ -35,7 +35,7 @@
   <div class="pay-page__grid">
     <article class="pay-card pay-card--main">
       <div class="pay-card__head">
-        <h2>Journal des paiements</h2>
+        <h2>{{ 'modules.paiements.listTitle' | translate }}</h2>
       </div>
 
       <form class="pay-filters" [formGroup]="filters" (ngSubmit)="applyFilters()">
@@ -83,6 +83,7 @@
                 <th>Montant</th>
                 <th>Date</th>
                 <th>Statut</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -99,10 +100,13 @@
                       {{ p.statut }}
                     </span>
                   </td>
+                  <td class="pay-table__actions">
+                    <button type="button" class="pay-link-btn" (click)="viewPaiement(p)">Voir</button>
+                  </td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="7" class="pay-table__empty">Aucun paiement pour ces filtres.</td>
+                  <td colspan="8" class="pay-table__empty">Aucun paiement pour ces filtres.</td>
                 </tr>
               }
             </tbody>
@@ -112,8 +116,64 @@
     </article>
 
     <aside class="pay-side">
+      @if (sidePanelMode() === 'view') {
+        <article class="pay-card pay-card--detail">
+          <h2>{{ 'modules.paiements.detailsTitle' | translate }}</h2>
+
+          @if (detailError()) {
+            <p class="pay-alert pay-alert--error">{{ detailError() }}</p>
+          }
+
+          @if (detailLoading()) {
+            <app-loading-spinner label="Chargement des détails..." />
+          } @else if (viewingPaiement(); as payment) {
+            @if (viewingPaiementSummary(); as summary) {
+              <p class="pay-card__hint">{{ summary.reference }}</p>
+
+              <dl class="pay-detail">
+                <div>
+                  <dt>Client</dt>
+                  <dd>{{ summary.client_nom ?? '—' }}</dd>
+                </div>
+                <div>
+                  <dt>Type</dt>
+                  <dd>{{ payment.type_paiement }}</dd>
+                </div>
+                <div>
+                  <dt>Montant</dt>
+                  <dd>{{ payment.montant | mruCurrency }}</dd>
+                </div>
+                <div>
+                  <dt>Moyen de paiement</dt>
+                  <dd>{{ summary.moyen_paiement }}</dd>
+                </div>
+                <div>
+                  <dt>Statut</dt>
+                  <dd>
+                    <span class="pay-status" [class.is-valid]="payment.statut === 'Validé'">
+                      {{ payment.statut }}
+                    </span>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Date de paiement</dt>
+                  <dd>{{ payment.date_paiement | date: 'dd/MM/yyyy HH:mm' }}</dd>
+                </div>
+                <div>
+                  <dt>Enregistré le</dt>
+                  <dd>{{ payment.created_at | date: 'dd/MM/yyyy HH:mm' }}</dd>
+                </div>
+              </dl>
+
+              <button type="button" class="pay-btn pay-btn--ghost pay-btn--block" (click)="closeView()">
+                Fermer
+              </button>
+            }
+          }
+        </article>
+      } @else {
       <article class="pay-card pay-card--create">
-        <h2>Nouveau paiement</h2>
+        <h2>{{ 'modules.paiements.newPayment' | translate }}</h2>
         <p class="pay-card__hint">Abonnement, séance ou encaissement manuel.</p>
 
         @if (createSuccess()) {
@@ -190,10 +250,11 @@
           </button>
         </form>
       </article>
+      }
 
       @if (caisse()) {
         <article class="pay-card">
-          <h2>Caisse du {{ caisse()!.jour | date: 'dd/MM/yyyy' }}</h2>
+          <h2>{{ 'modules.paiements.cashRegisterTitle' | translate: { date: caisseDateLabel() } }}</h2>
           <ul class="pay-repartition">
             @for (item of caisse()!.repartition; track item.moyen_paiement) {
               <li>

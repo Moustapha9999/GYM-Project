@@ -1,14 +1,14 @@
 :host {
   --rec-green: #0d5c3b;
-  --rec-green-soft: #e8f5ee;
-  --rec-text-muted: #94a3b8;
+  --rec-green-soft: color-mix(in srgb, var(--rec-green) 15%, var(--color-surface));
+  --rec-text-muted: var(--color-text-muted);
 }
 
 .rec-sidebar {
   width: 240px;
   min-height: 100vh;
-  background: #fff;
-  border-right: 1px solid #eef0f3;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border-light);
   padding: 1.25rem 1rem 1rem;
   display: flex;
   flex-direction: column;
@@ -37,12 +37,12 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .rec-sidebar__brand strong {
   font-size: 1.1rem;
-  color: #0f172a;
+  color: var(--color-text);
 }
 
 .rec-sidebar__section {
@@ -66,7 +66,7 @@
   padding: 0.7rem 0.85rem;
   border-radius: 999px;
   text-decoration: none;
-  color: #64748b;
+  color: var(--color-text-muted);
   font-size: 0.9rem;
   font-weight: 500;
   border: none;
@@ -83,10 +83,11 @@
 }
 
 .rec-sidebar__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 1.25rem;
-  text-align: center;
   flex-shrink: 0;
-  font-size: 0.95rem;
 }
 
 .rec-sidebar__link span:not(.rec-sidebar__badge) {
@@ -94,8 +95,8 @@
 }
 
 .rec-sidebar__link:hover {
-  color: #0f172a;
-  background: #f8fafc;
+  color: var(--color-text);
+  background: var(--color-bg-alt);
 }
 
 .rec-sidebar__link.is-active {
@@ -122,14 +123,14 @@
 .rec-sidebar__footer {
   margin-top: auto;
   padding: 1rem 0.75rem 0;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--color-border);
 }
 
 .rec-sidebar__footer small {
   display: block;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--color-text);
 }
 
 .rec-sidebar__footer span {

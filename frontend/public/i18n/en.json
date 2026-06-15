@@ -1,0 +1,285 @@
+{
+  "common": {
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "logout": "Log out",
+    "loading": "Loading…",
+    "search": "Search",
+    "resetFilters": "Reset filters",
+    "apply": "Apply",
+    "preview": "Preview",
+    "exampleButton": "Sample button",
+    "notifications": "Notifications",
+    "messages": "Messages",
+    "menu": "MENU",
+    "general": "GENERAL",
+    "exportReport": "Export report",
+    "thisWeek": "This week",
+    "thisMonth": "This month",
+    "active": "Active",
+    "inactive": "Inactive",
+    "filteredResults": "Filtered results",
+    "all": "All",
+    "total": "Total",
+    "details": "Details",
+    "new": "New",
+    "edit": "Edit",
+    "inRoom": "in gym",
+    "activeLabel": "active"
+  },
+  "languages": {
+    "fr": "Français",
+    "en": "English",
+    "ar": "العربية"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "paiements": "Payments",
+    "clients": "Clients",
+    "abonnements": "Subscriptions",
+    "cartesMembres": "Member cards",
+    "finances": "Finances",
+    "admin": "Administration",
+    "parametres": "Settings",
+    "presences": "Attendance",
+    "seances": "Daily sessions"
+  },
+  "roles": {
+    "superAdmin": "Super Admin",
+    "receptionist": "Receptionist"
+  },
+  "notifications": {
+    "panelTitle": "Notifications",
+    "panelSubtitle": "Subscriptions, members, recent payments",
+    "markAllRead": "Mark all as read",
+    "loading": "Loading…",
+    "empty": "No notifications at the moment."
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "login": "Sign in",
+    "loggingIn": "Signing in...",
+    "loginError": "Invalid credentials or server unavailable.",
+    "searchClient": "Search for a member..."
+  },
+  "parametres": {
+    "title": "Settings",
+    "subtitle": "Gym identity, logo, appearance and interface language.",
+    "loading": "Loading settings...",
+    "identityTitle": "Gym identity",
+    "identityHint": "Name and logo displayed in the application.",
+    "gymName": "Gym name",
+    "gymNamePlaceholder": "TOTAL FITNESS",
+    "slogan": "Slogan",
+    "sloganPlaceholder": "Discipline · Strength · Results",
+    "chooseLogo": "Choose a logo",
+    "removeLogo": "Remove",
+    "themeTitle": "Theme & colors",
+    "themeHint": "Primary color and display mode.",
+    "customColor": "Custom color",
+    "displayMode": "Display mode",
+    "light": "Light",
+    "dark": "Dark",
+    "instantPreview": "Instant preview",
+    "languageTitle": "Language",
+    "languageHint": "Interface language (French, English or Arabic).",
+    "previewTitle": "Preview",
+    "logoTitle": "Gym logo",
+    "logoDesc": "PNG, JPG or SVG — max. 1 MB",
+    "presetsLabel": "Preset colors",
+    "previewNote": "The preview reflects your name, slogan, color and mode. Click « Instant preview » to apply across the app.",
+    "saveSettings": "Save settings",
+    "saveSuccess": "Settings saved.",
+    "loadError": "Unable to load settings.",
+    "saveError": "Error while saving.",
+    "logoImageError": "Please select an image file.",
+    "logoSizeError": "Logo must not exceed 1 MB.",
+    "presets": {
+      "orange": "Orange",
+      "green": "Green",
+      "blue": "Blue",
+      "purple": "Purple",
+      "red": "Red"
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome, {{name}}",
+    "superAdminSubtitle": "Gym overview — revenue, subscriptions and activity.",
+    "revenueOverview": "Revenue overview",
+    "total7Days": "7-day total:",
+    "financialSummary": "Financial summary",
+    "loadError": "Unable to load dashboard.",
+    "presencesToday": "Today's attendance",
+    "presencesTodayHint": "{{count}} entries recorded",
+    "subscriptionsByGender": "Subscriptions by gender",
+    "dailyRevenue": "Today's revenue",
+    "monthlySubscriptions": "Subscriptions (month)",
+    "monthlySessions": "Sessions (month)",
+    "monthlyExpenses": "Expenses (month)",
+    "legendSessions": "Sessions",
+    "legendSubscriptions": "Subscriptions",
+    "kpi": {
+      "monthlyRevenue": "Monthly revenue",
+      "activeSubscriptions": "Active subscriptions",
+      "activeClients": "Active members",
+      "monthlyProfit": "Monthly profit"
+    },
+    "reception": {
+      "title": "Dashboard",
+      "subtitle": "Welcome {{name}}, here is today's reception activity.",
+      "newPayment": "+ New payment",
+      "importData": "Import data",
+      "activity": "Reception activity",
+      "activityHint": "Today's collections:",
+      "presentToday": "Present:",
+      "subscriptionsToday": "Today's subscriptions:",
+      "reminders": "Reminders",
+      "occupancy": "Gym occupancy",
+      "kpi": {
+        "paymentsToday": "Today's payments",
+        "presencesToday": "Today's attendance",
+        "sessionsCollected": "Sessions collected",
+        "expiringSubscriptions": "Expiring subscriptions"
+      }
+    }
+  },
+  "modules": {
+    "abonnements": {
+      "title": "Subscriptions",
+      "subtitle": "Plans, enrollments, renewals and status management.",
+      "listTitle": "Subscription list",
+      "detailsTitle": "Subscription details",
+      "subscribeTitle": "Subscribe / Renew",
+      "formulasTitle": "Available plans",
+      "kpi": {
+        "active": "Active subscriptions",
+        "suspended": "Suspended",
+        "formulas": "Plans"
+      }
+    },
+    "clients": {
+      "title": "Members",
+      "subtitle": "Member profiles, registrations and subscription tracking.",
+      "listTitle": "Member list",
+      "detailsTitle": "Member details",
+      "newClient": "New member",
+      "editClient": "Edit member",
+      "kpi": {
+        "total": "Total members"
+      }
+    },
+    "paiements": {
+      "title": "Payments",
+      "subtitle": "Payment journal, daily cash register and local methods.",
+      "listTitle": "Payment journal",
+      "detailsTitle": "Payment details",
+      "newPayment": "New payment",
+      "cashRegisterTitle": "Cash register — {{date}}",
+      "kpi": {
+        "cashTotal": "Cash total",
+        "subscriptions": "Subscriptions",
+        "sessions": "Sessions",
+        "filteredJournal": "Filtered journal"
+      }
+    },
+    "cartesMembres": {
+      "title": "Member cards",
+      "subtitle": "Generate, print and send access cards.",
+      "listTitle": "Card list",
+      "cardTitle": "Member card",
+      "previewTitle": "Preview",
+      "memberCardLabel": "MEMBER CARD",
+      "kpi": {
+        "active": "Active cards",
+        "expired": "Expired"
+      }
+    },
+    "admin": {
+      "title": "Administration",
+      "subtitle": "Users, roles, permissions and staff.",
+      "tabs": {
+        "users": "User accounts",
+        "employees": "Employees",
+        "roles": "Roles & privileges"
+      },
+      "usersListTitle": "User accounts",
+      "userDetailsTitle": "Account details",
+      "newAccount": "New account",
+      "editAccount": "Edit account",
+      "employeesTitle": "Staff (HR)",
+      "employeeDetailsTitle": "Employee details",
+      "newEmployee": "New employee",
+      "editEmployee": "Edit employee",
+      "rolesTitle": "Role and privilege assignment",
+      "rolesAdminSection": "Administration — Users & Employees",
+      "rolesBusinessSection": "Other business modules",
+      "systemRolesTitle": "System roles",
+      "roleSummary": "Summary — {{role}}",
+      "kpi": {
+        "totalAccounts": "Total accounts"
+      }
+    },
+    "presences": {
+      "title": "Attendance",
+      "subtitle": "Entry tracking and daily attendance."
+    },
+    "seances": {
+      "title": "Daily sessions",
+      "subtitle": "Schedule and manage today's sessions."
+    },
+    "finances": {
+      "title": "Finances",
+      "subtitle": "Expenses, financial summary and gym cost tracking.",
+      "listTitle": "Expense journal",
+      "detailsTitle": "Expense details",
+      "newExpense": "New expense",
+      "editExpense": "Edit expense",
+      "saveExpense": "Save expense",
+      "loading": "Loading finances...",
+      "empty": "No expenses for the selected period.",
+      "breakdownTitle": "Breakdown by category",
+      "readOnlyHint": "You only have read access to this module.",
+      "filters": {
+        "startDate": "Start date",
+        "endDate": "End date",
+        "category": "Category"
+      },
+      "columns": {
+        "reference": "Reference",
+        "label": "Label",
+        "category": "Category",
+        "amount": "Amount",
+        "date": "Date"
+      },
+      "form": {
+        "category": "Category",
+        "selectCategory": "Select a category",
+        "label": "Label",
+        "amount": "Amount (MRU)",
+        "date": "Expense date",
+        "receipt": "Receipt (URL)",
+        "createdAt": "Recorded on"
+      },
+      "kpi": {
+        "revenue": "Revenue (period)",
+        "expenses": "Expenses (period)",
+        "profit": "Profit",
+        "filteredTotal": "Filtered total"
+      },
+      "charts": {
+        "comparisonTitle": "Revenue vs expenses",
+        "comparisonHint": "Comparison for the filtered period",
+        "categoryTitle": "Expense breakdown",
+        "categoryHint": "Share by category",
+        "trendTitle": "Expense trend",
+        "trendHint": "Displayed total:",
+        "categoryBarsTitle": "Expenses by category",
+        "noCategoryData": "No category expenses for this period.",
+        "noTrendData": "Not enough data to draw the trend."
+      }
+    }
+  }
+}

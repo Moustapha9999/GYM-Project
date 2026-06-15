@@ -7,6 +7,7 @@ import {
   Client,
   ClientCreatePayload,
   ClientFilters,
+  ClientImportResult,
   ClientUpdatePayload,
 } from '@features/clients/models/client.model';
 
@@ -45,7 +46,33 @@ export class ClientsService {
     return this.api.delete<void>(`clients/${id}`).pipe(map(() => undefined));
   }
 
+  uploadPhoto(id: string, photoBase64: string): Observable<Client> {
+    return this.api
+      .put<Client>(`clients/${id}/photo`, { photo_base64: photoBase64 })
+      .pipe(map((response) => response.data));
+  }
+
   count(filters?: Pick<ClientFilters, 'actif'>): Observable<number> {
     return this.list({ ...filters, page: 1, per_page: 1 }).pipe(map((response) => response.meta.total));
+  }
+
+  downloadImportTemplate(): Observable<Blob> {
+    return this.api.getBlob('clients/import-modele').pipe(
+      map((blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'modele_import_clients.xlsx';
+        link.click();
+        URL.revokeObjectURL(url);
+        return blob;
+      }),
+    );
+  }
+
+  importExcel(file: File): Observable<ClientImportResult> {
+    return this.api
+      .uploadFile<ClientImportResult>('clients/import-excel', file)
+      .pipe(map((response) => response.data));
   }
 }

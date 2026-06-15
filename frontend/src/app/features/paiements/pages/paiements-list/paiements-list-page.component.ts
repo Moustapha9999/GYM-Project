@@ -1,22 +1,26 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, formatDate } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
 import { MruCurrencyPipe } from '@shared/pipes/mru-currency.pipe';
+import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { Client } from '@features/clients/models/client.model';
 import { ClientsService } from '@features/clients/services/clients.service';
 import {
   CaisseJour,
   MoyenPaiement,
   PaiementDetail,
+  PaiementRead,
 } from '@features/paiements/models/paiement.model';
 import { PaiementsService } from '@features/paiements/services/paiements.service';
 
+type SidePanelMode = 'create' | 'view';
+
 @Component({
   selector: 'app-paiements-list-page',
-  imports: [ReactiveFormsModule, LoadingSpinnerComponent, MruCurrencyPipe, DatePipe],
+  imports: [ReactiveFormsModule, LoadingSpinnerComponent, MruCurrencyPipe, DatePipe, TranslatePipe],
   templateUrl: './paiements-list-page.component.html',
   styleUrl: './paiements-list-page.component.scss',
 })
@@ -35,6 +39,11 @@ export class PaiementsListPageComponent implements OnInit {
   readonly createError = signal<string | null>(null);
   readonly clientResults = signal<Client[]>([]);
   readonly selectedClient = signal<Client | null>(null);
+  readonly sidePanelMode = signal<SidePanelMode>('create');
+  readonly viewingPaiement = signal<PaiementRead | null>(null);
+  readonly viewingPaiementSummary = signal<PaiementDetail | null>(null);
+  readonly detailLoading = signal(false);
+  readonly detailError = signal<string | null>(null);
 
   readonly filters = this.fb.nonNullable.group({
     date_debut: [''],
@@ -54,6 +63,11 @@ export class PaiementsListPageComponent implements OnInit {
   readonly totalJournal = computed(() =>
     this.paiements().reduce((sum, p) => sum + Number(p.montant), 0),
   );
+
+  readonly caisseDateLabel = computed(() => {
+    const jour = this.caisse()?.jour;
+    return jour ? formatDate(jour, 'dd/MM/yyyy', 'fr-FR') : '';
+  });
 
   readonly createType = computed(() => this.createForm.controls.type_paiement.value);
 
@@ -132,6 +146,32 @@ export class PaiementsListPageComponent implements OnInit {
     this.selectedClient.set(null);
     this.createForm.controls.client_search.setValue('');
     this.clientResults.set([]);
+  }
+
+  viewPaiement(paiement: PaiementDetail): void {
+    this.sidePanelMode.set('view');
+    this.viewingPaiementSummary.set(paiement);
+    this.viewingPaiement.set(null);
+    this.detailError.set(null);
+    this.detailLoading.set(true);
+
+    this.paiementsService.getById(paiement.id).subscribe({
+      next: (detail) => {
+        this.viewingPaiement.set(detail);
+        this.detailLoading.set(false);
+      },
+      error: () => {
+        this.detailError.set('Impossible de charger les détails du paiement.');
+        this.detailLoading.set(false);
+      },
+    });
+  }
+
+  closeView(): void {
+    this.sidePanelMode.set('create');
+    this.viewingPaiement.set(null);
+    this.viewingPaiementSummary.set(null);
+    this.detailError.set(null);
   }
 
   submitCreate(): void {

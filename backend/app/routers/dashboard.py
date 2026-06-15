@@ -1,12 +1,12 @@
 """Router des dashboards (3 vues par rôle)."""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.utilisateur import Utilisateur
 from app.schemas.common import ApiResponse
-from app.schemas.dashboard import DashboardAdmin, DashboardCoach, DashboardReception
+from app.schemas.dashboard import DashboardAdmin, DashboardCoach, DashboardReception, AlertesDashboard
 from app.services import dashboard_service
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
@@ -40,4 +40,15 @@ def dashboard_coach(
     """KPIs d'activité (Coach). Filtre sur le coach connecté si applicable."""
     # Si l'utilisateur est lié à un employé coach, on pourrait filtrer ici.
     data = dashboard_service.dashboard_coach(db)
+    return ApiResponse(success=True, data=data, message=None)
+
+
+@router.get("/alertes", response_model=ApiResponse[AlertesDashboard])
+def dashboard_alertes(
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(get_current_user),
+    limit: int = Query(30, ge=1, le=50),
+):
+    """Alertes métier pour le centre de notifications (header)."""
+    data = dashboard_service.alertes(db, limit=limit)
     return ApiResponse(success=True, data=data, message=None)

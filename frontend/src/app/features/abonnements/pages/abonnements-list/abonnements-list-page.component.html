@@ -1,26 +1,26 @@
 <section class="abo-page">
   <div class="abo-page__head">
     <div>
-      <h1>Abonnements</h1>
-      <p>Formules, souscriptions, renouvellements et gestion des statuts.</p>
+      <h1>{{ 'modules.abonnements.title' | translate }}</h1>
+      <p>{{ 'modules.abonnements.subtitle' | translate }}</p>
     </div>
   </div>
 
   <div class="abo-kpis">
     <article class="abo-kpi abo-kpi--highlight">
-      <span>Abonnements actifs</span>
+      <span>{{ 'modules.abonnements.kpi.active' | translate }}</span>
       <strong>{{ actifsCount() }}</strong>
     </article>
     <article class="abo-kpi">
-      <span>Suspendus</span>
+      <span>{{ 'modules.abonnements.kpi.suspended' | translate }}</span>
       <strong>{{ suspendusCount() }}</strong>
     </article>
     <article class="abo-kpi">
-      <span>Résultats filtrés</span>
+      <span>{{ 'common.filteredResults' | translate }}</span>
       <strong>{{ meta()?.total ?? 0 }}</strong>
     </article>
     <article class="abo-kpi">
-      <span>Formules</span>
+      <span>{{ 'modules.abonnements.kpi.formulas' | translate }}</span>
       <strong>{{ types().length }}</strong>
     </article>
   </div>
@@ -28,7 +28,7 @@
   <div class="abo-page__grid">
     <article class="abo-card abo-card--main">
       <div class="abo-card__head">
-        <h2>Liste des abonnements</h2>
+        <h2>{{ 'modules.abonnements.listTitle' | translate }}</h2>
       </div>
 
       <form class="abo-filters" [formGroup]="filters" (ngSubmit)="applyFilters()">
@@ -91,6 +91,7 @@
                         Résilier
                       </button>
                     }
+                    <button type="button" class="abo-link-btn" (click)="viewAbonnement(a)">Voir</button>
                   </td>
                 </tr>
               } @empty {
@@ -132,8 +133,99 @@
     </article>
 
     <aside class="abo-side">
+      @if (sidePanelMode() === 'view' && viewingAbonnement(); as abo) {
+        <article class="abo-card abo-card--detail">
+          <h2>{{ 'modules.abonnements.detailsTitle' | translate }}</h2>
+          <p class="abo-card__hint">{{ abo.type_abonnement }}</p>
+
+          <dl class="abo-detail">
+            <div>
+              <dt>Client</dt>
+              <dd>{{ abo.client_nom }}</dd>
+            </div>
+            <div>
+              <dt>Formule</dt>
+              <dd>{{ abo.type_abonnement }}</dd>
+            </div>
+            <div>
+              <dt>Type de tarif</dt>
+              <dd>{{ abo.est_inscription ? 'Inscription' : 'Renouvellement' }}</dd>
+            </div>
+            <div>
+              <dt>Date de début</dt>
+              <dd>{{ abo.date_debut | date: 'dd/MM/yyyy' }}</dd>
+            </div>
+            <div>
+              <dt>Date de fin</dt>
+              <dd>{{ abo.date_fin | date: 'dd/MM/yyyy' }}</dd>
+            </div>
+            <div>
+              <dt>Montant</dt>
+              <dd>{{ abo.montant | mruCurrency }}</dd>
+            </div>
+            <div>
+              <dt>Statut</dt>
+              <dd>
+                @if (isExpired(abo)) {
+                  <span class="abo-badge abo-badge--expired">Expiré</span>
+                } @else {
+                  <span class="abo-badge" [class.is-active]="abo.statut === 'Actif'">
+                    {{ abo.statut }}
+                  </span>
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>Souscrit le</dt>
+              <dd>{{ abo.created_at | date: 'dd/MM/yyyy HH:mm' }}</dd>
+            </div>
+          </dl>
+
+          @if (detailSuccess()) {
+            <p class="abo-alert abo-alert--success">{{ detailSuccess() }}</p>
+          }
+          @if (detailError()) {
+            <p class="abo-alert abo-alert--error">{{ detailError() }}</p>
+          }
+
+          @if (viewEligibilite(); as elig) {
+            <div class="abo-eligibilite" [class.is-warning]="!elig.tarif_normal">
+              @if (elig.premiere_inscription) {
+                <span>Première inscription — tarif inscription appliqué.</span>
+              } @else if (elig.tarif_normal) {
+                <span>Renouvellement au tarif normal possible.</span>
+              } @else {
+                <span>
+                  Retard de {{ elig.jours_retard }} jour(s) — séance journalière requise avant renouvellement.
+                </span>
+              }
+            </div>
+          }
+
+          <form class="abo-form abo-form--renew" [formGroup]="renewForm" (ngSubmit)="submitRenew()">
+            <label>
+              Moyen de paiement
+              <select formControlName="moyen_paiement_id">
+                <option value="">Choisir...</option>
+                @for (m of moyens(); track m.id) {
+                  <option [value]="m.id">{{ m.libelle }}</option>
+                }
+              </select>
+            </label>
+
+            <div class="abo-detail__actions">
+              <button type="submit" class="abo-btn abo-btn--primary abo-btn--block" [disabled]="renewing()">
+                {{ renewing() ? 'Renouvellement...' : 'Renouveler l\'abonnement' }}
+              </button>
+              <button type="button" class="abo-btn abo-btn--ghost abo-btn--block" (click)="closeView()">
+                Fermer
+              </button>
+            </div>
+          </form>
+        </article>
+      } @else {
       <article class="abo-card abo-card--form">
-        <h2>Souscrire / Renouveler</h2>
+        <h2>{{ 'modules.abonnements.subscribeTitle' | translate }}</h2>
         <p class="abo-card__hint">Type et tarif déterminés selon le sexe du client.</p>
 
         @if (formSuccess()) {
@@ -193,13 +285,13 @@
           </label>
 
           <button type="submit" class="abo-btn abo-btn--primary abo-btn--block" [disabled]="submitting()">
-            {{ submitting() ? 'Traitement...' : 'Souscrire / Renouveler' }}
+            {{ submitting() ? 'Traitement...' : 'Souscrire' }}
           </button>
         </form>
       </article>
 
       <article class="abo-card">
-        <h2>Formules disponibles</h2>
+        <h2>{{ 'modules.abonnements.formulasTitle' | translate }}</h2>
         <ul class="abo-types">
           @for (t of types(); track t.id) {
             <li>
@@ -217,6 +309,7 @@
           }
         </ul>
       </article>
+      }
     </aside>
   </div>
 </section>

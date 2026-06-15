@@ -39,6 +39,16 @@ export class ApiService {
     return this.http.delete<ApiResponse<T>>(this.buildUrl(path));
   }
 
+  getBlob(path: string): Observable<Blob> {
+    return this.http.get(this.buildUrl(path), { responseType: 'blob' });
+  }
+
+  uploadFile<T>(path: string, file: File, fieldName = 'file'): Observable<ApiResponse<T>> {
+    const formData = new FormData();
+    formData.append(fieldName, file);
+    return this.http.post<ApiResponse<T>>(this.buildUrl(path), formData);
+  }
+
   private buildUrl(path: string): string {
     return `${this.baseUrl}/${path.replace(/^\//, '')}`;
   }

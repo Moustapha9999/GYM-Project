@@ -77,3 +77,53 @@ def exporter_clients(clients: list[dict]) -> bytes:
     wb.save(buffer)
     buffer.seek(0)
     return buffer.read()
+
+
+def generer_modele_import_clients() -> bytes:
+    """Génère un fichier Excel modèle pour l'import en masse de clients."""
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Import clients"
+
+    entetes = [
+        "Nom *",
+        "Prénom *",
+        "Téléphone *",
+        "Sexe",
+        "Date naissance",
+        "WhatsApp",
+        "Adresse",
+        "Email",
+        "N° pièce identité",
+        "Contact urgence",
+        "Tél. urgence",
+        "Groupe sanguin",
+    ]
+    ws.append(entetes)
+    _styliser_entete(ws, len(entetes))
+
+    ws.append([
+        "Diallo",
+        "Amadou",
+        "22246123456",
+        "Homme",
+        "15/03/1995",
+        "22246123456",
+        "Nouakchott",
+        "amadou@email.com",
+        "N123456",
+        "Fatou Diallo",
+        "22246987654",
+        "O+",
+    ])
+
+    note = ws.cell(row=3, column=1, value="* Champs obligatoires. Sexe : Homme ou Femme. Date : JJ/MM/AAAA.")
+    note.font = Font(italic=True, color="FF64748B")
+
+    for col, larg in zip("ABCDEFGHIJKL", [16, 16, 16, 10, 16, 16, 22, 24, 16, 18, 14, 14]):
+        ws.column_dimensions[col].width = larg
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    return buffer.read()

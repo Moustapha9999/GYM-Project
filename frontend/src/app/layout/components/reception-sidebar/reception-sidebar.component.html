@@ -4,10 +4,10 @@
       <span class="rec-sidebar__logo-dot"></span>
       <span class="rec-sidebar__logo-dot"></span>
     </span>
-    <strong>GYM SYLLA</strong>
+    <strong>{{ gymName() }}</strong>
   </div>
 
-  <p class="rec-sidebar__section">MENU</p>
+  <p class="rec-sidebar__section">{{ 'common.menu' | translate }}</p>
   <nav class="rec-sidebar__nav">
     @for (item of menuItems; track item.route) {
       <a
@@ -17,16 +17,9 @@
         class="rec-sidebar__link"
       >
         <span class="rec-sidebar__icon" aria-hidden="true">
-          @switch (item.icon) {
-            @case ('dashboard') { ▦ }
-            @case ('clients') { 👥 }
-            @case ('abonnements') { 🎫 }
-            @case ('paiements') { 💳 }
-            @case ('presences') { ✓ }
-            @case ('seances') { 🏋️ }
-          }
+          <app-icon [name]="item.icon" [size]="18" />
         </span>
-        <span>{{ item.label }}</span>
+        <span>{{ item.labelKey | translate }}</span>
         @if (item.badge) {
           <span class="rec-sidebar__badge">{{ item.badge }}</span>
         }
@@ -34,16 +27,18 @@
     }
   </nav>
 
-  <p class="rec-sidebar__section">GÉNÉRAL</p>
+  <p class="rec-sidebar__section">{{ 'common.general' | translate }}</p>
   <nav class="rec-sidebar__nav">
     <button type="button" class="rec-sidebar__link rec-sidebar__link--btn" (click)="logout()">
-      <span class="rec-sidebar__icon" aria-hidden="true">↪</span>
-      <span>Déconnexion</span>
+      <span class="rec-sidebar__icon" aria-hidden="true">
+        <app-icon name="log-out" [size]="18" />
+      </span>
+      <span>{{ 'common.logout' | translate }}</span>
     </button>
   </nav>
 
   <div class="rec-sidebar__footer">
     <small>{{ userName() }}</small>
-    <span>Réceptionniste</span>
+    <span>{{ 'roles.receptionist' | translate }}</span>
   </div>
 </aside>

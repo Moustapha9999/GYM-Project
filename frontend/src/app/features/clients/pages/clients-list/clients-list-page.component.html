@@ -1,29 +1,45 @@
 <section class="cli-page">
   <div class="cli-page__head">
     <div>
-      <h1>Clients</h1>
-      <p>Gestion des adhérents, fiches membres et statuts.</p>
+      <h1>{{ 'modules.clients.title' | translate }}</h1>
+      <p>{{ 'modules.clients.subtitle' | translate }}</p>
     </div>
-    <button type="button" class="cli-btn cli-btn--ghost" (click)="startCreate()">
-      Nouveau client
-    </button>
+    <div class="cli-page__head-actions">
+      <button type="button" class="cli-btn cli-btn--ghost" (click)="downloadImportTemplate()">
+        Modèle Excel
+      </button>
+      <label class="cli-import">
+        <input
+          type="file"
+          accept=".xlsx"
+          (change)="onImportFileSelected($event)"
+          [disabled]="importing()"
+        />
+        <span class="cli-btn cli-btn--secondary">
+          @if (importing()) { Import… } @else { Importer Excel }
+        </span>
+      </label>
+      <button type="button" class="cli-btn cli-btn--ghost" (click)="startCreate()">
+        Nouveau client
+      </button>
+    </div>
   </div>
 
   <div class="cli-kpis">
     <article class="cli-kpi cli-kpi--highlight">
-      <span>Total adhérents</span>
+      <span>{{ 'modules.clients.kpi.total' | translate }}</span>
       <strong>{{ totalClients() }}</strong>
     </article>
     <article class="cli-kpi">
-      <span>Actifs</span>
+      <span>{{ 'common.active' | translate }}</span>
       <strong>{{ actifsCount() }}</strong>
     </article>
     <article class="cli-kpi">
-      <span>Inactifs</span>
+      <span>{{ 'common.inactive' | translate }}</span>
       <strong>{{ inactifsCount() }}</strong>
     </article>
     <article class="cli-kpi">
-      <span>Résultats filtrés</span>
+      <span>{{ 'common.filteredResults' | translate }}</span>
       <strong>{{ meta()?.total ?? 0 }}</strong>
     </article>
   </div>
@@ -31,7 +47,7 @@
   <div class="cli-page__grid">
     <article class="cli-card cli-card--main">
       <div class="cli-card__head">
-        <h2>Liste des clients</h2>
+        <h2>{{ 'modules.clients.listTitle' | translate }}</h2>
       </div>
 
       <form class="cli-filters" [formGroup]="filters" (ngSubmit)="applyFilters()">
@@ -64,6 +80,26 @@
       } @else if (error()) {
         <p class="cli-alert cli-alert--error">{{ error() }}</p>
       } @else {
+        @if (importResult(); as result) {
+          <div class="cli-import-result" [class.cli-import-result--warn]="result.echecs > 0">
+            <p>
+              <strong>{{ result.crees }}</strong> client(s) importé(s) sur {{ result.total_lignes }} ligne(s).
+              @if (result.echecs > 0) {
+                <span> — {{ result.echecs }} erreur(s).</span>
+              }
+            </p>
+            @if (result.erreurs.length) {
+              <ul>
+                @for (err of result.erreurs; track err.ligne) {
+                  <li>Ligne {{ err.ligne }} : {{ err.message }}</li>
+                }
+              </ul>
+            }
+            <button type="button" class="cli-btn cli-btn--ghost cli-btn--sm" (click)="clearImportResult()">
+              Fermer
+            </button>
+          </div>
+        }
         <div class="cli-table-wrap">
           <table class="cli-table">
             <thead>
@@ -95,6 +131,7 @@
                     <button type="button" class="cli-link-btn cli-link-btn--danger" (click)="deleteClient(c)">
                       Supprimer
                     </button>
+                    <button type="button" class="cli-link-btn" (click)="viewClient(c)">Voir</button>
                   </td>
                 </tr>
               } @empty {
@@ -136,12 +173,99 @@
     </article>
 
     <aside class="cli-side">
+      @if (formMode() === 'view') {
+        <article class="cli-card cli-card--detail">
+          <h2>{{ 'modules.clients.detailsTitle' | translate }}</h2>
+
+          @if (formError()) {
+            <p class="cli-alert cli-alert--error">{{ formError() }}</p>
+          }
+
+          @if (detailLoading()) {
+            <app-loading-spinner label="Chargement des détails..." />
+          } @else if (viewingClient(); as client) {
+            <p class="cli-card__hint">N° {{ client.numero_membre }}</p>
+
+            <dl class="cli-detail">
+              <div>
+                <dt>Prénom</dt>
+                <dd>{{ client.prenom }}</dd>
+              </div>
+              <div>
+                <dt>Nom</dt>
+                <dd>{{ client.nom }}</dd>
+              </div>
+              <div>
+                <dt>Téléphone</dt>
+                <dd>{{ client.telephone }}</dd>
+              </div>
+              <div>
+                <dt>Sexe</dt>
+                <dd>{{ client.sexe ?? '—' }}</dd>
+              </div>
+              <div>
+                <dt>Date de naissance</dt>
+                <dd>{{ client.date_naissance ? (client.date_naissance | date: 'dd/MM/yyyy') : '—' }}</dd>
+              </div>
+              <div>
+                <dt>Email</dt>
+                <dd>{{ client.email ?? '—' }}</dd>
+              </div>
+              <div>
+                <dt>WhatsApp</dt>
+                <dd>{{ client.whatsapp ?? '—' }}</dd>
+              </div>
+              <div>
+                <dt>Adresse</dt>
+                <dd>{{ client.adresse ?? '—' }}</dd>
+              </div>
+              <div>
+                <dt>N° pièce d'identité</dt>
+                <dd>{{ client.numero_piece_identite ?? '—' }}</dd>
+              </div>
+              <div>
+                <dt>Contact urgence</dt>
+                <dd>{{ client.contact_urgence_nom ?? '—' }}</dd>
+              </div>
+              <div>
+                <dt>Tél. urgence</dt>
+                <dd>{{ client.contact_urgence_telephone ?? '—' }}</dd>
+              </div>
+              <div>
+                <dt>Groupe sanguin</dt>
+                <dd>{{ client.groupe_sanguin ?? '—' }}</dd>
+              </div>
+              <div>
+                <dt>Statut</dt>
+                <dd>
+                  <span class="cli-badge" [class.is-active]="client.actif">
+                    {{ client.actif ? 'Actif' : 'Inactif' }}
+                  </span>
+                </dd>
+              </div>
+              <div>
+                <dt>Inscrit le</dt>
+                <dd>{{ client.created_at | date: 'dd/MM/yyyy HH:mm' }}</dd>
+              </div>
+            </dl>
+
+            <div class="cli-detail__actions">
+              <button type="button" class="cli-btn cli-btn--primary cli-btn--block" (click)="startEdit(client)">
+                Modifier
+              </button>
+              <button type="button" class="cli-btn cli-btn--ghost cli-btn--block" (click)="closeView()">
+                Fermer
+              </button>
+            </div>
+          }
+        </article>
+      } @else {
       <article class="cli-card cli-card--form">
         <h2>
           @if (formMode() === 'create') {
-            Nouveau client
+            {{ 'modules.clients.newClient' | translate }}
           } @else {
-            Modifier le client
+            {{ 'modules.clients.editClient' | translate }}
           }
         </h2>
         @if (formMode() === 'edit' && editingClient()) {
@@ -251,6 +375,7 @@
           }
         </form>
       </article>
+      }
     </aside>
   </div>
 </section>

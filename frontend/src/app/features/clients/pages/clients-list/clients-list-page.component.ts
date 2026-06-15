@@ -4,14 +4,15 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { PaginationMeta } from '@core/models/api-response.model';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
-import { Client } from '@features/clients/models/client.model';
+import { TranslatePipe } from '@shared/pipes/translate.pipe';
+import { Client, ClientImportResult } from '@features/clients/models/client.model';
 import { ClientsService } from '@features/clients/services/clients.service';
 
-type FormMode = 'create' | 'edit';
+type FormMode = 'create' | 'edit' | 'view';
 
 @Component({
   selector: 'app-clients-list-page',
-  imports: [ReactiveFormsModule, LoadingSpinnerComponent, DatePipe],
+  imports: [ReactiveFormsModule, LoadingSpinnerComponent, DatePipe, TranslatePipe],
   templateUrl: './clients-list-page.component.html',
   styleUrl: './clients-list-page.component.scss',
 })
@@ -31,6 +32,10 @@ export class ClientsListPageComponent implements OnInit {
   readonly formError = signal<string | null>(null);
   readonly formMode = signal<FormMode>('create');
   readonly editingClient = signal<Client | null>(null);
+  readonly viewingClient = signal<Client | null>(null);
+  readonly detailLoading = signal(false);
+  readonly importing = signal(false);
+  readonly importResult = signal<ClientImportResult | null>(null);
 
   readonly perPage = 15;
 
@@ -93,6 +98,7 @@ export class ClientsListPageComponent implements OnInit {
   startCreate(): void {
     this.formMode.set('create');
     this.editingClient.set(null);
+    this.viewingClient.set(null);
     this.formSuccess.set(null);
     this.formError.set(null);
     this.clientForm.reset({
@@ -114,6 +120,7 @@ export class ClientsListPageComponent implements OnInit {
 
   startEdit(client: Client): void {
     this.formMode.set('edit');
+    this.viewingClient.set(null);
     this.editingClient.set(client);
     this.formSuccess.set(null);
     this.formError.set(null);
@@ -141,6 +148,32 @@ export class ClientsListPageComponent implements OnInit {
         this.formError.set('Impossible de charger le client.');
       },
     });
+  }
+
+  viewClient(client: Client): void {
+    this.formMode.set('view');
+    this.editingClient.set(null);
+    this.formSuccess.set(null);
+    this.formError.set(null);
+    this.detailLoading.set(true);
+    this.viewingClient.set(null);
+
+    this.clientsService.getById(client.id).subscribe({
+      next: (full) => {
+        this.viewingClient.set(full);
+        this.detailLoading.set(false);
+      },
+      error: () => {
+        this.formError.set('Impossible de charger les détails du client.');
+        this.detailLoading.set(false);
+        this.formMode.set('create');
+      },
+    });
+  }
+
+  closeView(): void {
+    this.viewingClient.set(null);
+    this.startCreate();
   }
 
   submitForm(): void {
@@ -223,7 +256,7 @@ export class ClientsListPageComponent implements OnInit {
     this.clientsService.delete(client.id).subscribe({
       next: () => {
         this.formSuccess.set('Client supprimé.');
-        if (this.editingClient()?.id === client.id) {
+        if (this.editingClient()?.id === client.id || this.viewingClient()?.id === client.id) {
           this.startCreate();
         }
         this.loadStats();
@@ -231,6 +264,54 @@ export class ClientsListPageComponent implements OnInit {
       },
       error: (err) => this.handleFormError(err),
     });
+  }
+
+  downloadImportTemplate(): void {
+    this.clientsService.downloadImportTemplate().subscribe({
+      error: () => this.formError.set('Impossible de télécharger le modèle Excel.'),
+    });
+  }
+
+  onImportFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+      this.formError.set('Format non supporté. Utilisez un fichier .xlsx.');
+      input.value = '';
+      return;
+    }
+
+    this.importing.set(true);
+    this.formError.set(null);
+    this.formSuccess.set(null);
+    this.importResult.set(null);
+
+    this.clientsService.importExcel(file).subscribe({
+      next: (result) => {
+        this.importing.set(false);
+        this.importResult.set(result);
+        if (result.crees > 0) {
+          this.formSuccess.set(`${result.crees} client(s) importé(s).`);
+          this.loadStats();
+          this.loadClients(1);
+        }
+      },
+      error: (err) => {
+        this.importing.set(false);
+        const detail = err.error?.detail;
+        this.formError.set(
+          typeof detail === 'string' ? detail : 'Impossible d\'importer le fichier Excel.',
+        );
+      },
+    });
+
+    input.value = '';
+  }
+
+  clearImportResult(): void {
+    this.importResult.set(null);
   }
 
   private loadStats(): void {

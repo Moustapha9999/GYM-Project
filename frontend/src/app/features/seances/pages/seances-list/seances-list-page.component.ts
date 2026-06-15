@@ -13,7 +13,7 @@ import { PageHeaderComponent } from '@shared/components/page-header/page-header.
     />
 
     <app-empty-state
-      icon="🏋️"
+      icon="dumbbell"
       title="Module Séances prêt"
       description="Brancher ici la liste du jour et l'encaissement via SeancesService."
     />

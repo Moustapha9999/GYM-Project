@@ -4,14 +4,15 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { MAIN_NAV_ITEMS } from '@layout/config/navigation.config';
 import { NavItem } from '@layout/models/nav-item.model';
+import { AppIconComponent } from '@shared/components/app-icon/app-icon.component';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, AppIconComponent],
   template: `
     <aside class="sidebar">
       <div class="sidebar__brand">
-        <span class="sidebar__logo">🏋️</span>
+        <span class="sidebar__logo"><app-icon name="gym" [size]="28" /></span>
         <div>
           <strong>GYM SYLLA</strong>
           <small>Total Fitness</small>
@@ -26,7 +27,7 @@ import { NavItem } from '@layout/models/nav-item.model';
             [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
             class="sidebar__link"
           >
-            <span aria-hidden="true">{{ item.icon }}</span>
+            <span aria-hidden="true"><app-icon [name]="item.icon" [size]="18" /></span>
             <span>{{ item.label }}</span>
           </a>
         }
@@ -53,7 +54,10 @@ import { NavItem } from '@layout/models/nav-item.model';
     }
 
     .sidebar__logo {
-      font-size: 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
     }
 
     .sidebar__brand strong {

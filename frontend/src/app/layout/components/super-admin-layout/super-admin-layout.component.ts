@@ -15,14 +15,26 @@ import { SuperAdminHeaderComponent } from '@layout/components/super-admin-header
     </div>
   `,
   styles: `
+    :host {
+      display: block;
+      height: 100%;
+      overflow: hidden;
+    }
+
     .sa-layout {
-      min-height: 100vh;
-      background: #f6f7f9;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background: var(--color-bg);
     }
 
     .sa-layout__content {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
       padding: 1.25rem 1.5rem 2rem;
       max-width: 1400px;
+      width: 100%;
       margin: 0 auto;
     }
   `,

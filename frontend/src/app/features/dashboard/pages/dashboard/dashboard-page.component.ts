@@ -21,7 +21,7 @@ import {
       <app-loading-spinner />
     } @else if (error()) {
       <app-empty-state
-        icon="⚠️"
+        icon="alert-triangle"
         title="Impossible de charger le tableau de bord"
         [description]="error()!"
       />

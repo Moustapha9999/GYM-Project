@@ -1,5 +1,5 @@
 import express from "express";
-import { sendMessage, isConnected } from "../whatsapp/baileys.client.js";
+import { sendMessage, sendDocument, isConnected } from "../whatsapp/baileys.client.js";
 import { sendSMS } from "../sms/sms.provider.js";
 
 const router = express.Router();
@@ -31,6 +31,22 @@ router.post("/send", checkSecret, async (req, res) => {
       return res.json({ success: true, canal: "sms", message_id: sms.message_id });
     }
     return res.status(502).json({ success: false, erreur: `WhatsApp: ${wa.erreur} | SMS: ${sms.erreur}` });
+  }
+  return res.status(502).json({ success: false, erreur: wa.erreur });
+});
+
+router.post("/send-document", checkSecret, async (req, res) => {
+  const { numero, filename, document_base64, caption } = req.body;
+  if (!numero || !filename || !document_base64) {
+    return res.status(400).json({
+      success: false,
+      erreur: "numero, filename et document_base64 requis",
+    });
+  }
+  const buffer = Buffer.from(document_base64, "base64");
+  const wa = await sendDocument(numero, buffer, filename, caption || "");
+  if (wa.success) {
+    return res.json({ success: true, canal: "whatsapp", message_id: wa.message_id });
   }
   return res.status(502).json({ success: false, erreur: wa.erreur });
 });

@@ -1,32 +1,40 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { APP_ROUTES } from '@core/config/app.constants';
 import { AuthService } from '@core/services/auth.service';
+import { ThemeService } from '@core/services/theme.service';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
+import { AppIconComponent } from '@shared/components/app-icon/app-icon.component';
+import { TranslatePipe } from '@shared/pipes/translate.pipe';
+import { TranslationService } from '@core/services/translation.service';
 import { environment } from '@env/environment';
 
 @Component({
   selector: 'app-login-page',
-  imports: [ReactiveFormsModule, LoadingSpinnerComponent],
+  imports: [ReactiveFormsModule, LoadingSpinnerComponent, TranslatePipe, AppIconComponent],
   template: `
     <div class="login-page">
       <section class="login-card">
         <div class="login-card__brand">
-          <span aria-hidden="true">🏋️</span>
-          <h1>TOTAL FITNESS</h1>
-          <p>Connexion à l'espace de gestion</p>
+          @if (logoUrl()) {
+            <img [src]="logoUrl()!" alt="" class="login-card__logo" />
+          } @else {
+            <span class="login-card__logo-fallback" aria-hidden="true"><app-icon name="gym" [size]="40" /></span>
+          }
+          <h1>{{ gymName() }}</h1>
+          <p>{{ slogan() }}</p>
         </div>
 
         <form [formGroup]="form" (ngSubmit)="submit()">
           <label>
-            Email
+            {{ 'auth.email' | translate }}
             <input type="email" formControlName="email" placeholder="reception@gymsylla.mr" />
           </label>
 
           <label>
-            Mot de passe
+            {{ 'auth.password' | translate }}
             <input type="password" formControlName="password" placeholder="••••••••" />
           </label>
 
@@ -35,24 +43,30 @@ import { environment } from '@env/environment';
           }
 
           <button type="submit" class="btn btn--primary" [disabled]="form.invalid || loading()">
-            Se connecter
+            {{ 'auth.login' | translate }}
           </button>
         </form>
 
         @if (loading()) {
-          <app-loading-spinner label="Connexion en cours..." />
+          <app-loading-spinner [label]="'auth.loggingIn' | translate" />
         }
       </section>
     </div>
   `,
   styles: `
+    :host {
+      display: block;
+      height: 100%;
+      overflow-y: auto;
+    }
+
     .login-page {
-      min-height: 100vh;
+      min-height: 100%;
       display: grid;
       place-items: center;
       padding: 1.5rem;
       background:
-        radial-gradient(circle at top right, rgba(234, 88, 12, 0.15), transparent 35%),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary) 15%, transparent), transparent 35%),
         var(--color-bg);
     }
 
@@ -70,8 +84,19 @@ import { environment } from '@env/environment';
       margin-bottom: 1.5rem;
     }
 
-    .login-card__brand span {
-      font-size: 2.5rem;
+    .login-card__logo-fallback {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 3.5rem;
+      height: 3.5rem;
+      color: var(--color-primary);
+    }
+
+    .login-card__logo {
+      width: 3.5rem;
+      height: 3.5rem;
+      object-fit: contain;
     }
 
     h1 {
@@ -104,7 +129,8 @@ import { environment } from '@env/environment';
       border: 1px solid var(--color-border);
       border-radius: var(--radius-md);
       font: inherit;
-      background: #fff;
+      background: var(--color-surface);
+      color: var(--color-text);
     }
 
     .login-card__error {
@@ -118,6 +144,12 @@ export class LoginPageComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly theme = inject(ThemeService);
+  private readonly translation = inject(TranslationService);
+
+  readonly gymName = computed(() => this.theme.settings()?.nom_salle ?? 'TOTAL FITNESS');
+  readonly slogan = computed(() => this.theme.settings()?.slogan ?? 'Connexion à l\'espace de gestion');
+  readonly logoUrl = computed(() => this.theme.settings()?.logo_url ?? null);
 
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -148,7 +180,7 @@ export class LoginPageComponent {
       },
       error: () => {
         this.loading.set(false);
-        this.errorMessage.set('Identifiants invalides ou serveur indisponible.');
+        this.errorMessage.set(this.translation.translate('auth.loginError'));
       },
     });
   }

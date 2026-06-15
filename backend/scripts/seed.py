@@ -85,6 +85,11 @@ TYPES_ABONNEMENTS = [
 
 PARAMETRES = [
     ("nom_salle", "TOTAL FITNESS", "Nom commercial de la salle"),
+    ("slogan", "Discipline · Force · Résultats", "Slogan affiché dans l'application"),
+    ("logo_url", "", "Logo (data URL base64)"),
+    ("theme_couleur", "#ea580c", "Couleur principale du thème (hex)"),
+    ("theme_mode", "light", "Mode d'affichage : light ou dark"),
+    ("langue", "fr", "Langue de l'interface : fr, en ou ar"),
     ("devise", "MRU", "Devise utilisée"),
     ("tarif_seance_journaliere", "50", "Tarif en MRU pour une séance journalière"),
     ("delai_grace_jours", "3", "Délai de grâce (jours) après expiration pour renouveler au tarif normal"),
