@@ -46,6 +46,15 @@ def _lien_whatsapp(numero: str, texte: str) -> str | None:
     return f"https://wa.me/{num}?text={texte_encode}"
 
 
+def _signature(db: Session) -> str:
+    """Signature ajoutée en bas de chaque message (nom + numéro de la salle)."""
+    nom = _param(db, "nom_salle", NOM_SALLE)
+    numero = _param(db, "numero_salle", "")
+    if numero:
+        return f"\n\n— {nom} · 📞 {numero}"
+    return f"\n\n— {nom}"
+
+
 def _abonnement_actuel(db: Session, client_id: uuid.UUID) -> Abonnement | None:
     return (
         db.query(Abonnement)
@@ -58,8 +67,8 @@ def _abonnement_actuel(db: Session, client_id: uuid.UUID) -> Abonnement | None:
 # ── Templates de messages ───────────────────────────────────
 def _texte_bienvenue(client: Client) -> str:
     return (
-        f"Bonjour {client.prenom} \n"
-        f"Bienvenue chez {NOM_SALLE} ! \n"
+        f"Bonjour {client.prenom} 👋\n"
+        f"Bienvenue chez {NOM_SALLE} ! 🏋️\n"
         f"Votre numéro de membre est {client.numero_membre}.\n"
         f"Discipline · Force · Résultats. À très vite en salle !"
     )
@@ -68,9 +77,9 @@ def _texte_bienvenue(client: Client) -> str:
 def _texte_carte_prete(client: Client, carte: CarteMembre | None) -> str:
     base = (
         f"Bonjour {client.prenom},\n"
-        f"Votre carte de membre {NOM_SALLE} est prête.\n"
+        f"Votre carte de membre {NOM_SALLE} est prête ✅\n"
         f"N° membre : {client.numero_membre}\n"
-        f"Présentez votre carte à l'entrée pour pointer vos séances."
+        f"Présentez votre QR code à l'entrée pour pointer vos séances."
     )
     return base
 
@@ -80,9 +89,9 @@ def _texte_renouvellement(client: Client, abo: Abonnement | None) -> str:
         fin = abo.date_fin.strftime("%d/%m/%Y")
         return (
             f"Bonjour {client.prenom},\n"
-            f"Merci d'avoir renouvelé votre abonnement chez {NOM_SALLE} ! \n"
+            f"Merci d'avoir renouvelé votre abonnement {NOM_SALLE} ! ✅\n"
             f"Montant : {abo.montant} MRU\n"
-            f"Valable jusqu'au {fin}. Merci pour votre confiance et bon entraînement ! "
+            f"Valable jusqu'au {fin}. Bon entraînement 💪"
         )
     return (
         f"Bonjour {client.prenom}, merci d'avoir renouvelé votre abonnement "
@@ -103,10 +112,10 @@ def _texte_alerte_fin(client: Client, abo: Abonnement | None) -> str:
         return (
             f"Bonjour {client.prenom},\n"
             f"Votre abonnement {NOM_SALLE} {echeance}.\n"
-            f"Pensez à le renouveler pour continuer à vous entraîner sans interruption ! "
+            f"Pensez à le renouveler pour continuer à vous entraîner sans interruption ! 🔔"
         )
     return (
-        f"Bonjour {client.prenom}, pensez à renouveler votre abonnement {NOM_SALLE} ! "
+        f"Bonjour {client.prenom}, pensez à renouveler votre abonnement {NOM_SALLE} ! 🔔"
     )
 
 
@@ -116,7 +125,7 @@ def _texte_recu_paiement(client: Client, abo: Abonnement | None) -> str:
         f"Bonjour {client.prenom},\n"
         f"Nous confirmons votre paiement chez {NOM_SALLE}.\n"
         f"Montant : {montant} MRU\n"
-        f"Merci pour votre confiance ! 🧾"
+        f"Merci de votre confiance ! 🧾"
     )
 
 
@@ -159,6 +168,9 @@ def generer(db: Session, client_id: uuid.UUID, type_message: str) -> dict:
     else:
         abo = _abonnement_actuel(db, client_id)
         texte = fonction(client, abo)
+
+    # Ajouter la signature de la salle (nom + numéro)
+    texte = texte + _signature(db)
 
     numero = client.whatsapp or client.telephone
     return {
