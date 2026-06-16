@@ -46,3 +46,4 @@ class EnvoiWhatsappResult(BaseModel):
     statut: str
     numero: str
     message: str | None = None
+    lien_whatsapp: str | None = None

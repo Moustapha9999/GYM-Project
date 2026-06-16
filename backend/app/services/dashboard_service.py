@@ -157,6 +157,76 @@ def dashboard_reception(db: Session) -> dict:
         Abonnement.date_fin <= dans_7j,
     ).scalar()
 
+    # ── Coach / Planning / Programmes ─────────────────────────
+    programmes_actifs = db.query(func.count(ProgrammeSportif.id)).filter(
+        ProgrammeSportif.actif == True  # noqa: E712
+    ).scalar()
+    seances_planifiees_jour = db.query(func.count(PlanningCoach.id)).filter(
+        PlanningCoach.date_seance == auj
+    ).scalar()
+    debut_sem = auj - timedelta(days=auj.weekday())
+    fin_sem = debut_sem + timedelta(days=6)
+    seances_planifiees_semaine = db.query(func.count(PlanningCoach.id)).filter(
+        PlanningCoach.date_seance >= debut_sem,
+        PlanningCoach.date_seance <= fin_sem,
+    ).scalar()
+    clients_suivis = db.query(func.count(func.distinct(ProgrammeSportif.client_id))).filter(
+        ProgrammeSportif.actif == True  # noqa: E712
+    ).scalar()
+
+    # ── Graphes : activité 7 derniers jours ───────────────────
+    jours_labels = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
+    activite_7_jours = []
+    presences_7_jours = []
+    for i in range(6, -1, -1):
+        j = auj - timedelta(days=i)
+        d, f = _bornes_jour(j)
+        nb_pay = db.query(func.count(Paiement.id)).filter(
+            Paiement.date_paiement >= d,
+            Paiement.date_paiement <= f,
+            Paiement.statut == "Validé",
+        ).scalar()
+        nb_pres = db.query(func.count(Presence.id)).filter(
+            Presence.heure_entree >= d,
+            Presence.heure_entree <= f,
+        ).scalar()
+        label = jours_labels[j.weekday()] if i > 0 else "Auj."
+        activite_7_jours.append({"label": label, "valeur": nb_pay})
+        presences_7_jours.append({"label": label, "valeur": nb_pres})
+
+    # ── Graphe : planning de la semaine ───────────────────────
+    planning_semaine = []
+    for i in range(7):
+        j = debut_sem + timedelta(days=i)
+        nb = db.query(func.count(PlanningCoach.id)).filter(
+            PlanningCoach.date_seance == j
+        ).scalar()
+        planning_semaine.append({"label": jours_labels[i], "valeur": nb})
+
+    # ── Graphe : planning par statut (semaine courante) ───────
+    rep_planning = (
+        db.query(PlanningCoach.statut, func.count(PlanningCoach.id))
+        .filter(
+            PlanningCoach.date_seance >= debut_sem,
+            PlanningCoach.date_seance <= fin_sem,
+        )
+        .group_by(PlanningCoach.statut)
+        .all()
+    )
+    planning_par_statut = [{"label": statut, "valeur": nb} for statut, nb in rep_planning]
+
+    # ── Graphe : programmes actifs / inactifs ─────────────────
+    prog_actifs = db.query(func.count(ProgrammeSportif.id)).filter(
+        ProgrammeSportif.actif == True  # noqa: E712
+    ).scalar()
+    prog_inactifs = db.query(func.count(ProgrammeSportif.id)).filter(
+        ProgrammeSportif.actif == False  # noqa: E712
+    ).scalar()
+    programmes_par_statut = [
+        {"label": "Actifs", "valeur": prog_actifs},
+        {"label": "Inactifs", "valeur": prog_inactifs},
+    ]
+
     return {
         "revenus_jour": revenus_jour,
         "nombre_paiements_jour": nb_paiements,
@@ -165,6 +235,15 @@ def dashboard_reception(db: Session) -> dict:
         "seances_jour": seances_jour,
         "abonnements_souscrits_jour": abos_jour,
         "abonnements_expirant_7j": expirant,
+        "programmes_actifs": programmes_actifs,
+        "seances_planifiees_jour": seances_planifiees_jour,
+        "seances_planifiees_semaine": seances_planifiees_semaine,
+        "clients_suivis": clients_suivis,
+        "activite_7_jours": activite_7_jours,
+        "presences_7_jours": presences_7_jours,
+        "planning_semaine": planning_semaine,
+        "planning_par_statut": planning_par_statut,
+        "programmes_par_statut": programmes_par_statut,
     }
 
 

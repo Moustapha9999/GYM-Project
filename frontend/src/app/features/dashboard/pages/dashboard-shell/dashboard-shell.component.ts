@@ -15,7 +15,7 @@ import { SuperAdminDashboardPageComponent } from '@features/dashboard/pages/supe
   template: `
     @if (isSuperAdmin()) {
       <app-super-admin-dashboard-page />
-    } @else if (isReceptionist()) {
+    } @else if (isReceptionist() || isManager()) {
       <app-reception-dashboard-page />
     } @else {
       <app-dashboard-page />
@@ -27,4 +27,5 @@ export class DashboardShellComponent {
 
   readonly isSuperAdmin = computed(() => this.auth.roleName() === 'super_admin');
   readonly isReceptionist = computed(() => this.auth.roleName() === 'receptionniste');
+  readonly isManager = computed(() => this.auth.roleName() === 'manager');
 }

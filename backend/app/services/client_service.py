@@ -5,7 +5,13 @@ from datetime import datetime, timezone
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
+from app.models.abonnement import Abonnement
+from app.models.carte_membre import CarteMembre
 from app.models.client import Client
+from app.models.notification import Notification
+from app.models.paiement import Paiement
+from app.models.planning_coach import PlanningCoach
+from app.models.seance_journaliere import SeanceJournaliere
 from app.schemas.client import ClientCreate, ClientUpdate
 
 
@@ -114,6 +120,53 @@ def modifier_photo(db: Session, client: Client, photo_base64: str) -> Client:
 
 
 def supprimer(db: Session, client: Client) -> None:
-    """Supprime définitivement un client (hard delete)."""
+    """
+    Supprime définitivement un client et toutes ses données liées.
+    Les tables sans CASCADE DB (paiements, séances, notifications…) sont
+    nettoyées explicitement pour éviter les erreurs d'intégrité référentielle.
+    """
+    client_id = client.id
+
+    abo_ids = [
+        row[0]
+        for row in db.query(Abonnement.id).filter(Abonnement.client_id == client_id).all()
+    ]
+    seance_ids = [
+        row[0]
+        for row in db.query(SeanceJournaliere.id)
+        .filter(SeanceJournaliere.client_id == client_id)
+        .all()
+    ]
+
+    paiement_filters = [Paiement.client_id == client_id]
+    if abo_ids:
+        paiement_filters.append(Paiement.abonnement_id.in_(abo_ids))
+    if seance_ids:
+        paiement_filters.append(Paiement.seance_journaliere_id.in_(seance_ids))
+
+    db.query(Paiement).filter(or_(*paiement_filters)).delete(synchronize_session=False)
+
+    db.query(CarteMembre).filter(CarteMembre.client_id == client_id).delete(
+        synchronize_session=False
+    )
+    db.query(Notification).filter(Notification.client_id == client_id).delete(
+        synchronize_session=False
+    )
+    db.query(PlanningCoach).filter(PlanningCoach.client_id == client_id).delete(
+        synchronize_session=False
+    )
+    db.query(SeanceJournaliere).filter(SeanceJournaliere.client_id == client_id).delete(
+        synchronize_session=False
+    )
+
+    # Chaînage entre abonnements (renouvele_de) avant suppression
+    db.query(Abonnement).filter(Abonnement.client_id == client_id).update(
+        {"renouvele_de": None},
+        synchronize_session=False,
+    )
+    db.query(Abonnement).filter(Abonnement.client_id == client_id).delete(
+        synchronize_session=False
+    )
+
     db.delete(client)
     db.commit()

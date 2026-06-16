@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.core.dependencies import require_permission
 from app.models.utilisateur import Utilisateur
 from app.schemas.common import ApiResponse
+from app.schemas.tarif import TarifsRead, TarifsUpdate
 from app.schemas.utilisateur import (
     PermissionRead,
     RoleDetailRead,
@@ -17,7 +18,8 @@ from app.schemas.utilisateur import (
     UtilisateurRead,
     UtilisateurUpdate,
 )
-from app.services import role_service, utilisateur_service
+from app.services import role_service, tarif_service, utilisateur_service
+from app.services.tarif_service import TarifError
 
 router = APIRouter(tags=["Administration"])
 
@@ -201,3 +203,36 @@ def lister_permissions(
         data=[PermissionRead.model_validate(p) for p in permissions],
         message=None,
     )
+
+
+@router.get(
+    "/tarifs",
+    response_model=ApiResponse[TarifsRead],
+)
+def lire_tarifs(
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("parametres.lecture")),
+):
+    """Tarifs séance journalière et abonnements homme / femme."""
+    try:
+        tarifs = tarif_service.lire_tarifs(db)
+    except TarifError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return ApiResponse(success=True, data=tarifs, message=None)
+
+
+@router.put(
+    "/tarifs",
+    response_model=ApiResponse[TarifsRead],
+)
+def modifier_tarifs(
+    payload: TarifsUpdate,
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("parametres.modification")),
+):
+    """Met à jour les tarifs normaux (séance, abonnements homme et femme)."""
+    try:
+        tarifs = tarif_service.mettre_a_jour_tarifs(db, payload)
+    except TarifError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return ApiResponse(success=True, data=tarifs, message="Tarifs enregistrés.")

@@ -1,8 +1,10 @@
 """Router du module Paiements (journal + caisse du jour)."""
 import uuid
+import io
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -17,11 +19,19 @@ from app.schemas.paiement import (
     PaiementDetail,
     PaiementRead,
 )
-from app.services import paiement_service
+from app.services import export_service, paiement_service
 from app.services.paiement_service import PaiementError
 from app.models.moyen_paiement import MoyenPaiement
 
 router = APIRouter(prefix="/paiements", tags=["Paiements"])
+
+
+def _stream(contenu: bytes, media_type: str, filename: str) -> StreamingResponse:
+    return StreamingResponse(
+        io.BytesIO(contenu),
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.get("", response_model=ApiResponse[list[PaiementDetail]])
@@ -42,6 +52,18 @@ def journal_paiements(
         type_paiement=type_paiement,
     )
     return ApiResponse(success=True, data=data, message=None)
+
+
+@router.get("/import-modele")
+def telecharger_modele_import(
+    _: Utilisateur = Depends(require_permission("paiements.lecture")),
+):
+    xl = export_service.generer_modele_import_paiements()
+    return _stream(
+        xl,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "modele_import_paiements.xlsx",
+    )
 
 
 @router.post("", response_model=ApiResponse[PaiementCreateResult], status_code=status.HTTP_201_CREATED)

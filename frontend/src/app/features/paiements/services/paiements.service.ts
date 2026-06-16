@@ -50,4 +50,18 @@ export class PaiementsService {
       .post<PaiementCreateResult>('paiements', payload)
       .pipe(map((response) => response.data));
   }
+
+  downloadImportTemplate(): Observable<Blob> {
+    return this.api.getBlob('paiements/import-modele').pipe(
+      map((blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'modele_import_paiements.xlsx';
+        link.click();
+        URL.revokeObjectURL(url);
+        return blob;
+      }),
+    );
+  }
 }

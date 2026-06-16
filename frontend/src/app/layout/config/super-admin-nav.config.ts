@@ -12,6 +12,7 @@ export const SUPER_ADMIN_NAV: SuperAdminNavItem[] = [
   { labelKey: 'nav.abonnements', route: APP_ROUTES.abonnements },
   { labelKey: 'nav.cartesMembres', route: APP_ROUTES.cartesMembres },
   { labelKey: 'nav.finances', route: APP_ROUTES.finances },
+  { labelKey: 'nav.rapports', route: APP_ROUTES.rapports },
   { labelKey: 'nav.admin', route: APP_ROUTES.admin },
   { labelKey: 'nav.parametres', route: APP_ROUTES.parametres },
 ];

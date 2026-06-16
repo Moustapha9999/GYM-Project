@@ -29,6 +29,15 @@ import { ReceptionSidebarComponent } from '@layout/components/reception-sidebar/
       display: flex;
       height: 100%;
       background: var(--color-bg);
+      --rec-green: #0d5c3b;
+      --color-primary: var(--rec-green);
+      --color-primary-end: #147a50;
+      --color-primary-soft: color-mix(in srgb, var(--rec-green) 15%, var(--color-surface));
+      --color-primary-hover: #0a4a2f;
+      --color-warning-bg: color-mix(in srgb, var(--rec-green) 10%, var(--color-surface));
+      --color-warning-text: var(--rec-green);
+      --color-warning-border: color-mix(in srgb, var(--rec-green) 28%, var(--color-border));
+      --kpi-icon-bg-1: color-mix(in srgb, var(--rec-green) 12%, var(--color-surface));
     }
 
     .rec-layout__main {

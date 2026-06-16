@@ -6,6 +6,7 @@ import { PaginationMeta } from '@core/models/api-response.model';
 import { AuthService } from '@core/services/auth.service';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
 import { AppIconComponent } from '@shared/components/app-icon/app-icon.component';
+import { DialogService } from '@shared/components/app-dialog/dialog.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { Employe } from '@features/admin/models/employe.model';
 import {
@@ -15,14 +16,22 @@ import {
   Utilisateur,
 } from '@features/admin/models/utilisateur.model';
 import { AdminService } from '@features/admin/services/admin.service';
+import { Tarifs } from '@features/admin/models/tarif.model';
 
-type AdminTab = 'utilisateurs' | 'employes' | 'roles';
+type AdminTab = 'utilisateurs' | 'employes' | 'roles' | 'tarifs';
 type FormMode = 'create' | 'edit' | 'view';
 
-const ASSIGNABLE_ROLES = ['receptionniste', 'coach', 'pdg'];
+const ASSIGNABLE_ROLES = [
+  'receptionniste',
+  'coach',
+  'pdg',
+  'manager',
+  'responsable_rh',
+  'comptable',
+];
 const SYSTEM_ROLES = ['super_admin'];
 const PRIVILEGE_MANAGERS = ['super_admin', 'pdg'];
-const PDG_EDITABLE_ROLES = ['receptionniste', 'coach'];
+const PDG_EDITABLE_ROLES = ['receptionniste', 'coach', 'manager', 'responsable_rh', 'comptable'];
 
 const PERMISSION_ACTIONS = [
   'lecture',
@@ -65,6 +74,7 @@ export class AdminPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly adminService = inject(AdminService);
   private readonly authService = inject(AuthService);
+  private readonly dialog = inject(DialogService);
 
   readonly permissionActions = PERMISSION_ACTIONS;
 
@@ -122,6 +132,18 @@ export class AdminPageComponent implements OnInit {
   readonly viewingEmploye = signal<Employe | null>(null);
   readonly employePerPage = 15;
 
+  // Tarifs
+  readonly tarifsLoading = signal(false);
+  readonly tarifs = signal<Tarifs | null>(null);
+
+  readonly tarifsForm = this.fb.nonNullable.group({
+    tarif_seance_journaliere: [0, [Validators.required, Validators.min(1)]],
+    homme_montant: [0, [Validators.required, Validators.min(1)]],
+    homme_montant_inscription: [0, [Validators.required, Validators.min(1)]],
+    femme_montant: [0, [Validators.required, Validators.min(1)]],
+    femme_montant_inscription: [0, [Validators.required, Validators.min(1)]],
+  });
+
   readonly employeFilters = this.fb.nonNullable.group({
     search: [''],
     statut: [''],
@@ -144,9 +166,14 @@ export class AdminPageComponent implements OnInit {
   readonly fonctionOptions = [
     'Réceptionniste',
     'Coach',
+    'Manager',
+    'Responsable de salle',
+    'Responsable RH',
+    'Directeur adjoint',
+    'Comptable',
+    'Responsable commercial',
     'Agent d\'entretien',
     'Gardien',
-    'Comptable',
     'Autre',
   ];
 
@@ -200,6 +227,14 @@ export class AdminPageComponent implements OnInit {
     this.roles().filter((r) => !SYSTEM_ROLES.includes(r.nom)),
   );
 
+  readonly systemRolesList = computed(() =>
+    this.roles().filter((r) => r.systeme === true || r.nom === 'super_admin' || r.nom === 'pdg'),
+  );
+
+  readonly operationalRolesList = computed(() =>
+    this.roles().filter((r) => r.systeme !== true && r.nom !== 'super_admin' && r.nom !== 'pdg'),
+  );
+
   ngOnInit(): void {
     this.loadRoles();
     this.loadUtilisateurs();
@@ -214,6 +249,9 @@ export class AdminPageComponent implements OnInit {
     }
     if (tab === 'roles' && !this.selectedRoleId() && this.roles().length > 0) {
       this.selectRole(this.roles()[0].id);
+    }
+    if (tab === 'tarifs' && !this.tarifs()) {
+      this.loadTarifs();
     }
   }
 
@@ -333,15 +371,25 @@ export class AdminPageComponent implements OnInit {
 
   deactivateUser(user: Utilisateur): void {
     if (SYSTEM_ROLES.includes(user.role.nom)) return;
-    if (!confirm(`Désactiver le compte de ${user.prenom} ${user.nom} ?`)) return;
 
-    this.adminService.deactivateUtilisateur(user.id).subscribe({
-      next: () => {
-        this.formSuccess.set('Compte désactivé.');
-        this.loadUtilisateurs();
-      },
-      error: (err) => this.handleError(err),
-    });
+    this.dialog
+      .confirm({
+        title: 'Désactiver le compte',
+        message: `Désactiver le compte de ${user.prenom} ${user.nom} ?`,
+        variant: 'warning',
+        confirmLabel: 'Désactiver',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+
+        this.adminService.deactivateUtilisateur(user.id).subscribe({
+          next: () => {
+            this.formSuccess.set('Compte désactivé.');
+            this.loadUtilisateurs();
+          },
+          error: (err) => this.handleError(err),
+        });
+      });
   }
 
   isSystemUser(user: Utilisateur): boolean {
@@ -476,15 +524,23 @@ export class AdminPageComponent implements OnInit {
   }
 
   deleteEmploye(employe: Employe): void {
-    if (!confirm(`Supprimer ${employe.prenom} ${employe.nom} ?`)) return;
+    this.dialog
+      .confirm({
+        title: 'Supprimer l\'employé',
+        message: `Supprimer ${employe.prenom} ${employe.nom} ?`,
+        variant: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
 
-    this.adminService.deleteEmploye(employe.id).subscribe({
-      next: () => {
-        this.formSuccess.set('Employé supprimé.');
-        this.loadEmployes(this.employesMeta()?.current_page ?? 1);
-      },
-      error: (err) => this.handleError(err),
-    });
+        this.adminService.deleteEmploye(employe.id).subscribe({
+          next: () => {
+            this.formSuccess.set('Employé supprimé.');
+            this.loadEmployes(this.employesMeta()?.current_page ?? 1);
+          },
+          error: (err) => this.handleError(err),
+        });
+      });
   }
 
   // ── Rôles & permissions ───────────────────────────────────
@@ -619,6 +675,64 @@ export class AdminPageComponent implements OnInit {
       export: 'Export',
     };
     return labels[action] ?? action;
+  }
+
+  // ── Tarifs ────────────────────────────────────────────────
+  submitTarifs(): void {
+    if (this.tarifsForm.invalid) {
+      this.tarifsForm.markAllAsTouched();
+      return;
+    }
+    const v = this.tarifsForm.getRawValue();
+    this.submitting.set(true);
+    this.clearMessages();
+    this.adminService
+      .updateTarifs({
+        tarif_seance_journaliere: v.tarif_seance_journaliere,
+        abonnement_homme: {
+          montant: v.homme_montant,
+          montant_inscription: v.homme_montant_inscription,
+        },
+        abonnement_femme: {
+          montant: v.femme_montant,
+          montant_inscription: v.femme_montant_inscription,
+        },
+      })
+      .subscribe({
+        next: (tarifs) => {
+          this.tarifs.set(tarifs);
+          this.patchTarifsForm(tarifs);
+          this.submitting.set(false);
+          this.formSuccess.set('Tarifs enregistrés avec succès.');
+        },
+        error: (err) => this.handleError(err),
+      });
+  }
+
+  private loadTarifs(): void {
+    this.tarifsLoading.set(true);
+    this.clearMessages();
+    this.adminService.getTarifs().subscribe({
+      next: (tarifs) => {
+        this.tarifs.set(tarifs);
+        this.patchTarifsForm(tarifs);
+        this.tarifsLoading.set(false);
+      },
+      error: () => {
+        this.formError.set('Impossible de charger les tarifs.');
+        this.tarifsLoading.set(false);
+      },
+    });
+  }
+
+  private patchTarifsForm(tarifs: Tarifs): void {
+    this.tarifsForm.reset({
+      tarif_seance_journaliere: tarifs.tarif_seance_journaliere,
+      homme_montant: tarifs.abonnement_homme.montant,
+      homme_montant_inscription: tarifs.abonnement_homme.montant_inscription,
+      femme_montant: tarifs.abonnement_femme.montant,
+      femme_montant_inscription: tarifs.abonnement_femme.montant_inscription,
+    });
   }
 
   // ── Chargement ────────────────────────────────────────────

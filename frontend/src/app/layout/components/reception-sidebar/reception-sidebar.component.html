@@ -1,15 +1,18 @@
 <aside class="rec-sidebar">
   <div class="rec-sidebar__brand">
-    <span class="rec-sidebar__logo">
-      <span class="rec-sidebar__logo-dot"></span>
-      <span class="rec-sidebar__logo-dot"></span>
-    </span>
+    @if (logoUrl()) {
+      <img [src]="logoUrl()!" alt="" class="rec-sidebar__logo-img" />
+    } @else {
+      <span class="rec-sidebar__logo-fallback" aria-hidden="true">
+        <app-icon name="gym" [size]="22" />
+      </span>
+    }
     <strong>{{ gymName() }}</strong>
   </div>
 
   <p class="rec-sidebar__section">{{ 'common.menu' | translate }}</p>
   <nav class="rec-sidebar__nav">
-    @for (item of menuItems; track item.route) {
+    @for (item of menuItems(); track item.route) {
       <a
         [routerLink]="item.route"
         routerLinkActive="is-active"
@@ -39,6 +42,6 @@
 
   <div class="rec-sidebar__footer">
     <small>{{ userName() }}</small>
-    <span>{{ 'roles.receptionist' | translate }}</span>
+    <span>{{ roleLabelKey() | translate }}</span>
   </div>
 </aside>

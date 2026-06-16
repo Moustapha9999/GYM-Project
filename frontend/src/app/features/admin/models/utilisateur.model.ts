@@ -2,6 +2,7 @@ export interface Role {
   id: string;
   nom: string;
   libelle: string;
+  systeme?: boolean;
 }
 
 export interface Permission {

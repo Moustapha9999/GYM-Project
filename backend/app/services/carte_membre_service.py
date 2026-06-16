@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.models.abonnement import Abonnement
 from app.models.carte_membre import CarteMembre
 from app.models.client import Client
+from app.services import carte_qr_service, parametre_service
 
 
 def lister(
@@ -14,6 +15,9 @@ def lister(
     search: str | None = None,
 ):
     """Retourne une requête filtrée des cartes membres (clients inscrits avec abonnement)."""
+    carte_qr_service.synchroniser_cartes_abonnements_inactifs(db)
+    db.commit()
+
     query = (
         db.query(CarteMembre)
         .join(Client, CarteMembre.client_id == Client.id)
@@ -76,9 +80,10 @@ def to_list_item(carte: CarteMembre) -> dict:
     }
 
 
-def construire_donnees_pdf(carte: CarteMembre) -> dict:
+def construire_donnees_pdf(db: Session, carte: CarteMembre) -> dict:
     """Prépare le dict pour la génération PDF de la carte membre."""
     client = carte.client
+    settings = parametre_service.lire_app_settings(db)
     type_nom = "—"
     if carte.abonnement and carte.abonnement.type_abonnement:
         type_nom = carte.abonnement.type_abonnement.nom
@@ -89,6 +94,7 @@ def construire_donnees_pdf(carte: CarteMembre) -> dict:
         "type_abonnement": type_nom,
         "date_expiration": carte.date_expiration.strftime("%d/%m/%Y"),
         "qr_code_uuid": str(carte.qr_code_uuid),
-        "photo_url": client.photo_url,
+        "logo_url": settings.logo_url,
+        "nom_salle": settings.nom_salle,
         "statut": carte.statut,
     }

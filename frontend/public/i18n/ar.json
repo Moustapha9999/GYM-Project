@@ -29,6 +29,10 @@
     "inRoom": "في القاعة",
     "activeLabel": "نشط"
   },
+  "dialog": {
+    "confirm": "تأكيد",
+    "ok": "موافق"
+  },
   "languages": {
     "fr": "Français",
     "en": "English",
@@ -44,11 +48,15 @@
     "admin": "الإدارة",
     "parametres": "الإعدادات",
     "presences": "الحضور",
-    "seances": "الحصص اليومية"
+    "seances": "الحصص اليومية",
+    "rapports": "التقارير",
+    "rh": "الموارد البشرية",
+    "coach": "المدرب (الجدول والبرامج)"
   },
   "roles": {
     "superAdmin": "المشرف العام",
-    "receptionist": "موظف الاستقبال"
+    "receptionist": "موظف الاستقبال",
+    "manager": "مدير"
   },
   "notifications": {
     "panelTitle": "الإشعارات",
@@ -70,9 +78,12 @@
     "subtitle": "هوية النادي، الشعار، المظهر ولغة الواجهة.",
     "loading": "جاري تحميل الإعدادات...",
     "identityTitle": "هوية النادي",
-    "identityHint": "الاسم والشعار المعروضان في التطبيق.",
+    "identityHint": "اسم النادي ورقم واتساب والشعار المعروضون في التطبيق.",
     "gymName": "اسم النادي",
     "gymNamePlaceholder": "TOTAL FITNESS",
+    "gymPhone": "رقم واتساب النادي",
+    "gymPhonePlaceholder": "+222 45 25 00 00",
+    "gymPhoneHint": "يُستخدم هذا الرقم لإرسال إشعارات واتساب للعملاء (توقيع الرسائل).",
     "slogan": "الشعار",
     "sloganPlaceholder": "انضباط · قوة · نتائج",
     "chooseLogo": "اختيار شعار",
@@ -103,6 +114,27 @@
       "blue": "أزرق",
       "purple": "بنفسجي",
       "red": "أحمر"
+    }
+  },
+  "whatsapp": {
+    "promptTitle": "إرسال رسالة واتساب",
+    "promptMessage": "هل تريد إرسال « {{type}} » إلى {{name}} عبر واتساب؟",
+    "send": "فتح واتساب",
+    "sendCard": "إرسال البطاقة والرسالة",
+    "sending": "جارٍ الإرسال…",
+    "cartePrompt": "إرسال « {{type}} » وبطاقة PDF إلى {{name}} عبر واتساب؟",
+    "carteAutoSuccess": "تم إرسال البطاقة والرسالة إلى {{numero}} عبر واتساب.",
+    "carteManualSuccess": "تم تنزيل PDF وفتح واتساب — أرفق ملف PDF بالرسالة.",
+    "cartePdfError": "تم فتح واتساب. تعذر تنزيل PDF تلقائياً.",
+    "carteSendError": "فشل الإرسال عبر واتساب. تحقق من اتصال الخدمة.",
+    "noPhone": "لا يوجد رقم واتساب أو هاتف مسجل لهذا العميل.",
+    "generateError": "تعذر تجهيز الرسالة.",
+    "types": {
+      "bienvenue": "رسالة ترحيب",
+      "carte_prete": "بطاقة العضو جاهزة",
+      "renouvellement": "تأكيد التجديد",
+      "alerte_fin": "تنبيه انتهاء الاشتراك",
+      "recu_paiement": "إيصال الدفع"
     }
   },
   "dashboard": {
@@ -138,11 +170,39 @@
       "subscriptionsToday": "اشتراكات اليوم:",
       "reminders": "تذكيرات",
       "occupancy": "إشغال القاعة",
+      "quickAccess": "وصول سريع",
+      "coachSection": "الجدول والبرامج",
+      "viewPlanning": "عرض الجدول",
+      "viewProgrammes": "عرض البرامج",
+      "activities": {
+        "sessionsToday": "حصص اليوم",
+        "sessionsTodayHint": "جدول المدربين لليوم",
+        "activePrograms": "برامج نشطة",
+        "activeProgramsHint": "البرامج الرياضية قيد المتابعة",
+        "noSessions": "لا توجد حصص مخططة اليوم.",
+        "noPrograms": "لا توجد برامج نشطة حالياً.",
+        "active": "نشط"
+      },
       "kpi": {
+        "revenue": "إيرادات اليوم",
         "paymentsToday": "مدفوعات اليوم",
-        "presencesToday": "حضور اليوم",
-        "sessionsCollected": "حصص محصّلة",
-        "expiringSubscriptions": "اشتراكات تنتهي"
+        "subscriptionsToday": "اشتراكات اليوم",
+        "expiringSubscriptions": "اشتراكات تنتهي",
+        "activePrograms": "برامج نشطة",
+        "clientsFollowed": "عملاء متابعون",
+        "sessionsToday": "حصص مخططة (اليوم)",
+        "sessionsWeek": "حصص مخططة (الأسبوع)"
+      },
+      "charts": {
+        "section": "رسوم بيانية وإحصائيات",
+        "payments7d": "المدفوعات — آخر 7 أيام",
+        "presences7d": "الحضور — آخر 7 أيام",
+        "planningWeek": "جدول المدربين — الأسبوع",
+        "planningWeekHint": "عدد الحصص المخططة يومياً",
+        "planningStatus": "الجدول حسب الحالة",
+        "programmes": "البرامج الرياضية",
+        "programmesHint": "توزيع البرامج النشطة وغير النشطة",
+        "noPlanning": "لا توجد حصص مخططة هذا الأسبوع."
       }
     }
   },
@@ -154,6 +214,14 @@
       "detailsTitle": "تفاصيل الاشتراك",
       "subscribeTitle": "اشتراك / تجديد",
       "formulasTitle": "الخطط المتاحة",
+      "formulasMen": "اشتراك الرجال",
+      "formulasWomen": "اشتراك النساء",
+      "formulasRegistration": "التسجيل",
+      "formulasMonthly": "شهري",
+      "formulasDailySession": "جلسة يومية",
+      "formulasPerSession": "لكل جلسة",
+      "formulasEmpty": "لا توجد خطة مُعدّة.",
+      "formulasPaymentNote": "يجب دفع الجلسات قبل البدء.",
       "kpi": {
         "active": "اشتراكات نشطة",
         "suspended": "معلّقة",
@@ -203,7 +271,8 @@
       "tabs": {
         "users": "حسابات المستخدمين",
         "employees": "الموظفون",
-        "roles": "الأدوار والصلاحيات"
+        "roles": "الأدوار والصلاحيات",
+        "pricing": "التعريفات"
       },
       "usersListTitle": "حسابات المستخدمين",
       "userDetailsTitle": "تفاصيل الحساب",
@@ -220,11 +289,53 @@
       "roleSummary": "ملخص — {{role}}",
       "kpi": {
         "totalAccounts": "إجمالي الحسابات"
+      },
+      "pricing": {
+        "title": "التعريفات العادية",
+        "subtitle": "الحصة اليومية والاشتراكات الشهرية للرجال / النساء (الشهر الأول والتجديد).",
+        "loading": "جاري تحميل التعريفات…",
+        "seanceTitle": "حصة يومية",
+        "seanceAmount": "سعر الحصة (أوقية)",
+        "menTitle": "اشتراك الرجال",
+        "womenTitle": "اشتراك النساء",
+        "firstMonth": "الشهر الأول / التسجيل (أوقية)",
+        "renewal": "التجديد (أوقية)",
+        "currencyHint": "المبالغ بالأوقية. تُطبَّق الأسعار الجديدة على الاشتراكات والحصص القادمة."
       }
     },
     "presences": {
       "title": "الحضور",
-      "subtitle": "متابعة الدخول والحضور اليومي."
+      "subtitle": "تسجيل الدخول/الخروج عبر QR أو يدوياً.",
+      "dateLabel": "اليوم",
+      "pointageTitle": "التسجيل",
+      "modeQr": "مسح QR",
+      "modeManual": "يدوي",
+      "qrEntreeLabel": "QR بطاقة العضو — دخول",
+      "qrSortieLabel": "QR بطاقة العضو — خروج",
+      "qrHint": "ضع المؤشر في الحقل وامسح البطاقة (الماسح يرسل UUID).",
+      "searchClient": "بحث عن عضو",
+      "entreeBtn": "تسجيل دخول",
+      "sortieBtn": "تسجيل خروج",
+      "sortieTitle": "خروج سريع",
+      "processing": "جاري المعالجة…",
+      "listTitle": "سجل اليوم",
+      "entries": "دخول",
+      "loading": "جاري تحميل الحضور…",
+      "empty": "لا يوجد حضور مسجل لهذا التاريخ.",
+      "inRoom": "في القاعة",
+      "kpi": {
+        "inRoom": "أعضاء في القاعة",
+        "total": "دخول اليوم",
+        "qr": "عبر QR",
+        "manual": "يدوي"
+      },
+      "columns": {
+        "member": "العضو",
+        "method": "الطريقة",
+        "entry": "الدخول",
+        "exit": "الخروج",
+        "duration": "المدة"
+      }
     },
     "seances": {
       "title": "الحصص اليومية",

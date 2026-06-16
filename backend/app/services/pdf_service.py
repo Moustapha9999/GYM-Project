@@ -152,6 +152,46 @@ def generer_fiche_paie(fiche: dict) -> bytes:
     return buffer.read()
 
 
+def generer_rapport_tableau(titre: str, entetes: list[str], lignes: list[list]) -> bytes:
+    """Génère un PDF tabulaire générique pour les rapports."""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=16 * mm, bottomMargin=14 * mm)
+    styles = _styles()
+    elements = []
+    _entete(elements, styles, titre)
+
+    if not lignes:
+        elements.append(Paragraph("Aucune donnée pour cette période.", styles["SousTitre"]))
+    else:
+        data = [entetes, *lignes]
+        table = Table(data, repeatRows=1)
+        table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), NOIR),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 8.5),
+                    ("GRID", (0, 0), (-1, -1), 0.25, colors.lightgrey),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fafc")]),
+                ]
+            )
+        )
+        elements.append(table)
+
+    elements.append(Spacer(1, 6 * mm))
+    elements.append(
+        Paragraph(
+            f"Document généré le {datetime.now().strftime('%d/%m/%Y à %H:%M')}",
+            styles["SousTitre"],
+        )
+    )
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer.read()
+
+
 def _charger_image_photo(photo_url: str | None):
     """Charge une image depuis une data URL base64 ou retourne None."""
     if not photo_url:
@@ -203,7 +243,7 @@ def generer_carte_membre(carte: dict) -> bytes:
     Génère un PDF de carte membre (format 171.2 × 108 mm — CR80 ×2).
     carte attendu :
       numero_membre, nom_complet, type_abonnement, date_expiration,
-      qr_code_uuid, photo_url, statut
+      qr_code_uuid, logo_url, nom_salle, statut
     """
     from reportlab.lib.utils import ImageReader
     from reportlab.pdfgen import canvas
@@ -225,41 +265,46 @@ def generer_carte_membre(carte: dict) -> bytes:
     c.roundRect(3 * mm, card_h - header_h - 3 * mm, card_w - 6 * mm, header_h, 6 * mm, fill=1, stroke=0)
     c.rect(3 * mm, card_h - header_h - 3 * mm, card_w - 6 * mm, 6 * mm, fill=1, stroke=0)
 
+    nom_salle = carte.get("nom_salle") or "TOTAL FITNESS"
+    if len(nom_salle) > 24:
+        nom_salle = nom_salle[:22] + "…"
+
     c.setFillColor(JAUNE)
     c.setFont("Helvetica-Bold", 18)
-    c.drawString(10 * mm, card_h - header_h + 5 * mm, "TOTAL FITNESS")
+    c.drawString(10 * mm, card_h - header_h + 5 * mm, nom_salle)
     c.setFont("Helvetica-Bold", 13)
     c.drawRightString(card_w - 10 * mm, card_h - header_h + 5 * mm, "CARTE MEMBRE")
 
     # ── Zone corps ────────────────────────────────────────────
-    photo_w, photo_h = 40 * mm, 48 * mm
-    x_photo = 10 * mm
-    y_photo = 14 * mm
+    logo_w, logo_h = 40 * mm, 48 * mm
+    x_logo = 10 * mm
+    y_logo = 14 * mm
 
-    photo_img = _charger_image_photo(carte.get("photo_url"))
-    if photo_img:
-        photo_buffer = io.BytesIO()
-        photo_img.save(photo_buffer, format="PNG")
-        photo_buffer.seek(0)
+    c.setFillColor(colors.white)
+    c.setStrokeColor(colors.HexColor("#e2e8f0"))
+    c.setLineWidth(1)
+    c.roundRect(x_logo, y_logo, logo_w, logo_h, 4 * mm, fill=1, stroke=1)
+
+    logo_img = _charger_image_photo(carte.get("logo_url"))
+    if logo_img:
+        logo_buffer = io.BytesIO()
+        logo_img.save(logo_buffer, format="PNG")
+        logo_buffer.seek(0)
+        padding = 3 * mm
         c.drawImage(
-            ImageReader(photo_buffer),
-            x_photo, y_photo,
-            width=photo_w, height=photo_h,
+            ImageReader(logo_buffer),
+            x_logo + padding, y_logo + padding,
+            width=logo_w - 2 * padding, height=logo_h - 2 * padding,
             preserveAspectRatio=True, anchor="c", mask="auto",
         )
-        c.setStrokeColor(colors.HexColor("#e2e8f0"))
-        c.setLineWidth(1)
-        c.roundRect(x_photo, y_photo, photo_w, photo_h, 4 * mm, fill=0, stroke=1)
     else:
-        c.setFillColor(colors.HexColor("#f1f5f9"))
-        c.roundRect(x_photo, y_photo, photo_w, photo_h, 4 * mm, fill=1, stroke=0)
         c.setFillColor(colors.HexColor("#94a3b8"))
-        c.setFont("Helvetica", 12)
-        c.drawCentredString(x_photo + photo_w / 2, y_photo + photo_h / 2 - 2 * mm, "PHOTO")
+        c.setFont("Helvetica-Bold", 11)
+        c.drawCentredString(x_logo + logo_w / 2, y_logo + logo_h / 2 - 2 * mm, "LOGO")
 
     # ── Infos membre ─────────────────────────────────────────
     x_info = 56 * mm
-    y_top = y_photo + photo_h - 4 * mm
+    y_top = y_logo + logo_h - 4 * mm
 
     c.setFillColor(NOIR)
     c.setFont("Helvetica-Bold", 17)
@@ -292,7 +337,7 @@ def generer_carte_membre(carte: dict) -> bytes:
 
     qr_size = 40 * mm
     x_qr = card_w - qr_size - 10 * mm
-    y_qr = y_photo + (photo_h - qr_size) / 2
+    y_qr = y_logo + (logo_h - qr_size) / 2
     c.drawImage(
         ImageReader(qr_buffer),
         x_qr, y_qr,

@@ -31,6 +31,14 @@
     >
       {{ 'modules.admin.tabs.roles' | translate }}
     </button>
+    <button
+      type="button"
+      class="adm-tabs__btn"
+      [class.is-active]="activeTab() === 'tarifs'"
+      (click)="setTab('tarifs')"
+    >
+      {{ 'modules.admin.tabs.pricing' | translate }}
+    </button>
   </nav>
 
   @if (formSuccess()) {
@@ -675,9 +683,28 @@
 
       <aside class="adm-card">
         <h2>{{ 'modules.admin.systemRolesTitle' | translate }}</h2>
-        <p class="adm-card__hint">Sélectionnez un rôle pour afficher ses privilèges par module.</p>
+        <p class="adm-card__hint">Sélectionnez un rôle pour afficher et configurer ses privilèges par module.</p>
+
+        <h3 class="adm-role-list__heading">Direction &amp; administration</h3>
         <ul class="adm-role-list">
-          @for (r of roles(); track r.id) {
+          @for (r of systemRolesList(); track r.id) {
+            <li>
+              <button
+                type="button"
+                class="adm-role-list__item"
+                [class.is-active]="selectedRoleId() === r.id"
+                (click)="selectRole(r.id)"
+              >
+                <span>{{ r.libelle }}</span>
+                <small>{{ r.nom }}</small>
+              </button>
+            </li>
+          }
+        </ul>
+
+        <h3 class="adm-role-list__heading">Opérationnel</h3>
+        <ul class="adm-role-list">
+          @for (r of operationalRolesList(); track r.id) {
             <li>
               <button
                 type="button"
@@ -711,5 +738,71 @@
         }
       </aside>
     </div>
+  }
+
+  <!-- ── Onglet Tarifs ───────────────────────────────────── -->
+  @if (activeTab() === 'tarifs') {
+    @if (tarifsLoading()) {
+      <app-loading-spinner [label]="'modules.admin.pricing.loading' | translate" />
+    } @else {
+      <article class="adm-card adm-card--main adm-tarifs">
+        <div class="adm-card__head">
+          <h2>{{ 'modules.admin.pricing.title' | translate }}</h2>
+          <p class="adm-card__hint">{{ 'modules.admin.pricing.subtitle' | translate }}</p>
+        </div>
+
+        <form [formGroup]="tarifsForm" (ngSubmit)="submitTarifs()" class="adm-form">
+          <section class="adm-tarifs__section">
+            <h3>{{ 'modules.admin.pricing.seanceTitle' | translate }}</h3>
+            <div class="adm-form__row">
+              <label>
+                {{ 'modules.admin.pricing.seanceAmount' | translate }}
+                <input type="number" min="1" step="1" formControlName="tarif_seance_journaliere" />
+              </label>
+            </div>
+          </section>
+
+          <section class="adm-tarifs__section">
+            <h3>{{ 'modules.admin.pricing.menTitle' | translate }}</h3>
+            <div class="adm-form__row">
+              <label>
+                {{ 'modules.admin.pricing.firstMonth' | translate }}
+                <input type="number" min="1" step="1" formControlName="homme_montant_inscription" />
+              </label>
+              <label>
+                {{ 'modules.admin.pricing.renewal' | translate }}
+                <input type="number" min="1" step="1" formControlName="homme_montant" />
+              </label>
+            </div>
+          </section>
+
+          <section class="adm-tarifs__section">
+            <h3>{{ 'modules.admin.pricing.womenTitle' | translate }}</h3>
+            <div class="adm-form__row">
+              <label>
+                {{ 'modules.admin.pricing.firstMonth' | translate }}
+                <input type="number" min="1" step="1" formControlName="femme_montant_inscription" />
+              </label>
+              <label>
+                {{ 'modules.admin.pricing.renewal' | translate }}
+                <input type="number" min="1" step="1" formControlName="femme_montant" />
+              </label>
+            </div>
+          </section>
+
+          <p class="adm-card__hint">{{ 'modules.admin.pricing.currencyHint' | translate }}</p>
+
+          <div class="adm-form__actions">
+            <button type="submit" class="adm-btn adm-btn--primary" [disabled]="submitting() || tarifsForm.invalid">
+              @if (submitting()) {
+                {{ 'common.saving' | translate }}
+              } @else {
+                {{ 'common.save' | translate }}
+              }
+            </button>
+          </div>
+        </form>
+      </article>
+    }
   }
 </section>

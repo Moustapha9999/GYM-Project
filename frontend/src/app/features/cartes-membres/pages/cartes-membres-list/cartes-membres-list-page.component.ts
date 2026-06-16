@@ -1,25 +1,29 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 import { PaginationMeta } from '@core/models/api-response.model';
+import { ThemeService } from '@core/services/theme.service';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
-import { PhotoCropModalComponent } from '@shared/components/photo-crop-modal/photo-crop-modal.component';
+import { DialogService } from '@shared/components/app-dialog/dialog.service';
+import { AppIconComponent } from '@shared/components/app-icon/app-icon.component';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
+import { TranslationService } from '@core/services/translation.service';
 import { CarteMembre } from '@features/cartes-membres/models/carte-membre.model';
 import { CartesMembresService } from '@features/cartes-membres/services/cartes-membres.service';
-import { ClientsService } from '@features/clients/services/clients.service';
 
 @Component({
   selector: 'app-cartes-membres-list-page',
-  imports: [ReactiveFormsModule, LoadingSpinnerComponent, PhotoCropModalComponent, DatePipe, TranslatePipe],
+  imports: [ReactiveFormsModule, LoadingSpinnerComponent, AppIconComponent, DatePipe, TranslatePipe],
   templateUrl: './cartes-membres-list-page.component.html',
   styleUrl: './cartes-membres-list-page.component.scss',
 })
 export class CartesMembresListPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly cartesService = inject(CartesMembresService);
-  private readonly clientsService = inject(ClientsService);
+  private readonly theme = inject(ThemeService);
+  private readonly dialog = inject(DialogService);
+  private readonly translation = inject(TranslationService);
 
   readonly loading = signal(true);
   readonly cartes = signal<CarteMembre[]>([]);
@@ -30,11 +34,11 @@ export class CartesMembresListPageComponent implements OnInit {
   readonly selectedCarte = signal<CarteMembre | null>(null);
   readonly actionSuccess = signal<string | null>(null);
   readonly actionError = signal<string | null>(null);
-  readonly uploadingPhoto = signal(false);
-  readonly cropImageSrc = signal<string | null>(null);
-  readonly pendingPhotoCarte = signal<CarteMembre | null>(null);
   readonly downloadingPdf = signal(false);
   readonly sendingWhatsapp = signal(false);
+
+  readonly gymName = computed(() => this.theme.settings()?.nom_salle ?? 'TOTAL FITNESS');
+  readonly logoUrl = computed(() => this.theme.settings()?.logo_url ?? null);
 
   readonly perPage = 15;
 
@@ -82,65 +86,6 @@ export class CartesMembresListPageComponent implements OnInit {
     this.actionError.set(null);
   }
 
-  onPhotoSelected(event: Event): void {
-    const carte = this.selectedCarte();
-    if (!carte) return;
-
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      this.actionError.set('Veuillez sélectionner une image (JPG, PNG).');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      this.actionError.set('La photo ne doit pas dépasser 5 Mo.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.pendingPhotoCarte.set(carte);
-      this.cropImageSrc.set(reader.result as string);
-      this.actionError.set(null);
-    };
-    reader.readAsDataURL(file);
-    input.value = '';
-  }
-
-  onPhotoCropped(base64: string): void {
-    const carte = this.pendingPhotoCarte();
-    this.cropImageSrc.set(null);
-    this.pendingPhotoCarte.set(null);
-    if (!carte) return;
-
-    this.uploadingPhoto.set(true);
-    this.actionError.set(null);
-
-    this.clientsService.uploadPhoto(carte.client_id, base64).subscribe({
-      next: (client) => {
-        this.uploadingPhoto.set(false);
-        this.actionSuccess.set('Photo mise à jour.');
-        const updated = { ...carte, client_photo_url: client.photo_url };
-        this.selectedCarte.set(updated);
-        this.cartes.update((list) =>
-          list.map((c) => (c.id === carte.id ? { ...c, client_photo_url: client.photo_url } : c)),
-        );
-      },
-      error: () => {
-        this.uploadingPhoto.set(false);
-        this.actionError.set('Impossible de mettre à jour la photo.');
-      },
-    });
-  }
-
-  cancelPhotoCrop(): void {
-    this.cropImageSrc.set(null);
-    this.pendingPhotoCarte.set(null);
-  }
-
   downloadPdf(): void {
     const carte = this.selectedCarte();
     if (!carte) return;
@@ -168,30 +113,70 @@ export class CartesMembresListPageComponent implements OnInit {
 
     const numero = carte.client_whatsapp || carte.client_telephone;
     if (!numero) {
-      this.actionError.set('Aucun numéro WhatsApp ou téléphone renseigné.');
+      this.actionError.set(this.translation.translate('whatsapp.noPhone'));
       return;
     }
 
-    if (!confirm(`Envoyer la carte PDF à ${numero} via WhatsApp ?`)) return;
+    const clientName = this.clientFullName(carte);
+    const typeLabel = this.translation.translate('whatsapp.types.carte_prete');
 
-    this.sendingWhatsapp.set(true);
-    this.actionError.set(null);
+    this.dialog
+      .confirm({
+        title: this.translation.translate('whatsapp.promptTitle'),
+        message: this.translation.translate('whatsapp.cartePrompt', {
+          name: clientName,
+          type: typeLabel,
+        }),
+        confirmLabel: this.translation.translate('whatsapp.sendCard'),
+        cancelLabel: this.translation.translate('common.cancel'),
+        variant: 'info',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
 
-    this.cartesService.envoyerWhatsapp(carte.id).subscribe({
-      next: () => {
-        this.sendingWhatsapp.set(false);
-        this.actionSuccess.set(`Carte envoyée à ${numero} via WhatsApp.`);
-      },
-      error: (err) => {
-        this.sendingWhatsapp.set(false);
-        const detail = err.error?.detail;
-        this.actionError.set(
-          typeof detail === 'string'
-            ? detail
-            : 'Échec de l\'envoi WhatsApp. Vérifiez que le service est connecté.',
-        );
-      },
-    });
+        this.sendingWhatsapp.set(true);
+        this.actionError.set(null);
+        this.actionSuccess.set(null);
+
+        this.cartesService.envoyerWhatsapp(carte.id).subscribe({
+          next: (result) => {
+            this.sendingWhatsapp.set(false);
+
+            if (result.statut === 'Manuel' && result.lien_whatsapp) {
+              this.cartesService
+                .downloadPdf(carte.id, `carte_${carte.client_numero}.pdf`)
+                .subscribe({
+                  next: () => {
+                    window.open(result.lien_whatsapp!, '_blank', 'noopener,noreferrer');
+                    this.actionSuccess.set(
+                      this.translation.translate('whatsapp.carteManualSuccess'),
+                    );
+                  },
+                  error: () => {
+                    window.open(result.lien_whatsapp!, '_blank', 'noopener,noreferrer');
+                    this.actionError.set(
+                      this.translation.translate('whatsapp.cartePdfError'),
+                    );
+                  },
+                });
+              return;
+            }
+
+            this.actionSuccess.set(
+              this.translation.translate('whatsapp.carteAutoSuccess', { numero: result.numero }),
+            );
+          },
+          error: (err) => {
+            this.sendingWhatsapp.set(false);
+            const detail = err.error?.detail;
+            this.actionError.set(
+              typeof detail === 'string'
+                ? detail
+                : this.translation.translate('whatsapp.carteSendError'),
+            );
+          },
+        });
+      });
   }
 
   clientFullName(carte: CarteMembre): string {

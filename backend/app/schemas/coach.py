@@ -6,6 +6,15 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, model_validator
 
 
+# ── Coachs (liste légère pour les sélecteurs) ───────────────
+class CoachLight(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    nom: str
+    prenom: str
+    fonction: str
+
+
 # ── Programmes sportifs ─────────────────────────────────────
 class ProgrammeCreate(BaseModel):
     client_id: uuid.UUID
@@ -37,6 +46,10 @@ class ProgrammeRead(BaseModel):
     date_fin: date | None
     actif: bool
     created_at: datetime
+    coach_nom: str | None = None
+    coach_prenom: str | None = None
+    client_nom: str | None = None
+    client_prenom: str | None = None
 
 
 # ── Planning ────────────────────────────────────────────────
@@ -74,3 +87,7 @@ class PlanningRead(BaseModel):
     heure_fin: time
     statut: str
     created_at: datetime
+    coach_nom: str | None = None
+    coach_prenom: str | None = None
+    client_nom: str | None = None
+    client_prenom: str | None = None

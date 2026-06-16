@@ -10,7 +10,8 @@ from app.core.dependencies import require_permission
 from app.models.utilisateur import Utilisateur
 from app.schemas.carte_membre import CarteMembreListItem, CarteMembreRead, EnvoiWhatsappResult
 from app.schemas.common import ApiResponse, PaginatedResponse
-from app.services import carte_membre_service, notification_service, pdf_service
+from app.services import carte_membre_service, message_service, notification_service, pdf_service
+from app.services.message_service import MessageError
 from app.utils.pagination import paginate
 
 router = APIRouter(prefix="/cartes-membres", tags=["Cartes membres"])
@@ -72,7 +73,7 @@ def telecharger_pdf(
     if carte is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Carte introuvable.")
 
-    data = carte_membre_service.construire_donnees_pdf(carte)
+    data = carte_membre_service.construire_donnees_pdf(db, carte)
     pdf = pdf_service.generer_carte_membre(data)
     filename = f"carte_{carte.client.numero_membre}.pdf"
     return _stream(pdf, "application/pdf", filename)
@@ -97,13 +98,16 @@ def envoyer_whatsapp(
             detail="Aucun numéro WhatsApp ou téléphone renseigné pour ce client.",
         )
 
-    data = carte_membre_service.construire_donnees_pdf(carte)
+    data = carte_membre_service.construire_donnees_pdf(db, carte)
     pdf = pdf_service.generer_carte_membre(data)
     filename = f"carte_{client.numero_membre}.pdf"
-    caption = (
-        f"Bonjour {client.prenom}, voici votre carte membre TOTAL FITNESS "
-        f"(N° {client.numero_membre}). Valable jusqu'au {data['date_expiration']}."
-    )
+
+    try:
+        message_data = message_service.generer(db, client.id, "carte_prete")
+    except MessageError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    caption = message_data["texte"]
 
     notif = notification_service.envoyer_document(
         db,
@@ -117,13 +121,26 @@ def envoyer_whatsapp(
     )
 
     if notif.statut != "Envoyé":
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Échec de l'envoi WhatsApp. Vérifiez que le service est connecté.",
+        return ApiResponse(
+            success=True,
+            data=EnvoiWhatsappResult(
+                statut="Manuel",
+                numero=numero,
+                message=caption,
+                lien_whatsapp=message_data.get("lien_whatsapp"),
+            ),
+            message=(
+                "Envoi automatique indisponible. Le PDF sera téléchargé et WhatsApp "
+                "s'ouvrira avec le message prérempli — joignez le PDF manuellement."
+            ),
         )
 
     return ApiResponse(
         success=True,
-        data=EnvoiWhatsappResult(statut=notif.statut, numero=numero, message=caption),
-        message="Carte envoyée via WhatsApp.",
+        data=EnvoiWhatsappResult(
+            statut=notif.statut,
+            numero=numero,
+            message=caption,
+        ),
+        message="Carte et message envoyés via WhatsApp.",
     )

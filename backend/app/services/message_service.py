@@ -74,10 +74,10 @@ def _texte_bienvenue(client: Client) -> str:
     )
 
 
-def _texte_carte_prete(client: Client, carte: CarteMembre | None) -> str:
+def _texte_carte_prete(client: Client, carte: CarteMembre | None, nom_salle: str = NOM_SALLE) -> str:
     base = (
         f"Bonjour {client.prenom},\n"
-        f"Votre carte de membre {NOM_SALLE} est prête ✅\n"
+        f"Votre carte de membre {nom_salle} est prête ✅\n"
         f"N° membre : {client.numero_membre}\n"
         f"Présentez votre QR code à l'entrée pour pointer vos séances."
     )
@@ -164,7 +164,8 @@ def generer(db: Session, client_id: uuid.UUID, type_message: str) -> dict:
             .order_by(CarteMembre.date_generation.desc())
             .first()
         )
-        texte = fonction(client, carte)
+        nom_salle = _param(db, "nom_salle", NOM_SALLE)
+        texte = _texte_carte_prete(client, carte, nom_salle)
     else:
         abo = _abonnement_actuel(db, client_id)
         texte = fonction(client, abo)

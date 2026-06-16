@@ -46,6 +46,9 @@ def _verifier_acces(db: Session, client_id: uuid.UUID) -> None:
             "Ce client n'a aucun abonnement. Il doit souscrire ou payer une séance journalière."
         )
 
+    if abo.statut in ("Suspendu", "Résilié"):
+        raise PresenceError(f"Abonnement {abo.statut.lower()}. Accès refusé.")
+
     aujourdhui = date.today()
 
     # Abonnement encore valide

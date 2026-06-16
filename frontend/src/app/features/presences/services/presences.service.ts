@@ -1,29 +1,35 @@
 import { Injectable, inject } from '@angular/core';
 import { map, Observable } from 'rxjs';
 
-import { PaginatedApiResponse } from '@core/models/api-response.model';
 import { ApiService } from '@core/services/api.service';
-
-export interface Presence {
-  id: string;
-  client_id: string;
-  heure_entree: string;
-  heure_sortie?: string;
-}
+import {
+  EntreeManuellePayload,
+  EntreeQRPayload,
+  Presence,
+  PresenceClientInfo,
+  SortiePayload,
+} from '@features/presences/models/presence.model';
 
 @Injectable({ providedIn: 'root' })
 export class PresencesService {
   private readonly api = inject(ApiService);
 
-  list(params?: Record<string, string | number | boolean>): Observable<PaginatedApiResponse<Presence>> {
-    return this.api.getPaginated<Presence>('presences', params);
+  listDuJour(jour?: string): Observable<PresenceClientInfo[]> {
+    const params: Record<string, string> = {};
+    if (jour) params['jour'] = jour;
+
+    return this.api.get<PresenceClientInfo[]>('presences/jour', params).pipe(map((r) => r.data));
   }
 
-  entree(payload: { client_id?: string; qr_code?: string }): Observable<Presence> {
+  entreeManuelle(payload: EntreeManuellePayload): Observable<Presence> {
     return this.api.post<Presence>('presences/entree', payload).pipe(map((r) => r.data));
   }
 
-  sortie(id: string): Observable<Presence> {
-    return this.api.patch<Presence>(`presences/${id}/sortie`).pipe(map((r) => r.data));
+  entreeQr(payload: EntreeQRPayload): Observable<Presence> {
+    return this.api.post<Presence>('presences/entree-qr', payload).pipe(map((r) => r.data));
+  }
+
+  sortie(payload: SortiePayload): Observable<Presence> {
+    return this.api.patch<Presence>('presences/sortie', payload).pipe(map((r) => r.data));
   }
 }

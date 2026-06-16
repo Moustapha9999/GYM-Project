@@ -20,5 +20,6 @@ export const APP_ROUTES = {
   rh: '/rh',
   coach: '/coach',
   admin: '/admin',
+  rapports: '/rapports',
   parametres: '/parametres',
 } as const;

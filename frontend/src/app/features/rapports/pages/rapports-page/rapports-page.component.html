@@ -1,0 +1,148 @@
+<section class="rep-page">
+  <div class="rep-page__head">
+    <div>
+      <h1>Rapports</h1>
+      <p>Fiche de paie, journal audit, journal caisse, journal client avec filtres et exports.</p>
+    </div>
+    <div class="rep-page__actions">
+      <button type="button" class="rep-btn rep-btn--ghost" [disabled]="exporting()" (click)="exportCurrent('excel')">
+        Export Excel
+      </button>
+      <button type="button" class="rep-btn" [disabled]="exporting()" (click)="exportCurrent('pdf')">
+        Export PDF
+      </button>
+    </div>
+  </div>
+
+  <nav class="rep-tabs">
+    <button type="button" class="rep-tabs__btn" [class.is-active]="activeTab() === 'fiches'" (click)="setTab('fiches')">Fiches de paie</button>
+    <button type="button" class="rep-tabs__btn" [class.is-active]="activeTab() === 'audit'" (click)="setTab('audit')">Journal audit</button>
+    <button type="button" class="rep-tabs__btn" [class.is-active]="activeTab() === 'caisse'" (click)="setTab('caisse')">Journal caisse</button>
+    <button type="button" class="rep-tabs__btn" [class.is-active]="activeTab() === 'clients'" (click)="setTab('clients')">Journal client</button>
+  </nav>
+
+  <form class="rep-filters" [formGroup]="filters" (ngSubmit)="applyFilters()">
+    <label>
+      Date début
+      <input type="date" formControlName="date_debut" />
+    </label>
+    <label>
+      Date fin
+      <input type="date" formControlName="date_fin" />
+    </label>
+    @if (activeTab() === 'audit') {
+      <label>
+        Module (audit)
+        <input type="text" formControlName="module" placeholder="clients, paiements..." />
+      </label>
+    }
+    <button type="submit" class="rep-btn rep-btn--primary">Filtrer</button>
+    <button type="button" class="rep-btn rep-btn--ghost" (click)="resetFilters()">Réinitialiser</button>
+  </form>
+
+  @if (error()) {
+    <p class="rep-alert rep-alert--error">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <app-loading-spinner label="Chargement des rapports..." />
+  } @else {
+    <div class="rep-table-wrap">
+      @if (activeTab() === 'fiches') {
+        <table class="rep-table">
+          <thead>
+            <tr>
+              <th>Employé</th><th>Période</th><th>Salaire base</th><th>Net</th><th>Statut</th><th>Paiement</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of fiches(); track r.id) {
+              <tr>
+                <td>{{ r.employe_nom }}</td>
+                <td>{{ r.mois }}/{{ r.annee }}</td>
+                <td>{{ r.salaire_base | number: '1.0-0' }} MRU</td>
+                <td>{{ (r.salaire_final ?? 0) | number: '1.0-0' }} MRU</td>
+                <td>{{ r.statut_paiement }}</td>
+                <td>{{ r.date_paiement ? (r.date_paiement | date: 'dd/MM/yyyy') : '—' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="rep-empty">Aucune fiche sur cette période.</td></tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      @if (activeTab() === 'audit') {
+        <table class="rep-table">
+          <thead>
+            <tr>
+              <th>Date</th><th>Action</th><th>Module</th><th>Utilisateur</th><th>Rôle</th><th>IP</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of audits(); track r.id) {
+              <tr>
+                <td>{{ r.created_at | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td>{{ r.action }}</td>
+                <td>{{ r.module }}</td>
+                <td>{{ r.utilisateur_nom ?? '—' }}</td>
+                <td>{{ r.role_nom ?? '—' }}</td>
+                <td>{{ r.adresse_ip ?? '—' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="rep-empty">Aucune trace audit.</td></tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      @if (activeTab() === 'caisse') {
+        <table class="rep-table">
+          <thead>
+            <tr>
+              <th>Date</th><th>Encaisse</th><th>Dépenses</th><th>Solde</th><th>Statut</th><th>Clôturé par</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of caisses(); track r.id) {
+              <tr>
+                <td>{{ r.date_jour | date: 'dd/MM/yyyy' }}</td>
+                <td>{{ r.total_encaisse | number: '1.0-0' }} MRU</td>
+                <td>{{ r.total_depenses | number: '1.0-0' }} MRU</td>
+                <td>{{ r.solde | number: '1.0-0' }} MRU</td>
+                <td>{{ r.statut }}</td>
+                <td>{{ r.cloture_par_nom ?? '—' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="rep-empty">Aucun journal caisse.</td></tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      @if (activeTab() === 'clients') {
+        <table class="rep-table">
+          <thead>
+            <tr>
+              <th>N° membre</th><th>Nom</th><th>Téléphone</th><th>Email</th><th>Statut</th><th>Dernière présence</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of clients(); track r.id) {
+              <tr>
+                <td>{{ r.numero_membre }}</td>
+                <td>{{ r.prenom }} {{ r.nom }}</td>
+                <td>{{ r.telephone }}</td>
+                <td>{{ r.email ?? '—' }}</td>
+                <td>{{ r.actif ? 'Actif' : 'Inactif' }}</td>
+                <td>{{ r.derniere_presence ? (r.derniere_presence | date: 'dd/MM/yyyy HH:mm') : '—' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="rep-empty">Aucun client trouvé.</td></tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  }
+</section>

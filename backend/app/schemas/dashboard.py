@@ -49,7 +49,7 @@ class DashboardAdmin(BaseModel):
 
 
 class DashboardReception(BaseModel):
-    """KPIs Réceptionniste — vue opérationnelle du jour."""
+    """KPIs Réceptionniste / Manager — vue opérationnelle du jour."""
     revenus_jour: Decimal
     nombre_paiements_jour: int
     presences_jour: int
@@ -57,6 +57,17 @@ class DashboardReception(BaseModel):
     seances_jour: int
     abonnements_souscrits_jour: int
     abonnements_expirant_7j: int
+    # Coach / Planning / Programmes
+    programmes_actifs: int
+    seances_planifiees_jour: int
+    seances_planifiees_semaine: int
+    clients_suivis: int
+    # Graphes
+    activite_7_jours: list[PointGraphe]
+    presences_7_jours: list[PointGraphe]
+    planning_semaine: list[PointGraphe]
+    planning_par_statut: list[PointGraphe]
+    programmes_par_statut: list[PointGraphe]
 
 
 class DashboardCoach(BaseModel):

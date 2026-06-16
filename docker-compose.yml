@@ -21,6 +21,9 @@ services:
     image: dpage/pgadmin4:latest
     container_name: gym-sylla-pgadmin
     restart: unless-stopped
+    # pgpass doit être en 0600, sinon PostgreSQL refuse le mot de passe
+    entrypoint: >
+      /bin/sh -c "chmod 600 /pgadmin4/pgpass 2>/dev/null || true; exec /entrypoint.sh"
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@gym.sylla
       PGADMIN_DEFAULT_PASSWORD: admin

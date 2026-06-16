@@ -9,7 +9,7 @@ from app.models.role import Role
 from app.models.utilisateur import Utilisateur
 from app.schemas.utilisateur import UtilisateurCreate, UtilisateurUpdate
 
-ROLES_ASSIGNABLES = {"receptionniste", "coach", "pdg"}
+ROLES_ASSIGNABLES = {"receptionniste", "coach", "pdg", "manager", "responsable_rh", "comptable"}
 ROLES_NON_SUPPRIMABLES = {"super_admin"}
 
 

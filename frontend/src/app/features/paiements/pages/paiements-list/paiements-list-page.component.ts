@@ -8,6 +8,7 @@ import { MruCurrencyPipe } from '@shared/pipes/mru-currency.pipe';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { Client } from '@features/clients/models/client.model';
 import { ClientsService } from '@features/clients/services/clients.service';
+import { WhatsappMessageService } from '@core/services/whatsapp-message.service';
 import {
   CaisseJour,
   MoyenPaiement,
@@ -28,6 +29,7 @@ export class PaiementsListPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly paiementsService = inject(PaiementsService);
   private readonly clientsService = inject(ClientsService);
+  private readonly whatsapp = inject(WhatsappMessageService);
 
   readonly loading = signal(true);
   readonly submitting = signal(false);
@@ -44,6 +46,7 @@ export class PaiementsListPageComponent implements OnInit {
   readonly viewingPaiementSummary = signal<PaiementDetail | null>(null);
   readonly detailLoading = signal(false);
   readonly detailError = signal<string | null>(null);
+  readonly importing = signal(false);
 
   readonly filters = this.fb.nonNullable.group({
     date_debut: [''],
@@ -136,6 +139,34 @@ export class PaiementsListPageComponent implements OnInit {
     this.loadData();
   }
 
+  downloadImportTemplate(): void {
+    this.paiementsService.downloadImportTemplate().subscribe({
+      error: () => {
+        this.createError.set('Impossible de télécharger le modèle Excel.');
+      },
+    });
+  }
+
+  onImportFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.importing.set(true);
+    this.createError.set(null);
+    this.createSuccess.set(null);
+
+    // Endpoint backend non disponible pour l'instant sur les paiements.
+    setTimeout(() => {
+      this.importing.set(false);
+      this.createError.set(
+        'Import Excel paiements non disponible pour le moment. Utilisez ce fichier comme modèle de saisie.',
+      );
+    }, 500);
+
+    input.value = '';
+  }
+
   selectClient(client: Client): void {
     this.selectedClient.set(client);
     this.createForm.controls.client_search.setValue(`${client.prenom} ${client.nom}`);
@@ -226,6 +257,14 @@ export class PaiementsListPageComponent implements OnInit {
         this.createSuccess.set(
           `Paiement ${result.paiement_reference} — ${result.montant} MRU enregistré.`,
         );
+        const client = this.selectedClient();
+        if (client) {
+          this.whatsapp.offerSend(
+            client.id,
+            `${client.prenom} ${client.nom}`,
+            'recu_paiement',
+          );
+        }
         this.createForm.reset({
           type_paiement: 'Abonnement',
           moyen_paiement_id: '',

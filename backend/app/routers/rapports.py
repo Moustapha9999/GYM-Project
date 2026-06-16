@@ -11,7 +11,20 @@ from app.core.dependencies import require_permission
 from app.models.employe import Employe
 from app.models.fiche_paie import FichePaie
 from app.models.utilisateur import Utilisateur
-from app.services import client_service, paiement_service, pdf_service, export_service
+from app.schemas.common import ApiResponse
+from app.schemas.rapport import (
+    FichePaieRapportRead,
+    JournalAuditRead,
+    JournalCaisseRead,
+    JournalClientRead,
+)
+from app.services import (
+    client_service,
+    export_service,
+    paiement_service,
+    pdf_service,
+    rapport_service,
+)
 
 router = APIRouter(prefix="/rapports", tags=["Rapports / Exports"])
 
@@ -23,6 +36,14 @@ def _stream(contenu: bytes, media_type: str, filename: str) -> StreamingResponse
         media_type=media_type,
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+def _fmt_date(value):
+    return value.strftime("%d/%m/%Y") if value else "—"
+
+
+def _fmt_datetime(value):
+    return value.strftime("%d/%m/%Y %H:%M") if value else "—"
 
 
 # ── Reçu PDF d'un paiement ──────────────────────────────────
@@ -127,3 +148,285 @@ def export_clients_excel(
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "clients.xlsx",
     )
+
+
+# ── Rapports détaillés (liste + filtres date) ───────────────
+@router.get("/fiches-paie", response_model=ApiResponse[list[FichePaieRapportRead]])
+def rapport_fiches_paie(
+    date_debut: date | None = Query(None),
+    date_fin: date | None = Query(None),
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("salaires.lecture")),
+):
+    data = rapport_service.lister_fiches_paie(db, date_debut=date_debut, date_fin=date_fin)
+    return ApiResponse(success=True, data=data)
+
+
+@router.get("/journal-audit", response_model=ApiResponse[list[JournalAuditRead]])
+def rapport_journal_audit(
+    date_debut: date | None = Query(None),
+    date_fin: date | None = Query(None),
+    module: str | None = Query(None),
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("audit.lecture")),
+):
+    data = rapport_service.lister_journal_audit(db, date_debut=date_debut, date_fin=date_fin, module=module)
+    return ApiResponse(success=True, data=data)
+
+
+@router.get("/journal-caisse", response_model=ApiResponse[list[JournalCaisseRead]])
+def rapport_journal_caisse(
+    date_debut: date | None = Query(None),
+    date_fin: date | None = Query(None),
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("finances.lecture")),
+):
+    data = rapport_service.lister_journal_caisse(db, date_debut=date_debut, date_fin=date_fin)
+    return ApiResponse(success=True, data=data)
+
+
+@router.get("/journal-clients", response_model=ApiResponse[list[JournalClientRead]])
+def rapport_journal_clients(
+    date_debut: date | None = Query(None),
+    date_fin: date | None = Query(None),
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("clients.lecture")),
+):
+    data = rapport_service.lister_journal_clients(db, date_debut=date_debut, date_fin=date_fin)
+    return ApiResponse(success=True, data=data)
+
+
+# ── Exports détaillés Excel/PDF ─────────────────────────────
+@router.get("/fiches-paie/export/excel")
+def export_fiches_paie_excel(
+    date_debut: date | None = Query(None),
+    date_fin: date | None = Query(None),
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("salaires.export")),
+):
+    data = rapport_service.lister_fiches_paie(db, date_debut=date_debut, date_fin=date_fin)
+    entetes = [
+        "Employé",
+        "Fonction",
+        "Période",
+        "Salaire base",
+        "Primes",
+        "Bonus",
+        "Retenues",
+        "Net",
+        "Statut",
+        "Paiement le",
+    ]
+    lignes = [
+        [
+            row["employe_nom"],
+            row["fonction"] or "—",
+            f'{row["mois"]:02d}/{row["annee"]}',
+            float(row["salaire_base"]),
+            float(row["primes"]),
+            float(row["bonus"]),
+            float(row["retenues"]),
+            float(row["salaire_final"] or 0),
+            row["statut_paiement"],
+            _fmt_date(row["date_paiement"]),
+        ]
+        for row in data
+    ]
+    xl = export_service.exporter_rapport_detaille("Fiches de paie", entetes, lignes)
+    return _stream(
+        xl,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "rapport_fiches_paie.xlsx",
+    )
+
+
+@router.get("/fiches-paie/export/pdf")
+def export_fiches_paie_pdf(
+    date_debut: date | None = Query(None),
+    date_fin: date | None = Query(None),
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("salaires.export")),
+):
+    data = rapport_service.lister_fiches_paie(db, date_debut=date_debut, date_fin=date_fin)
+    entetes = ["Employé", "Période", "Net MRU", "Statut", "Date paiement"]
+    lignes = [
+        [
+            row["employe_nom"],
+            f'{row["mois"]:02d}/{row["annee"]}',
+            f'{row["salaire_final"] or 0}',
+            row["statut_paiement"],
+            _fmt_date(row["date_paiement"]),
+        ]
+        for row in data
+    ]
+    pdf = pdf_service.generer_rapport_tableau("RAPPORT FICHES DE PAIE", entetes, lignes)
+    return _stream(pdf, "application/pdf", "rapport_fiches_paie.pdf")
+
+
+@router.get("/journal-audit/export/excel")
+def export_journal_audit_excel(
+    date_debut: date | None = Query(None),
+    date_fin: date | None = Query(None),
+    module: str | None = Query(None),
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("audit.export")),
+):
+    data = rapport_service.lister_journal_audit(db, date_debut=date_debut, date_fin=date_fin, module=module)
+    entetes = ["Date", "Action", "Module", "Utilisateur", "Rôle", "IP", "Table", "Cible ID"]
+    lignes = [
+        [
+            _fmt_datetime(row["created_at"]),
+            row["action"],
+            row["module"],
+            row["utilisateur_nom"] or "—",
+            row["role_nom"] or "—",
+            row["adresse_ip"] or "—",
+            row["cible_table"] or "—",
+            str(row["cible_id"] or "—"),
+        ]
+        for row in data
+    ]
+    xl = export_service.exporter_rapport_detaille("Journal audit", entetes, lignes)
+    return _stream(
+        xl,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "rapport_journal_audit.xlsx",
+    )
+
+
+@router.get("/journal-audit/export/pdf")
+def export_journal_audit_pdf(
+    date_debut: date | None = Query(None),
+    date_fin: date | None = Query(None),
+    module: str | None = Query(None),
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("audit.export")),
+):
+    data = rapport_service.lister_journal_audit(db, date_debut=date_debut, date_fin=date_fin, module=module)
+    entetes = ["Date", "Action", "Module", "Utilisateur", "IP"]
+    lignes = [
+        [
+            _fmt_datetime(row["created_at"]),
+            row["action"],
+            row["module"],
+            row["utilisateur_nom"] or "—",
+            row["adresse_ip"] or "—",
+        ]
+        for row in data
+    ]
+    pdf = pdf_service.generer_rapport_tableau("RAPPORT JOURNAL D'AUDIT", entetes, lignes)
+    return _stream(pdf, "application/pdf", "rapport_journal_audit.pdf")
+
+
+@router.get("/journal-caisse/export/excel")
+def export_journal_caisse_excel(
+    date_debut: date | None = Query(None),
+    date_fin: date | None = Query(None),
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("finances.export")),
+):
+    data = rapport_service.lister_journal_caisse(db, date_debut=date_debut, date_fin=date_fin)
+    entetes = ["Date", "Encaisse", "Dépenses", "Solde", "Statut", "Clôturé par", "Clôturé le"]
+    lignes = [
+        [
+            _fmt_date(row["date_jour"]),
+            float(row["total_encaisse"]),
+            float(row["total_depenses"]),
+            float(row["solde"]),
+            row["statut"],
+            row["cloture_par_nom"] or "—",
+            _fmt_datetime(row["cloture_le"]),
+        ]
+        for row in data
+    ]
+    xl = export_service.exporter_rapport_detaille("Journal caisse", entetes, lignes)
+    return _stream(
+        xl,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "rapport_journal_caisse.xlsx",
+    )
+
+
+@router.get("/journal-caisse/export/pdf")
+def export_journal_caisse_pdf(
+    date_debut: date | None = Query(None),
+    date_fin: date | None = Query(None),
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("finances.export")),
+):
+    data = rapport_service.lister_journal_caisse(db, date_debut=date_debut, date_fin=date_fin)
+    entetes = ["Date", "Encaisse", "Dépenses", "Solde", "Statut"]
+    lignes = [
+        [
+            _fmt_date(row["date_jour"]),
+            float(row["total_encaisse"]),
+            float(row["total_depenses"]),
+            float(row["solde"]),
+            row["statut"],
+        ]
+        for row in data
+    ]
+    pdf = pdf_service.generer_rapport_tableau("RAPPORT JOURNAL DE CAISSE", entetes, lignes)
+    return _stream(pdf, "application/pdf", "rapport_journal_caisse.pdf")
+
+
+@router.get("/journal-clients/export/excel")
+def export_journal_clients_excel(
+    date_debut: date | None = Query(None),
+    date_fin: date | None = Query(None),
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("clients.export")),
+):
+    data = rapport_service.lister_journal_clients(db, date_debut=date_debut, date_fin=date_fin)
+    entetes = [
+        "N° Membre",
+        "Nom",
+        "Téléphone",
+        "Email",
+        "Statut",
+        "Inscrit le",
+        "Dernière présence",
+        "Fin dernier abonnement",
+    ]
+    lignes = [
+        [
+            row["numero_membre"],
+            f'{row["prenom"]} {row["nom"]}',
+            row["telephone"],
+            row["email"] or "—",
+            "Actif" if row["actif"] else "Inactif",
+            _fmt_datetime(row["created_at"]),
+            _fmt_datetime(row["derniere_presence"]),
+            _fmt_date(row["dernier_abonnement_fin"]),
+        ]
+        for row in data
+    ]
+    xl = export_service.exporter_rapport_detaille("Journal clients", entetes, lignes)
+    return _stream(
+        xl,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "rapport_journal_clients.xlsx",
+    )
+
+
+@router.get("/journal-clients/export/pdf")
+def export_journal_clients_pdf(
+    date_debut: date | None = Query(None),
+    date_fin: date | None = Query(None),
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("clients.export")),
+):
+    data = rapport_service.lister_journal_clients(db, date_debut=date_debut, date_fin=date_fin)
+    entetes = ["N° Membre", "Nom", "Statut", "Inscrit le", "Dernière présence"]
+    lignes = [
+        [
+            row["numero_membre"],
+            f'{row["prenom"]} {row["nom"]}',
+            "Actif" if row["actif"] else "Inactif",
+            _fmt_datetime(row["created_at"]),
+            _fmt_datetime(row["derniere_presence"]),
+        ]
+        for row in data
+    ]
+    pdf = pdf_service.generer_rapport_tableau("RAPPORT JOURNAL CLIENTS", entetes, lignes)
+    return _stream(pdf, "application/pdf", "rapport_journal_clients.pdf")

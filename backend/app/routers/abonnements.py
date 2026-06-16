@@ -1,7 +1,9 @@
 """Router du module Abonnements."""
 import uuid
+import io
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -16,12 +18,22 @@ from app.schemas.abonnement import (
     TypeAbonnementRead,
 )
 from app.schemas.common import ApiResponse, PaginatedResponse
-from app.services import abonnement_service
+from app.schemas.tarif import TarifsRead
+from app.services import abonnement_service, export_service, tarif_service
 from app.services.abonnement_service import AbonnementError
+from app.services.tarif_service import TarifError
 from app.utils.pagination import paginate
 
 router = APIRouter(prefix="/abonnements", tags=["Abonnements"])
 types_router = APIRouter(prefix="/types-abonnements", tags=["Types abonnements"])
+
+
+def _stream(contenu: bytes, media_type: str, filename: str) -> StreamingResponse:
+    return StreamingResponse(
+        io.BytesIO(contenu),
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 def _to_list_item(abonnement) -> AbonnementListItem:
@@ -57,6 +69,31 @@ def lister_abonnements(
         data=[_to_list_item(a) for a in items],
         meta=meta,
     )
+
+
+@router.get("/import-modele")
+def telecharger_modele_import(
+    _: Utilisateur = Depends(require_permission("abonnements.lecture")),
+):
+    xl = export_service.generer_modele_import_abonnements()
+    return _stream(
+        xl,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "modele_import_abonnements.xlsx",
+    )
+
+
+@router.get("/formules-tarifs", response_model=ApiResponse[TarifsRead])
+def lire_formules_tarifs(
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("abonnements.lecture")),
+):
+    """Tarifs affichés au module abonnements (homme, femme, séance journalière)."""
+    try:
+        tarifs = tarif_service.lire_tarifs(db)
+    except TarifError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return ApiResponse(success=True, data=tarifs, message=None)
 
 
 @router.post(

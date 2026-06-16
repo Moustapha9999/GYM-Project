@@ -17,13 +17,34 @@ export class ReceptionSidebarComponent {
   private readonly auth = inject(AuthService);
   private readonly theme = inject(ThemeService);
 
-  readonly menuItems = RECEPTION_MENU_NAV;
+  readonly menuItems = computed(() =>
+    RECEPTION_MENU_NAV.filter(
+      (item) =>
+        !item.requiredPermissions || this.auth.hasAnyPermission(item.requiredPermissions),
+    ),
+  );
 
   readonly gymName = computed(() => this.theme.settings()?.nom_salle ?? 'GYM SYLLA');
+
+  readonly logoUrl = computed(() => this.theme.settings()?.logo_url ?? null);
 
   readonly userName = computed(() => {
     const user = this.auth.currentUser();
     return user ? `${user.prenom} ${user.nom}` : 'Réception';
+  });
+
+  readonly roleLabelKey = computed(() => {
+    const roleName = this.auth.currentUser()?.role.nom;
+
+    if (roleName === 'manager') {
+      return 'roles.manager';
+    }
+
+    if (roleName === 'super_admin') {
+      return 'roles.superAdmin';
+    }
+
+    return 'roles.receptionist';
   });
 
   logout(): void {

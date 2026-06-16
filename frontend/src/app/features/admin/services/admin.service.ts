@@ -16,6 +16,7 @@ import {
   UpdateUtilisateurRequest,
   Utilisateur,
 } from '@features/admin/models/utilisateur.model';
+import { Tarifs, TarifsUpdate } from '@features/admin/models/tarif.model';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -88,5 +89,14 @@ export class AdminService {
 
   deleteEmploye(id: string): Observable<void> {
     return this.api.delete<void>(`rh/employes/${id}`).pipe(map(() => undefined));
+  }
+
+  // ── Tarifs ────────────────────────────────────────────────
+  getTarifs(): Observable<Tarifs> {
+    return this.api.get<Tarifs>('tarifs').pipe(map((r) => r.data));
+  }
+
+  updateTarifs(payload: TarifsUpdate): Observable<Tarifs> {
+    return this.api.put<Tarifs>('tarifs', payload).pipe(map((r) => r.data));
   }
 }

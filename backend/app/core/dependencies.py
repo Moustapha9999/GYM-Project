@@ -78,3 +78,21 @@ def require_permission(permission_code: str):
         return current_user
 
     return checker
+
+
+def require_any_permission(*permission_codes: str):
+    """Fabrique de dépendance : au moins une des permissions listées."""
+
+    def checker(current_user: Utilisateur = Depends(get_current_user)) -> Utilisateur:
+        if current_user.role and current_user.role.nom == "super_admin":
+            return current_user
+
+        permissions = get_user_permissions(current_user)
+        if not any(code in permissions for code in permission_codes):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Permission refusée : l'une de {', '.join(permission_codes)} est requise.",
+            )
+        return current_user
+
+    return checker

@@ -152,6 +152,13 @@
   font-size: 0.82rem;
 }
 
+.prm-field__hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
 /* Logo */
 .prm-logo-block {
   display: flex;

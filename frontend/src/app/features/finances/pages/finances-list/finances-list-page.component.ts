@@ -11,6 +11,7 @@ import {
 } from '@features/finances/models/finance.model';
 import { FinancesService } from '@features/finances/services/finances.service';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
+import { DialogService } from '@shared/components/app-dialog/dialog.service';
 import { MruCurrencyPipe } from '@shared/pipes/mru-currency.pipe';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 
@@ -26,6 +27,7 @@ export class FinancesListPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly financesService = inject(FinancesService);
   private readonly auth = inject(AuthService);
+  private readonly dialog = inject(DialogService);
 
   readonly loading = signal(true);
   readonly submitting = signal(false);
@@ -297,14 +299,23 @@ export class FinancesListPageComponent implements OnInit {
 
   deleteDepense(depense: Depense): void {
     if (!this.canDelete()) return;
-    if (!confirm(`Supprimer la dépense « ${depense.reference} » ?`)) return;
 
-    this.financesService.deleteDepense(depense.id).subscribe({
-      next: () => this.loadData(this.meta()?.current_page ?? 1),
-      error: (err) => {
-        this.error.set(err?.error?.detail ?? 'Erreur lors de la suppression.');
-      },
-    });
+    this.dialog
+      .confirm({
+        title: 'Supprimer la dépense',
+        message: `Supprimer la dépense « ${depense.reference} » ?`,
+        variant: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+
+        this.financesService.deleteDepense(depense.id).subscribe({
+          next: () => this.loadData(this.meta()?.current_page ?? 1),
+          error: (err) => {
+            this.error.set(err?.error?.detail ?? 'Erreur lors de la suppression.');
+          },
+        });
+      });
   }
 
   private loadData(page: number): void {

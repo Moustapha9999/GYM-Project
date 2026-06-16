@@ -14,6 +14,7 @@ from app.models.abonnement import Abonnement
 from app.models.carte_membre import CarteMembre
 from app.models.client import Client
 from app.services import notification_service
+from app.services import carte_qr_service
 
 
 def expirer_abonnements(db: Session) -> int:
@@ -26,6 +27,7 @@ def expirer_abonnements(db: Session) -> int:
     )
     for abo in abos:
         abo.statut = "Expiré"
+        carte_qr_service.desactiver_cartes_abonnement(db, abo)
     db.commit()
     return len(abos)
 

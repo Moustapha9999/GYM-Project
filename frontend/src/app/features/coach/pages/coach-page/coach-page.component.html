@@ -1,0 +1,364 @@
+<section class="co-page">
+  <div class="co-page__head">
+    <div>
+      <h1>Planning &amp; Programmes</h1>
+      <p>Gestion du planning des coachs et des programmes sportifs.</p>
+    </div>
+  </div>
+
+  <div class="co-tabs">
+    <button
+      type="button"
+      class="co-tab"
+      [class.is-active]="activeTab() === 'planning'"
+      (click)="setTab('planning')"
+    >
+      <app-icon name="clock" [size]="16" />
+      Planning
+    </button>
+    <button
+      type="button"
+      class="co-tab"
+      [class.is-active]="activeTab() === 'programmes'"
+      (click)="setTab('programmes')"
+    >
+      <app-icon name="target" [size]="16" />
+      Programmes
+    </button>
+  </div>
+
+  @if (actionSuccess()) {
+    <p class="co-alert co-alert--success">{{ actionSuccess() }}</p>
+  }
+
+  <!-- ── PLANNING ─────────────────────────────────────────── -->
+  @if (activeTab() === 'planning') {
+    <div class="co-toolbar" [formGroup]="planningFilters">
+      <select formControlName="coach_id" (change)="loadPlannings()">
+        <option value="">Tous les coachs</option>
+        @for (c of coachs(); track c.id) {
+          <option [value]="c.id">{{ c.prenom }} {{ c.nom }}</option>
+        }
+      </select>
+      <input type="date" formControlName="jour" (change)="loadPlannings()" />
+      <span class="co-toolbar__spacer"></span>
+      @if (canCreatePlanning()) {
+        <button type="button" class="co-btn co-btn--primary" (click)="startCreatePlanning()">
+          + Nouvelle séance
+        </button>
+      }
+    </div>
+
+    <article class="co-card">
+      @if (planningLoading()) {
+        <app-loading-spinner label="Chargement du planning…" />
+      } @else if (planningError()) {
+        <p class="co-alert co-alert--error">{{ planningError() }}</p>
+      } @else if (plannings().length === 0) {
+        <p class="co-empty">Aucune séance planifiée.</p>
+      } @else {
+        <div class="co-table-wrap">
+          <table class="co-table">
+            <thead>
+              <tr>
+                <th>Séance</th>
+                <th>Coach</th>
+                <th>Client</th>
+                <th>Date</th>
+                <th>Horaire</th>
+                <th>Statut</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of plannings(); track p.id) {
+                <tr>
+                  <td><strong>{{ p.titre }}</strong></td>
+                  <td>{{ coachName(p) }}</td>
+                  <td>{{ clientName(p) }}</td>
+                  <td>{{ p.date_seance | date: 'dd/MM/yyyy' }}</td>
+                  <td>{{ shortTime(p.heure_debut) }} – {{ shortTime(p.heure_fin) }}</td>
+                  <td>
+                    <span class="co-status" [class]="statutClass(p.statut)">{{ p.statut }}</span>
+                  </td>
+                  <td class="co-actions">
+                    @if (canEditPlanning()) {
+                      <button type="button" class="co-btn co-btn--sm" (click)="startEditPlanning(p)">Modifier</button>
+                    }
+                    @if (canDeletePlanning()) {
+                      <button type="button" class="co-btn co-btn--sm co-btn--danger" (click)="deletePlanning(p)">Supprimer</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </article>
+  }
+
+  <!-- ── PROGRAMMES ───────────────────────────────────────── -->
+  @if (activeTab() === 'programmes') {
+    <div class="co-toolbar" [formGroup]="programmeFilters">
+      <select formControlName="coach_id" (change)="loadProgrammes()">
+        <option value="">Tous les coachs</option>
+        @for (c of coachs(); track c.id) {
+          <option [value]="c.id">{{ c.prenom }} {{ c.nom }}</option>
+        }
+      </select>
+      <select formControlName="actif" (change)="loadProgrammes()">
+        <option value="">Tous les statuts</option>
+        <option value="true">Actifs</option>
+        <option value="false">Inactifs</option>
+      </select>
+      <span class="co-toolbar__spacer"></span>
+      @if (canCreateProgramme()) {
+        <button type="button" class="co-btn co-btn--primary" (click)="startCreateProgramme()">
+          + Nouveau programme
+        </button>
+      }
+    </div>
+
+    <article class="co-card">
+      @if (programmeLoading()) {
+        <app-loading-spinner label="Chargement des programmes…" />
+      } @else if (programmeError()) {
+        <p class="co-alert co-alert--error">{{ programmeError() }}</p>
+      } @else if (programmes().length === 0) {
+        <p class="co-empty">Aucun programme sportif.</p>
+      } @else {
+        <div class="co-table-wrap">
+          <table class="co-table">
+            <thead>
+              <tr>
+                <th>Programme</th>
+                <th>Client</th>
+                <th>Coach</th>
+                <th>Objectif</th>
+                <th>Période</th>
+                <th>Statut</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of programmes(); track p.id) {
+                <tr>
+                  <td><strong>{{ p.titre }}</strong></td>
+                  <td>{{ clientName(p) }}</td>
+                  <td>{{ coachName(p) }}</td>
+                  <td>{{ p.objectif || '—' }}</td>
+                  <td>
+                    {{ p.date_debut | date: 'dd/MM/yyyy' }}
+                    @if (p.date_fin) {
+                      → {{ p.date_fin | date: 'dd/MM/yyyy' }}
+                    }
+                  </td>
+                  <td>
+                    <span class="co-status" [class.is-confirmed]="p.actif" [class.is-cancelled]="!p.actif">
+                      {{ p.actif ? 'Actif' : 'Inactif' }}
+                    </span>
+                  </td>
+                  <td class="co-actions">
+                    @if (canEditProgramme()) {
+                      <button type="button" class="co-btn co-btn--sm" (click)="startEditProgramme(p)">Modifier</button>
+                    }
+                    @if (canDeleteProgramme()) {
+                      <button type="button" class="co-btn co-btn--sm co-btn--danger" (click)="deleteProgramme(p)">Supprimer</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </article>
+  }
+
+  <!-- ── MODALE PLANNING ──────────────────────────────────── -->
+  @if (showPlanningForm()) {
+    <div class="co-modal" (click)="closePlanningForm()">
+      <div class="co-modal__box" (click)="$event.stopPropagation()">
+        <div class="co-modal__head">
+          <h2>{{ editingPlanning() ? 'Modifier la séance' : 'Nouvelle séance' }}</h2>
+          <button type="button" class="co-close" (click)="closePlanningForm()" aria-label="Fermer">✕</button>
+        </div>
+
+        <form class="co-form" [formGroup]="planningForm" (ngSubmit)="submitPlanning()">
+          <label>
+            Coach *
+            <select formControlName="coach_id" [attr.disabled]="editingPlanning() ? true : null">
+              <option value="">Sélectionner un coach</option>
+              @for (c of coachs(); track c.id) {
+                <option [value]="c.id">{{ c.prenom }} {{ c.nom }}</option>
+              }
+            </select>
+          </label>
+
+          @if (!editingPlanning()) {
+            <label class="co-search">
+              Client (optionnel)
+              <input
+                type="search"
+                [formControl]="clientSearchForm.controls.search"
+                placeholder="Rechercher un client…"
+                autocomplete="off"
+              />
+              @if (clientSearchLoading()) {
+                <p class="co-hint">Recherche…</p>
+              } @else if (clientResults().length > 0) {
+                <ul class="co-suggest">
+                  @for (c of clientResults(); track c.id) {
+                    <li>
+                      <button type="button" (click)="selectClient(c)">
+                        <strong>{{ c.prenom }} {{ c.nom }}</strong>
+                        <span>{{ c.numero_membre }} · {{ c.telephone }}</span>
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
+            </label>
+          }
+
+          <label>
+            Titre de la séance *
+            <input type="text" formControlName="titre" placeholder="Ex : Séance cardio" />
+          </label>
+
+          <div class="co-form__row">
+            <label>
+              Date *
+              <input type="date" formControlName="date_seance" />
+            </label>
+            <label>
+              Début *
+              <input type="time" formControlName="heure_debut" />
+            </label>
+            <label>
+              Fin *
+              <input type="time" formControlName="heure_fin" />
+            </label>
+          </div>
+
+          @if (editingPlanning()) {
+            <label>
+              Statut
+              <select formControlName="statut">
+                @for (s of statuts; track s) {
+                  <option [value]="s">{{ s }}</option>
+                }
+              </select>
+            </label>
+          }
+
+          @if (formError()) {
+            <p class="co-alert co-alert--error">{{ formError() }}</p>
+          }
+
+          <div class="co-form__actions">
+            <button type="button" class="co-btn co-btn--ghost" (click)="closePlanningForm()">Annuler</button>
+            <button type="submit" class="co-btn co-btn--primary" [disabled]="submitting()">
+              {{ submitting() ? 'Enregistrement…' : 'Enregistrer' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ── MODALE PROGRAMME ─────────────────────────────────── -->
+  @if (showProgrammeForm()) {
+    <div class="co-modal" (click)="closeProgrammeForm()">
+      <div class="co-modal__box" (click)="$event.stopPropagation()">
+        <div class="co-modal__head">
+          <h2>{{ editingProgramme() ? 'Modifier le programme' : 'Nouveau programme' }}</h2>
+          <button type="button" class="co-close" (click)="closeProgrammeForm()" aria-label="Fermer">✕</button>
+        </div>
+
+        <form class="co-form" [formGroup]="programmeForm" (ngSubmit)="submitProgramme()">
+          @if (!editingProgramme()) {
+            <label class="co-search">
+              Client *
+              <input
+                type="search"
+                [formControl]="clientSearchForm.controls.search"
+                placeholder="Rechercher un client…"
+                autocomplete="off"
+              />
+              @if (clientSearchLoading()) {
+                <p class="co-hint">Recherche…</p>
+              } @else if (clientResults().length > 0) {
+                <ul class="co-suggest">
+                  @for (c of clientResults(); track c.id) {
+                    <li>
+                      <button type="button" (click)="selectClient(c)">
+                        <strong>{{ c.prenom }} {{ c.nom }}</strong>
+                        <span>{{ c.numero_membre }} · {{ c.telephone }}</span>
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
+            </label>
+          }
+
+          <label>
+            Coach *
+            <select formControlName="coach_id" [attr.disabled]="editingProgramme() ? true : null">
+              <option value="">Sélectionner un coach</option>
+              @for (c of coachs(); track c.id) {
+                <option [value]="c.id">{{ c.prenom }} {{ c.nom }}</option>
+              }
+            </select>
+          </label>
+
+          <label>
+            Titre du programme *
+            <input type="text" formControlName="titre" placeholder="Ex : Prise de masse" />
+          </label>
+
+          <label>
+            Objectif
+            <input type="text" formControlName="objectif" placeholder="Ex : Perte de poids" />
+          </label>
+
+          <label>
+            Description
+            <textarea formControlName="description" rows="3" placeholder="Détails du programme…"></textarea>
+          </label>
+
+          <div class="co-form__row">
+            <label>
+              Date de début *
+              <input type="date" formControlName="date_debut" [attr.disabled]="editingProgramme() ? true : null" />
+            </label>
+            <label>
+              Date de fin
+              <input type="date" formControlName="date_fin" />
+            </label>
+          </div>
+
+          @if (editingProgramme()) {
+            <label class="co-checkbox">
+              <input type="checkbox" formControlName="actif" />
+              Programme actif
+            </label>
+          }
+
+          @if (formError()) {
+            <p class="co-alert co-alert--error">{{ formError() }}</p>
+          }
+
+          <div class="co-form__actions">
+            <button type="button" class="co-btn co-btn--ghost" (click)="closeProgrammeForm()">Annuler</button>
+            <button type="submit" class="co-btn co-btn--primary" [disabled]="submitting()">
+              {{ submitting() ? 'Enregistrement…' : 'Enregistrer' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</section>

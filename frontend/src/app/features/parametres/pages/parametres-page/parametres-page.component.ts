@@ -39,6 +39,7 @@ export class ParametresPageComponent implements OnInit {
 
   readonly form = this.fb.nonNullable.group({
     nom_salle: [''],
+    numero_salle: [''],
     slogan: [''],
     theme_couleur: ['#ea580c'],
     theme_mode: ['light' as 'light' | 'dark'],
@@ -91,6 +92,7 @@ export class ParametresPageComponent implements OnInit {
     const raw = this.form.getRawValue();
     this.themeService.apply({
       nom_salle: raw.nom_salle,
+      numero_salle: raw.numero_salle,
       slogan: raw.slogan,
       logo_url: this.logoPreview(),
       theme_couleur: raw.theme_couleur,
@@ -108,6 +110,7 @@ export class ParametresPageComponent implements OnInit {
     const raw = this.form.getRawValue();
     const payload: Record<string, string | null> = {
       nom_salle: raw.nom_salle.trim(),
+      numero_salle: raw.numero_salle.trim(),
       slogan: raw.slogan.trim(),
       theme_couleur: raw.theme_couleur,
       theme_mode: raw.theme_mode,
@@ -131,6 +134,7 @@ export class ParametresPageComponent implements OnInit {
   private patchForm(settings: AppSettings): void {
     this.form.patchValue({
       nom_salle: settings.nom_salle,
+      numero_salle: settings.numero_salle ?? '',
       slogan: settings.slogan,
       theme_couleur: settings.theme_couleur,
       theme_mode: settings.theme_mode,

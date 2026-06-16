@@ -7,8 +7,11 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import require_permission
+from app.models.client import Client
+from app.models.employe import Employe
 from app.models.utilisateur import Utilisateur
 from app.schemas.coach import (
+    CoachLight,
     PlanningCreate,
     PlanningRead,
     PlanningUpdate,
@@ -17,12 +20,49 @@ from app.schemas.coach import (
     ProgrammeUpdate,
 )
 from app.schemas.common import ApiResponse, PaginatedResponse
-from app.services import planning_service, programme_service
+from app.services import employe_service, planning_service, programme_service
 from app.services.planning_service import PlanningError
 from app.services.programme_service import ProgrammeError
 from app.utils.pagination import paginate
 
 router = APIRouter(prefix="/coach", tags=["Coach"])
+
+
+def _charger_noms(db: Session, items: list) -> tuple[dict, dict]:
+    """Construit les maps {coach_id: Employe} et {client_id: Client} pour une liste."""
+    coach_ids = {i.coach_id for i in items if getattr(i, "coach_id", None)}
+    client_ids = {i.client_id for i in items if getattr(i, "client_id", None)}
+    coachs = (
+        {e.id: e for e in db.query(Employe).filter(Employe.id.in_(coach_ids)).all()}
+        if coach_ids else {}
+    )
+    clients = (
+        {c.id: c for c in db.query(Client).filter(Client.id.in_(client_ids)).all()}
+        if client_ids else {}
+    )
+    return coachs, clients
+
+
+def _enrichir(read, item, coachs: dict, clients: dict):
+    coach = coachs.get(item.coach_id)
+    if coach is not None:
+        read.coach_nom = coach.nom
+        read.coach_prenom = coach.prenom
+    client = clients.get(getattr(item, "client_id", None))
+    if client is not None:
+        read.client_nom = client.nom
+        read.client_prenom = client.prenom
+    return read
+
+
+# ── Coachs (sélecteur) ──────────────────────────────────────
+@router.get("/coachs", response_model=ApiResponse[list[CoachLight]])
+def lister_coachs(
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_permission("planning.lecture")),
+):
+    coachs = employe_service.lister(db, fonction="Coach").all()
+    return ApiResponse(success=True, data=[CoachLight.model_validate(c) for c in coachs])
 
 
 # ── Programmes sportifs ─────────────────────────────────────
@@ -38,7 +78,9 @@ def lister_programmes(
 ):
     query = programme_service.lister(db, client_id=client_id, coach_id=coach_id, actif=actif)
     items, meta = paginate(query, page, per_page)
-    return PaginatedResponse(success=True, data=[ProgrammeRead.model_validate(p) for p in items], meta=meta)
+    coachs, clients = _charger_noms(db, items)
+    data = [_enrichir(ProgrammeRead.model_validate(p), p, coachs, clients) for p in items]
+    return PaginatedResponse(success=True, data=data, meta=meta)
 
 
 @router.post("/programmes-sportifs", response_model=ApiResponse[ProgrammeRead], status_code=status.HTTP_201_CREATED)
@@ -93,7 +135,9 @@ def lister_planning(
 ):
     query = planning_service.lister(db, coach_id=coach_id, jour=jour)
     items, meta = paginate(query, page, per_page)
-    return PaginatedResponse(success=True, data=[PlanningRead.model_validate(p) for p in items], meta=meta)
+    coachs, clients = _charger_noms(db, items)
+    data = [_enrichir(PlanningRead.model_validate(p), p, coachs, clients) for p in items]
+    return PaginatedResponse(success=True, data=data, meta=meta)
 
 
 @router.post("/planning", response_model=ApiResponse[PlanningRead], status_code=status.HTTP_201_CREATED)

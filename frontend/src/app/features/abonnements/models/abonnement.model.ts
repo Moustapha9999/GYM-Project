@@ -11,6 +11,21 @@ export interface AbonnementListItem {
   created_at: string;
 }
 
+export interface TarifAbonnement {
+  id: string;
+  nom: string;
+  sexe: string;
+  duree_jours: number;
+  montant: number;
+  montant_inscription: number;
+}
+
+export interface FormulesTarifs {
+  tarif_seance_journaliere: number;
+  abonnement_homme: TarifAbonnement;
+  abonnement_femme: TarifAbonnement;
+}
+
 export interface TypeAbonnement {
   id: string;
   nom: string;

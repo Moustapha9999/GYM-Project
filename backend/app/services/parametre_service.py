@@ -6,6 +6,7 @@ from app.schemas.parametre import AppSettingsRead, AppSettingsUpdate
 
 APP_KEYS = {
     "nom_salle": "TOTAL FITNESS",
+    "numero_salle": "",
     "slogan": "Discipline · Force · Résultats",
     "logo_url": "",
     "theme_couleur": "#ea580c",
@@ -34,6 +35,7 @@ def lire_app_settings(db: Session) -> AppSettingsRead:
     logo = _get(db, "logo_url")
     return AppSettingsRead(
         nom_salle=_get(db, "nom_salle"),
+        numero_salle=_get(db, "numero_salle"),
         slogan=_get(db, "slogan"),
         logo_url=logo if logo else None,
         theme_couleur=_get(db, "theme_couleur", "#ea580c"),
@@ -46,6 +48,7 @@ def mettre_a_jour_app_settings(db: Session, data: AppSettingsUpdate) -> AppSetti
     updates = data.model_dump(exclude_unset=True)
     descriptions = {
         "nom_salle": "Nom commercial de la salle",
+        "numero_salle": "Numéro WhatsApp officiel de la salle (signature des messages)",
         "slogan": "Slogan affiché dans l'application",
         "logo_url": "Logo (data URL base64)",
         "theme_couleur": "Couleur principale du thème (hex)",

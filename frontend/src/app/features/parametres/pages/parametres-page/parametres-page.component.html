@@ -35,6 +35,18 @@
             </label>
 
             <label class="prm-field">
+              <span class="prm-field__label">{{ 'parametres.gymPhone' | translate }}</span>
+              <input
+                type="tel"
+                class="prm-field__input"
+                formControlName="numero_salle"
+                [placeholder]="'parametres.gymPhonePlaceholder' | translate"
+                autocomplete="tel"
+              />
+              <p class="prm-field__hint">{{ 'parametres.gymPhoneHint' | translate }}</p>
+            </label>
+
+            <label class="prm-field">
               <span class="prm-field__label">{{ 'parametres.slogan' | translate }}</span>
               <input
                 type="text"

@@ -27,6 +27,18 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
     permissions: ['paiements.lecture'],
   },
   {
+    label: 'Finances',
+    route: APP_ROUTES.finances,
+    icon: 'wallet',
+    permissions: ['finances.lecture'],
+  },
+  {
+    label: 'Rapports',
+    route: APP_ROUTES.rapports,
+    icon: 'clipboard',
+    permissions: ['rapports.lecture', 'salaires.lecture', 'audit.lecture'],
+  },
+  {
     label: 'Présences',
     route: APP_ROUTES.presences,
     icon: 'user-check',

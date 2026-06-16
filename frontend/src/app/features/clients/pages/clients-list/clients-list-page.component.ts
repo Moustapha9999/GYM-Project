@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { PaginationMeta } from '@core/models/api-response.model';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
+import { DialogService } from '@shared/components/app-dialog/dialog.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { Client, ClientImportResult } from '@features/clients/models/client.model';
 import { ClientsService } from '@features/clients/services/clients.service';
@@ -19,6 +20,7 @@ type FormMode = 'create' | 'edit' | 'view';
 export class ClientsListPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly clientsService = inject(ClientsService);
+  private readonly dialog = inject(DialogService);
 
   readonly loading = signal(true);
   readonly submitting = signal(false);
@@ -249,21 +251,27 @@ export class ClientsListPageComponent implements OnInit {
   }
 
   deleteClient(client: Client): void {
-    if (!confirm(`Supprimer définitivement ${client.prenom} ${client.nom} ?`)) {
-      return;
-    }
+    this.dialog
+      .confirm({
+        title: 'Supprimer le client',
+        message: `Supprimer définitivement ${client.prenom} ${client.nom} ?`,
+        variant: 'danger',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
 
-    this.clientsService.delete(client.id).subscribe({
-      next: () => {
-        this.formSuccess.set('Client supprimé.');
-        if (this.editingClient()?.id === client.id || this.viewingClient()?.id === client.id) {
-          this.startCreate();
-        }
-        this.loadStats();
-        this.loadClients(this.meta()?.current_page ?? 1);
-      },
-      error: (err) => this.handleFormError(err),
-    });
+        this.clientsService.delete(client.id).subscribe({
+          next: () => {
+            this.formSuccess.set('Client supprimé.');
+            if (this.editingClient()?.id === client.id || this.viewingClient()?.id === client.id) {
+              this.startCreate();
+            }
+            this.loadStats();
+            this.loadClients(this.meta()?.current_page ?? 1);
+          },
+          error: (err) => this.handleFormError(err),
+        });
+      });
   }
 
   downloadImportTemplate(): void {

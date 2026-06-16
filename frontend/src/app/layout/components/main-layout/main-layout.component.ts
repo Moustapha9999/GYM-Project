@@ -19,7 +19,7 @@ import { SuperAdminLayoutComponent } from '@layout/components/super-admin-layout
   template: `
     @if (isSuperAdmin()) {
       <app-super-admin-layout />
-    } @else if (isReceptionist()) {
+    } @else if (isReceptionist() || isManager()) {
       <app-reception-layout />
     } @else {
       <div class="layout">
@@ -68,4 +68,5 @@ export class MainLayoutComponent {
 
   readonly isSuperAdmin = computed(() => this.auth.roleName() === 'super_admin');
   readonly isReceptionist = computed(() => this.auth.roleName() === 'receptionniste');
+  readonly isManager = computed(() => this.auth.roleName() === 'manager');
 }

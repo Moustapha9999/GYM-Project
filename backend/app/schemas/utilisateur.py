@@ -45,6 +45,7 @@ class RoleRead(BaseModel):
     id: uuid.UUID
     nom: str
     libelle: str
+    systeme: bool = False
 
 
 class PermissionRead(BaseModel):

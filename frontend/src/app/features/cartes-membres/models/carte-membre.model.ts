@@ -26,4 +26,5 @@ export interface EnvoiWhatsappResult {
   statut: string;
   numero: string;
   message: string | null;
+  lien_whatsapp?: string | null;
 }

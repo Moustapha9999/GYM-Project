@@ -68,11 +68,7 @@
                 <tr [class.is-selected]="selectedCarte()?.id === c.id">
                   <td>
                     <div class="cm-client-cell">
-                      @if (c.client_photo_url) {
-                        <img [src]="c.client_photo_url" alt="" class="cm-avatar" />
-                      } @else {
-                        <span class="cm-avatar cm-avatar--placeholder">{{ c.client_prenom.charAt(0) }}</span>
-                      }
+                      <span class="cm-avatar cm-avatar--placeholder">{{ c.client_prenom.charAt(0) }}</span>
                       <span>{{ clientFullName(c) }}</span>
                     </div>
                   </td>
@@ -132,15 +128,17 @@
 
         <div class="cm-preview">
           <div class="cm-preview__header">
-            <strong>TOTAL FITNESS</strong>
+            <strong>{{ gymName() }}</strong>
             <span>{{ 'modules.cartesMembres.memberCardLabel' | translate }}</span>
           </div>
           <div class="cm-preview__body">
-            <div class="cm-preview__photo">
-              @if (carte.client_photo_url) {
-                <img [src]="carte.client_photo_url" alt="Photo du membre" />
+            <div class="cm-preview__logo">
+              @if (logoUrl()) {
+                <img [src]="logoUrl()!" alt="Logo du gym" />
               } @else {
-                <span class="cm-preview__photo-placeholder">Photo</span>
+                <span class="cm-preview__logo-fallback" aria-hidden="true">
+                  <app-icon name="gym" [size]="28" />
+                </span>
               }
             </div>
             <div class="cm-preview__info">
@@ -162,13 +160,6 @@
         </div>
 
         <div class="cm-actions">
-          <label class="cm-upload">
-            <input type="file" accept="image/*" (change)="onPhotoSelected($event)" [disabled]="uploadingPhoto()" />
-            <span class="cm-btn cm-btn--secondary">
-              @if (uploadingPhoto()) { Envoi… } @else { Ajouter / modifier la photo }
-            </span>
-          </label>
-
           <button
             type="button"
             class="cm-btn cm-btn--primary"
@@ -184,7 +175,11 @@
             (click)="sendWhatsapp()"
             [disabled]="sendingWhatsapp()"
           >
-            @if (sendingWhatsapp()) { Envoi… } @else { Envoyer via WhatsApp }
+            @if (sendingWhatsapp()) {
+              {{ 'whatsapp.sending' | translate }}
+            } @else {
+              {{ 'whatsapp.sendCard' | translate }}
+            }
           </button>
         </div>
 
@@ -206,17 +201,9 @@
           <h2>{{ 'modules.cartesMembres.previewTitle' | translate }}</h2>
         </div>
         <p class="cm-empty cm-empty--side">
-          Sélectionnez une carte dans la liste pour voir l'aperçu, ajouter une photo ou l'envoyer en PDF.
+          Sélectionnez une carte dans la liste pour voir l'aperçu ou l'envoyer en PDF.
         </p>
       }
     </aside>
   </div>
 </section>
-
-@if (cropImageSrc(); as src) {
-  <app-photo-crop-modal
-    [imageSrc]="src"
-    (confirmed)="onPhotoCropped($event)"
-    (cancelled)="cancelPhotoCrop()"
-  />
-}

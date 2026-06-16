@@ -4,9 +4,25 @@
       <h1>{{ 'modules.paiements.title' | translate }}</h1>
       <p>{{ 'modules.paiements.subtitle' | translate }}</p>
     </div>
-    <button type="button" class="pay-btn pay-btn--ghost" (click)="resetFilters()">
-      {{ 'common.resetFilters' | translate }}
-    </button>
+    <div class="pay-page__head-actions">
+      <button type="button" class="pay-btn pay-btn--ghost" (click)="downloadImportTemplate()">
+        Modèle Excel
+      </button>
+      <label class="pay-import">
+        <input
+          type="file"
+          accept=".xlsx,.csv"
+          (change)="onImportFileSelected($event)"
+          [disabled]="importing()"
+        />
+        <span class="pay-btn pay-btn--secondary">
+          @if (importing()) { Import… } @else { Importer Excel }
+        </span>
+      </label>
+      <button type="button" class="pay-btn pay-btn--ghost" (click)="resetFilters()">
+        {{ 'common.resetFilters' | translate }}
+      </button>
+    </div>
   </div>
 
   @if (caisse()) {

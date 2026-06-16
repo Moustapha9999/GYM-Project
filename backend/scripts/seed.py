@@ -25,6 +25,9 @@ from app.models import (
 ROLES = [
     {"nom": "super_admin", "libelle": "Super Administrateur", "systeme": True},
     {"nom": "pdg", "libelle": "PDG / Direction", "systeme": True},
+    {"nom": "manager", "libelle": "Manager / Responsable", "systeme": False},
+    {"nom": "responsable_rh", "libelle": "Responsable RH", "systeme": False},
+    {"nom": "comptable", "libelle": "Comptable", "systeme": False},
     {"nom": "receptionniste", "libelle": "Réceptionniste", "systeme": False},
     {"nom": "coach", "libelle": "Coach", "systeme": False},
 ]
@@ -43,6 +46,20 @@ PERMISSIONS_PAR_ROLE = {
         "modules": ["clients", "abonnements", "finances", "employes", "salaires",
                     "rapports", "roles", "utilisateurs", "audit", "parametres"],
         "exclure_actions": ["suppression"],
+    },
+    "manager": {
+        "modules": ["clients", "abonnements", "seances_journalieres", "cartes_membres",
+                    "presences", "paiements", "finances", "employes", "rapports",
+                    "notifications", "programmes_sportifs", "planning"],
+        "exclure_actions": ["suppression"],
+    },
+    "responsable_rh": {
+        "modules": ["employes", "salaires", "clients", "rapports"],
+        "actions": ["lecture", "creation", "modification", "export"],
+    },
+    "comptable": {
+        "modules": ["finances", "paiements", "salaires", "rapports"],
+        "actions": ["lecture", "creation", "modification", "export"],
     },
     "receptionniste": {
         "modules": ["clients", "abonnements", "seances_journalieres",

@@ -1,0 +1,222 @@
+<section class="pr-page">
+  <div class="pr-page__head">
+    <div>
+      <h1>{{ 'modules.presences.title' | translate }}</h1>
+      <p>{{ 'modules.presences.subtitle' | translate }}</p>
+    </div>
+    <label class="pr-date">
+      {{ 'modules.presences.dateLabel' | translate }}
+      <input
+        type="date"
+        [value]="selectedDate()"
+        (change)="onDateChange($event)"
+      />
+    </label>
+  </div>
+
+  <div class="pr-kpis">
+    <article class="pr-kpi pr-kpi--highlight">
+      <span>{{ 'modules.presences.kpi.inRoom' | translate }}</span>
+      <strong>{{ enSalle() }}</strong>
+      <small>{{ 'common.inRoom' | translate }}</small>
+    </article>
+    <article class="pr-kpi">
+      <span>{{ 'modules.presences.kpi.total' | translate }}</span>
+      <strong>{{ totalJour() }}</strong>
+    </article>
+    <article class="pr-kpi">
+      <span>{{ 'modules.presences.kpi.qr' | translate }}</span>
+      <strong>{{ entreesQr() }}</strong>
+    </article>
+    <article class="pr-kpi">
+      <span>{{ 'modules.presences.kpi.manual' | translate }}</span>
+      <strong>{{ entreesManuelles() }}</strong>
+    </article>
+  </div>
+
+  <div class="pr-page__grid">
+    <article class="pr-card pr-card--pointage">
+      <div class="pr-card__head">
+        <h2>{{ 'modules.presences.pointageTitle' | translate }}</h2>
+      </div>
+
+      <div class="pr-mode-tabs">
+        <button
+          type="button"
+          class="pr-mode-tab"
+          [class.is-active]="pointageMode() === 'qr'"
+          (click)="setMode('qr')"
+        >
+          <app-icon name="id-card" [size]="16" />
+          {{ 'modules.presences.modeQr' | translate }}
+        </button>
+        <button
+          type="button"
+          class="pr-mode-tab"
+          [class.is-active]="pointageMode() === 'manual'"
+          (click)="setMode('manual')"
+        >
+          <app-icon name="users" [size]="16" />
+          {{ 'modules.presences.modeManual' | translate }}
+        </button>
+      </div>
+
+      @if (pointageMode() === 'qr') {
+        <form class="pr-form" [formGroup]="qrForm" (ngSubmit)="submitEntreeQr()">
+          <label>
+            {{ 'modules.presences.qrEntreeLabel' | translate }}
+            <input
+              type="text"
+              formControlName="qr_code"
+              placeholder="Scannez ou collez le QR (UUID)..."
+              autocomplete="off"
+              [disabled]="!canCreate() || submitting()"
+            />
+          </label>
+          <p class="pr-hint">{{ 'modules.presences.qrHint' | translate }}</p>
+          @if (canCreate()) {
+            <button type="submit" class="pr-btn pr-btn--primary" [disabled]="submitting()">
+              @if (submitting()) {
+                {{ 'modules.presences.processing' | translate }}
+              } @else {
+                {{ 'modules.presences.entreeBtn' | translate }}
+              }
+            </button>
+          }
+        </form>
+      } @else {
+        <form class="pr-form" [formGroup]="manualForm" (ngSubmit)="submitEntreeManuelle()">
+          <label class="pr-search-wrap">
+            {{ 'modules.presences.searchClient' | translate }}
+            <input
+              type="search"
+              formControlName="search"
+              placeholder="Nom, n° membre, téléphone..."
+              autocomplete="off"
+              [disabled]="!canCreate() || submitting()"
+            />
+          </label>
+
+          @if (clientSearchLoading()) {
+            <p class="pr-hint">{{ 'common.loading' | translate }}</p>
+          } @else if (clientResults().length > 0) {
+            <ul class="pr-client-suggest">
+              @for (c of clientResults(); track c.id) {
+                <li>
+                  <button type="button" (click)="selectClient(c)">
+                    <strong>{{ c.prenom }} {{ c.nom }}</strong>
+                    <span>{{ c.numero_membre }} · {{ c.telephone }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+
+          @if (canCreate()) {
+            <button type="submit" class="pr-btn pr-btn--primary" [disabled]="submitting() || !selectedClient()">
+              @if (submitting()) {
+                {{ 'modules.presences.processing' | translate }}
+              } @else {
+                {{ 'modules.presences.entreeBtn' | translate }}
+              }
+            </button>
+          }
+        </form>
+      }
+
+      <div class="pr-sortie-block">
+        <h3>{{ 'modules.presences.sortieTitle' | translate }}</h3>
+        <form class="pr-form pr-form--inline" [formGroup]="sortieQrForm" (ngSubmit)="submitSortieQr()">
+          <label>
+            {{ 'modules.presences.qrSortieLabel' | translate }}
+            <input
+              type="text"
+              formControlName="qr_code"
+              placeholder="Re-scanner la carte..."
+              autocomplete="off"
+              [disabled]="!canSortie() || submitting()"
+            />
+          </label>
+          @if (canSortie()) {
+            <button type="submit" class="pr-btn pr-btn--secondary" [disabled]="submitting()">
+              {{ 'modules.presences.sortieBtn' | translate }}
+            </button>
+          }
+        </form>
+      </div>
+
+      @if (actionSuccess()) {
+        <p class="pr-alert pr-alert--success">{{ actionSuccess() }}</p>
+      }
+      @if (actionError()) {
+        <p class="pr-alert pr-alert--error">{{ actionError() }}</p>
+      }
+    </article>
+
+    <article class="pr-card pr-card--list">
+      <div class="pr-card__head">
+        <h2>{{ 'modules.presences.listTitle' | translate }}</h2>
+        <span class="pr-badge">{{ totalJour() }} {{ 'modules.presences.entries' | translate }}</span>
+      </div>
+
+      @if (loading()) {
+        <app-loading-spinner [label]="'modules.presences.loading' | translate" />
+      } @else if (error()) {
+        <p class="pr-alert pr-alert--error">{{ error() }}</p>
+      } @else if (presences().length === 0) {
+        <p class="pr-empty">{{ 'modules.presences.empty' | translate }}</p>
+      } @else {
+        <div class="pr-table-wrap">
+          <table class="pr-table">
+            <thead>
+              <tr>
+                <th>{{ 'modules.presences.columns.member' | translate }}</th>
+                <th>{{ 'modules.presences.columns.method' | translate }}</th>
+                <th>{{ 'modules.presences.columns.entry' | translate }}</th>
+                <th>{{ 'modules.presences.columns.exit' | translate }}</th>
+                <th>{{ 'modules.presences.columns.duration' | translate }}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of presences(); track p.id) {
+                <tr [class.is-active]="isEnSalle(p)">
+                  <td>
+                    <strong>{{ clientFullName(p) }}</strong>
+                    <small>{{ p.numero_membre }}</small>
+                  </td>
+                  <td>
+                    <span class="pr-tag" [class.pr-tag--qr]="p.methode === 'QR Code'">
+                      {{ p.methode }}
+                    </span>
+                  </td>
+                  <td>{{ p.heure_entree | date: 'HH:mm' }}</td>
+                  <td>
+                    @if (p.heure_sortie) {
+                      {{ p.heure_sortie | date: 'HH:mm' }}
+                    } @else {
+                      <span class="pr-status pr-status--in">{{ 'modules.presences.inRoom' | translate }}</span>
+                    }
+                  </td>
+                  <td>{{ formatDuree(p.duree_minutes) }}</td>
+                  <td>
+                    @if (isEnSalle(p) && canSortie()) {
+                      <button
+                        type="button"
+                        class="pr-btn pr-btn--sm"
+                        (click)="pointerSortieManuelle(p)"
+                        [disabled]="submitting()"
+                      >
+                        {{ 'modules.presences.sortieBtn' | translate }}
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </article>
+  </div>
+</section>

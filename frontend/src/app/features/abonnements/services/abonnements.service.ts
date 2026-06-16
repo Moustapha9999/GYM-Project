@@ -9,6 +9,7 @@ import {
   Eligibilite,
   SouscriptionPayload,
   SouscriptionResult,
+  FormulesTarifs,
   TypeAbonnement,
 } from '@features/abonnements/models/abonnement.model';
 
@@ -29,6 +30,12 @@ export class AbonnementsService {
   listTypes(): Observable<TypeAbonnement[]> {
     return this.api
       .get<TypeAbonnement[]>('types-abonnements')
+      .pipe(map((response) => response.data));
+  }
+
+  getFormulesTarifs(): Observable<FormulesTarifs> {
+    return this.api
+      .get<FormulesTarifs>('abonnements/formules-tarifs')
       .pipe(map((response) => response.data));
   }
 
@@ -56,5 +63,19 @@ export class AbonnementsService {
     const params: Record<string, string | number> = { page: 1, per_page: 1 };
     if (statut) params['statut'] = statut;
     return this.list(params).pipe(map((response) => response.meta.total));
+  }
+
+  downloadImportTemplate(): Observable<Blob> {
+    return this.api.getBlob('abonnements/import-modele').pipe(
+      map((blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'modele_import_abonnements.xlsx';
+        link.click();
+        URL.revokeObjectURL(url);
+        return blob;
+      }),
+    );
   }
 }

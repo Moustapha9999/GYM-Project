@@ -4,10 +4,11 @@ import { RouterOutlet } from '@angular/router';
 import { DEFAULT_LANGUAGE } from '@core/models/language.model';
 import { ThemeService } from '@core/services/theme.service';
 import { TranslationService } from '@core/services/translation.service';
+import { DialogHostComponent } from '@shared/components/app-dialog/dialog-host.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, DialogHostComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

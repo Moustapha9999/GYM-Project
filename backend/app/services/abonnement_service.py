@@ -224,6 +224,7 @@ def peut_renouveler_au_tarif_normal(db: Session, client_id: uuid.UUID) -> dict:
 
 def suspendre(db: Session, abonnement: Abonnement) -> Abonnement:
     abonnement.statut = "Suspendu"
+    carte_qr_service.desactiver_cartes_abonnement(db, abonnement)
     db.commit()
     db.refresh(abonnement)
     return abonnement
@@ -231,6 +232,7 @@ def suspendre(db: Session, abonnement: Abonnement) -> Abonnement:
 
 def resilier(db: Session, abonnement: Abonnement) -> Abonnement:
     abonnement.statut = "Résilié"
+    carte_qr_service.desactiver_cartes_abonnement(db, abonnement)
     db.commit()
     db.refresh(abonnement)
     return abonnement

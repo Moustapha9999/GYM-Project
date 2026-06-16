@@ -10,6 +10,7 @@ class ParametreRead(BaseModel):
 
 class AppSettingsRead(BaseModel):
     nom_salle: str = "TOTAL FITNESS"
+    numero_salle: str = ""
     slogan: str = "Discipline · Force · Résultats"
     logo_url: str | None = None
     theme_couleur: str = "#ea580c"
@@ -19,6 +20,7 @@ class AppSettingsRead(BaseModel):
 
 class AppSettingsUpdate(BaseModel):
     nom_salle: str | None = Field(None, min_length=2, max_length=100)
+    numero_salle: str | None = Field(None, max_length=30)
     slogan: str | None = Field(None, max_length=200)
     logo_url: str | None = None
     theme_couleur: str | None = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$")

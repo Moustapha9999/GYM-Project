@@ -1,5 +1,6 @@
 export interface AppSettings {
   nom_salle: string;
+  numero_salle: string;
   slogan: string;
   logo_url: string | null;
   theme_couleur: string;
@@ -9,6 +10,7 @@ export interface AppSettings {
 
 export interface AppSettingsUpdate {
   nom_salle?: string;
+  numero_salle?: string;
   slogan?: string;
   logo_url?: string | null;
   theme_couleur?: string;

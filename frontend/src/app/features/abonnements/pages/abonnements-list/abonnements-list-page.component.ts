@@ -5,16 +5,18 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { PaginationMeta } from '@core/models/api-response.model';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
+import { DialogService } from '@shared/components/app-dialog/dialog.service';
 import { MruCurrencyPipe } from '@shared/pipes/mru-currency.pipe';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import {
   AbonnementListItem,
   Eligibilite,
-  TypeAbonnement,
+  FormulesTarifs,
 } from '@features/abonnements/models/abonnement.model';
 import { AbonnementsService } from '@features/abonnements/services/abonnements.service';
 import { Client } from '@features/clients/models/client.model';
 import { ClientsService } from '@features/clients/services/clients.service';
+import { WhatsappMessageService } from '@core/services/whatsapp-message.service';
 import { MoyenPaiement } from '@features/paiements/models/paiement.model';
 import { PaiementsService } from '@features/paiements/services/paiements.service';
 
@@ -31,12 +33,15 @@ export class AbonnementsListPageComponent implements OnInit {
   private readonly abonnementsService = inject(AbonnementsService);
   private readonly clientsService = inject(ClientsService);
   private readonly paiementsService = inject(PaiementsService);
+  private readonly dialog = inject(DialogService);
+  private readonly whatsapp = inject(WhatsappMessageService);
 
   readonly loading = signal(true);
   readonly submitting = signal(false);
   readonly abonnements = signal<AbonnementListItem[]>([]);
   readonly meta = signal<PaginationMeta | null>(null);
-  readonly types = signal<TypeAbonnement[]>([]);
+  readonly tarifs = signal<FormulesTarifs | null>(null);
+  readonly tarifsLoading = signal(true);
   readonly moyens = signal<MoyenPaiement[]>([]);
   readonly actifsCount = signal(0);
   readonly suspendusCount = signal(0);
@@ -52,6 +57,7 @@ export class AbonnementsListPageComponent implements OnInit {
   readonly detailSuccess = signal<string | null>(null);
   readonly detailError = signal<string | null>(null);
   readonly renewing = signal(false);
+  readonly importing = signal(false);
 
   readonly renewForm = this.fb.nonNullable.group({
     moyen_paiement_id: [''],
@@ -77,7 +83,7 @@ export class AbonnementsListPageComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.abonnementsService.listTypes().subscribe({ next: (t) => this.types.set(t) });
+    this.loadFormulesTarifs();
     this.paiementsService.listMoyensPaiement().subscribe({ next: (m) => this.moyens.set(m) });
 
     this.souscriptionForm.controls.client_search.valueChanges
@@ -103,6 +109,34 @@ export class AbonnementsListPageComponent implements OnInit {
   resetFilters(): void {
     this.filters.reset({ statut: '' });
     this.loadAbonnements(1);
+  }
+
+  downloadImportTemplate(): void {
+    this.abonnementsService.downloadImportTemplate().subscribe({
+      error: () => {
+        this.formError.set('Impossible de télécharger le modèle Excel.');
+      },
+    });
+  }
+
+  onImportFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.importing.set(true);
+    this.formError.set(null);
+    this.formSuccess.set(null);
+
+    // Endpoint backend non disponible pour l'instant sur les abonnements.
+    setTimeout(() => {
+      this.importing.set(false);
+      this.formError.set(
+        'Import Excel abonnements non disponible pour le moment. Utilisez ce fichier comme modèle de saisie.',
+      );
+    }, 500);
+
+    input.value = '';
   }
 
   goToPage(page: number): void {
@@ -189,6 +223,11 @@ export class AbonnementsListPageComponent implements OnInit {
             `Renouvellement — ${result.montant_paye} MRU (réf. ${result.paiement_reference})`,
           );
           this.formSuccess.set(this.detailSuccess());
+          this.whatsapp.offerAfterAbonnement(
+            abonnement.client_id,
+            abonnement.client_nom,
+            result.type_tarif,
+          );
           this.loadStats();
           this.loadAbonnements(this.meta()?.current_page ?? 1);
         },
@@ -238,6 +277,8 @@ export class AbonnementsListPageComponent implements OnInit {
         this.formSuccess.set(
           `${result.type_tarif} — ${result.montant_paye} MRU (réf. ${result.paiement_reference})`,
         );
+        const clientName = `${client.prenom} ${client.nom}`;
+        this.whatsapp.offerAfterAbonnement(client.id, clientName, result.type_tarif);
         this.clearClient();
         this.souscriptionForm.controls.moyen_paiement_id.setValue('');
         this.loadStats();
@@ -248,28 +289,60 @@ export class AbonnementsListPageComponent implements OnInit {
   }
 
   suspendre(abo: AbonnementListItem): void {
-    if (!confirm(`Suspendre l'abonnement de ${abo.client_nom} ?`)) return;
+    this.dialog
+      .confirm({
+        title: 'Suspendre l\'abonnement',
+        message: `Suspendre l'abonnement de ${abo.client_nom} ?`,
+        variant: 'warning',
+        confirmLabel: 'Suspendre',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
 
-    this.abonnementsService.suspendre(abo.id).subscribe({
-      next: () => {
-        this.formSuccess.set('Abonnement suspendu.');
-        this.loadStats();
-        this.loadAbonnements(this.meta()?.current_page ?? 1);
-      },
-      error: (err) => this.handleFormError(err),
-    });
+        this.abonnementsService.suspendre(abo.id).subscribe({
+          next: () => {
+            this.formSuccess.set('Abonnement suspendu. La carte membre a été désactivée.');
+            this.loadStats();
+            this.loadAbonnements(this.meta()?.current_page ?? 1);
+          },
+          error: (err) => this.handleFormError(err),
+        });
+      });
   }
 
   resilier(abo: AbonnementListItem): void {
-    if (!confirm(`Résilier l'abonnement de ${abo.client_nom} ?`)) return;
+    this.dialog
+      .confirm({
+        title: 'Résilier l\'abonnement',
+        message: `Résilier l'abonnement de ${abo.client_nom} ?`,
+        variant: 'danger',
+        confirmLabel: 'Résilier',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
 
-    this.abonnementsService.resilier(abo.id).subscribe({
-      next: () => {
-        this.formSuccess.set('Abonnement résilié.');
-        this.loadStats();
-        this.loadAbonnements(this.meta()?.current_page ?? 1);
+        this.abonnementsService.resilier(abo.id).subscribe({
+          next: () => {
+            this.formSuccess.set('Abonnement résilié. La carte membre a été désactivée.');
+            this.loadStats();
+            this.loadAbonnements(this.meta()?.current_page ?? 1);
+          },
+          error: (err) => this.handleFormError(err),
+        });
+      });
+  }
+
+  private loadFormulesTarifs(): void {
+    this.tarifsLoading.set(true);
+    this.abonnementsService.getFormulesTarifs().subscribe({
+      next: (tarifs) => {
+        this.tarifs.set(tarifs);
+        this.tarifsLoading.set(false);
       },
-      error: (err) => this.handleFormError(err),
+      error: () => {
+        this.tarifs.set(null);
+        this.tarifsLoading.set(false);
+      },
     });
   }
 

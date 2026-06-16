@@ -4,6 +4,22 @@
       <h1>{{ 'modules.abonnements.title' | translate }}</h1>
       <p>{{ 'modules.abonnements.subtitle' | translate }}</p>
     </div>
+    <div class="abo-page__head-actions">
+      <button type="button" class="abo-btn abo-btn--ghost" (click)="downloadImportTemplate()">
+        Modèle Excel
+      </button>
+      <label class="abo-import">
+        <input
+          type="file"
+          accept=".xlsx,.csv"
+          (change)="onImportFileSelected($event)"
+          [disabled]="importing()"
+        />
+        <span class="abo-btn abo-btn--secondary">
+          @if (importing()) { Import… } @else { Importer Excel }
+        </span>
+      </label>
+    </div>
   </div>
 
   <div class="abo-kpis">
@@ -21,7 +37,7 @@
     </article>
     <article class="abo-kpi">
       <span>{{ 'modules.abonnements.kpi.formulas' | translate }}</span>
-      <strong>{{ types().length }}</strong>
+      <strong>{{ tarifs() ? 2 : 0 }}</strong>
     </article>
   </div>
 
@@ -289,27 +305,53 @@
           </button>
         </form>
       </article>
-
-      <article class="abo-card">
-        <h2>{{ 'modules.abonnements.formulasTitle' | translate }}</h2>
-        <ul class="abo-types">
-          @for (t of types(); track t.id) {
-            <li>
-              <div>
-                <strong>{{ t.nom }}</strong>
-                <span>{{ t.duree_jours }} jours — {{ t.sexe ?? 'Mixte' }}</span>
-              </div>
-              <div class="abo-types__tarifs">
-                <span>Inscription : {{ t.montant_inscription | mruCurrency }}</span>
-                <span>Renouvellement : {{ t.montant | mruCurrency }}</span>
-              </div>
-            </li>
-          } @empty {
-            <li class="abo-types__empty">Aucune formule configurée.</li>
-          }
-        </ul>
-      </article>
       }
+
+      <article class="abo-card abo-card--tarifs">
+        <h2>{{ 'modules.abonnements.formulasTitle' | translate }}</h2>
+
+        @if (tarifsLoading()) {
+          <app-loading-spinner />
+        } @else if (tarifs(); as t) {
+          <div class="abo-tarifs">
+            <section class="abo-tarif-group">
+              <h3>{{ 'modules.abonnements.formulasMen' | translate }}</h3>
+              <div class="abo-tarif-row">
+                <span>{{ 'modules.abonnements.formulasRegistration' | translate }}</span>
+                <strong>{{ t.abonnement_homme.montant_inscription | mruCurrency }}</strong>
+              </div>
+              <div class="abo-tarif-row">
+                <span>{{ 'modules.abonnements.formulasMonthly' | translate }}</span>
+                <strong>{{ t.abonnement_homme.montant | mruCurrency }}</strong>
+              </div>
+            </section>
+
+            <section class="abo-tarif-group">
+              <h3>{{ 'modules.abonnements.formulasWomen' | translate }}</h3>
+              <div class="abo-tarif-row">
+                <span>{{ 'modules.abonnements.formulasRegistration' | translate }}</span>
+                <strong>{{ t.abonnement_femme.montant_inscription | mruCurrency }}</strong>
+              </div>
+              <div class="abo-tarif-row">
+                <span>{{ 'modules.abonnements.formulasMonthly' | translate }}</span>
+                <strong>{{ t.abonnement_femme.montant | mruCurrency }}</strong>
+              </div>
+            </section>
+
+            <section class="abo-tarif-group abo-tarif-group--seance">
+              <h3>{{ 'modules.abonnements.formulasDailySession' | translate }}</h3>
+              <div class="abo-tarif-row">
+                <span>{{ 'modules.abonnements.formulasPerSession' | translate }}</span>
+                <strong>{{ t.tarif_seance_journaliere | mruCurrency }}</strong>
+              </div>
+            </section>
+
+            <p class="abo-tarifs__note">{{ 'modules.abonnements.formulasPaymentNote' | translate }}</p>
+          </div>
+        } @else {
+          <p class="abo-tarifs__empty">{{ 'modules.abonnements.formulasEmpty' | translate }}</p>
+        }
+      </article>
     </aside>
   </div>
 </section>

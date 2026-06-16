@@ -29,6 +29,10 @@
     "inRoom": "in gym",
     "activeLabel": "active"
   },
+  "dialog": {
+    "confirm": "Confirm",
+    "ok": "OK"
+  },
   "languages": {
     "fr": "Français",
     "en": "English",
@@ -44,11 +48,15 @@
     "admin": "Administration",
     "parametres": "Settings",
     "presences": "Attendance",
-    "seances": "Daily sessions"
+    "seances": "Daily sessions",
+    "rapports": "Reports",
+    "rh": "Human resources",
+    "coach": "Coach (Planning & Programs)"
   },
   "roles": {
     "superAdmin": "Super Admin",
-    "receptionist": "Receptionist"
+    "receptionist": "Receptionist",
+    "manager": "Manager"
   },
   "notifications": {
     "panelTitle": "Notifications",
@@ -70,9 +78,12 @@
     "subtitle": "Gym identity, logo, appearance and interface language.",
     "loading": "Loading settings...",
     "identityTitle": "Gym identity",
-    "identityHint": "Name and logo displayed in the application.",
+    "identityHint": "Gym name, WhatsApp number and logo displayed in the application.",
     "gymName": "Gym name",
     "gymNamePlaceholder": "TOTAL FITNESS",
+    "gymPhone": "Gym WhatsApp number",
+    "gymPhonePlaceholder": "+222 45 25 00 00",
+    "gymPhoneHint": "This number is used to send WhatsApp notifications to clients (message signature).",
     "slogan": "Slogan",
     "sloganPlaceholder": "Discipline · Strength · Results",
     "chooseLogo": "Choose a logo",
@@ -103,6 +114,27 @@
       "blue": "Blue",
       "purple": "Purple",
       "red": "Red"
+    }
+  },
+  "whatsapp": {
+    "promptTitle": "Send a WhatsApp message",
+    "promptMessage": "Do you want to send \"{{type}}\" to {{name}} via WhatsApp?",
+    "send": "Open WhatsApp",
+    "sendCard": "Send card + message",
+    "sending": "Sending…",
+    "cartePrompt": "Send \"{{type}}\" and the PDF card to {{name}} via WhatsApp?",
+    "carteAutoSuccess": "Card and message sent to {{numero}} via WhatsApp.",
+    "carteManualSuccess": "PDF downloaded and WhatsApp opened — attach the PDF to the message.",
+    "cartePdfError": "WhatsApp opened. Could not download the PDF automatically.",
+    "carteSendError": "WhatsApp send failed. Check that the service is connected.",
+    "noPhone": "No WhatsApp or phone number on file for this client.",
+    "generateError": "Unable to prepare the message.",
+    "types": {
+      "bienvenue": "Welcome message",
+      "carte_prete": "Member card ready",
+      "renouvellement": "Renewal confirmation",
+      "alerte_fin": "Subscription expiry alert",
+      "recu_paiement": "Payment receipt"
     }
   },
   "dashboard": {
@@ -138,11 +170,39 @@
       "subscriptionsToday": "Today's subscriptions:",
       "reminders": "Reminders",
       "occupancy": "Gym occupancy",
+      "quickAccess": "Quick access",
+      "coachSection": "Planning & Programs",
+      "viewPlanning": "View schedule",
+      "viewProgrammes": "View programs",
+      "activities": {
+        "sessionsToday": "Today's sessions",
+        "sessionsTodayHint": "Coach schedule for today",
+        "activePrograms": "Active programs",
+        "activeProgramsHint": "Sport programs currently in progress",
+        "noSessions": "No sessions scheduled for today.",
+        "noPrograms": "No active programs at the moment.",
+        "active": "Active"
+      },
       "kpi": {
+        "revenue": "Today's revenue",
         "paymentsToday": "Today's payments",
-        "presencesToday": "Today's attendance",
-        "sessionsCollected": "Sessions collected",
-        "expiringSubscriptions": "Expiring subscriptions"
+        "subscriptionsToday": "Today's subscriptions",
+        "expiringSubscriptions": "Expiring subscriptions",
+        "activePrograms": "Active programs",
+        "clientsFollowed": "Clients followed",
+        "sessionsToday": "Sessions planned (today)",
+        "sessionsWeek": "Sessions planned (week)"
+      },
+      "charts": {
+        "section": "Charts & statistics",
+        "payments7d": "Payments — last 7 days",
+        "presences7d": "Attendance — last 7 days",
+        "planningWeek": "Coach schedule — week",
+        "planningWeekHint": "Number of sessions planned per day",
+        "planningStatus": "Schedule by status",
+        "programmes": "Fitness programs",
+        "programmesHint": "Active vs inactive programs breakdown",
+        "noPlanning": "No sessions planned this week."
       }
     }
   },
@@ -154,6 +214,14 @@
       "detailsTitle": "Subscription details",
       "subscribeTitle": "Subscribe / Renew",
       "formulasTitle": "Available plans",
+      "formulasMen": "Men's subscription",
+      "formulasWomen": "Women's subscription",
+      "formulasRegistration": "Registration",
+      "formulasMonthly": "Monthly",
+      "formulasDailySession": "Daily session",
+      "formulasPerSession": "Per session",
+      "formulasEmpty": "No plan configured.",
+      "formulasPaymentNote": "Sessions must be paid before starting.",
       "kpi": {
         "active": "Active subscriptions",
         "suspended": "Suspended",
@@ -203,7 +271,8 @@
       "tabs": {
         "users": "User accounts",
         "employees": "Employees",
-        "roles": "Roles & privileges"
+        "roles": "Roles & privileges",
+        "pricing": "Pricing"
       },
       "usersListTitle": "User accounts",
       "userDetailsTitle": "Account details",
@@ -220,11 +289,53 @@
       "roleSummary": "Summary — {{role}}",
       "kpi": {
         "totalAccounts": "Total accounts"
+      },
+      "pricing": {
+        "title": "Standard pricing",
+        "subtitle": "Daily session and monthly subscriptions for men / women (first month and renewal).",
+        "loading": "Loading pricing…",
+        "seanceTitle": "Daily session",
+        "seanceAmount": "Price per session (MRU)",
+        "menTitle": "Men's subscription",
+        "womenTitle": "Women's subscription",
+        "firstMonth": "First month / registration (MRU)",
+        "renewal": "Renewal (MRU)",
+        "currencyHint": "Amounts are in MRU. New prices apply to upcoming subscriptions and sessions."
       }
     },
     "presences": {
       "title": "Attendance",
-      "subtitle": "Entry tracking and daily attendance."
+      "subtitle": "Check-in/out via QR scan or manual entry.",
+      "dateLabel": "Day",
+      "pointageTitle": "Check-in",
+      "modeQr": "QR scan",
+      "modeManual": "Manual",
+      "qrEntreeLabel": "Member card QR — Entry",
+      "qrSortieLabel": "Member card QR — Exit",
+      "qrHint": "Focus the field and scan the card (scanner sends the UUID).",
+      "searchClient": "Search a member",
+      "entreeBtn": "Check in",
+      "sortieBtn": "Check out",
+      "sortieTitle": "Quick checkout",
+      "processing": "Processing…",
+      "listTitle": "Today's log",
+      "entries": "entries",
+      "loading": "Loading attendance…",
+      "empty": "No attendance recorded for this date.",
+      "inRoom": "In gym",
+      "kpi": {
+        "inRoom": "Members in gym",
+        "total": "Entries today",
+        "qr": "Via QR",
+        "manual": "Manual"
+      },
+      "columns": {
+        "member": "Member",
+        "method": "Method",
+        "entry": "Entry",
+        "exit": "Exit",
+        "duration": "Duration"
+      }
     },
     "seances": {
       "title": "Daily sessions",
