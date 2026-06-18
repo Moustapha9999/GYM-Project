@@ -21,6 +21,8 @@ import { Tarifs } from '@features/admin/models/tarif.model';
 type AdminTab = 'utilisateurs' | 'employes' | 'roles' | 'tarifs';
 type FormMode = 'create' | 'edit' | 'view';
 
+const USER_FORM_ROLES_SUPER_ADMIN = ['super_admin', 'pdg', 'manager', 'receptionniste'];
+const USER_FORM_ROLES_PDG = ['pdg', 'manager', 'receptionniste'];
 const ASSIGNABLE_ROLES = [
   'receptionniste',
   'coach',
@@ -219,9 +221,16 @@ export class AdminPageComponent implements OnInit {
     return role.permissions.length;
   });
 
-  readonly assignableRoles = computed(() =>
-    this.roles().filter((r) => ASSIGNABLE_ROLES.includes(r.nom)),
-  );
+  readonly assignableRoles = computed(() => {
+    const viewer = this.authService.roleName();
+    const allowed =
+      viewer === 'super_admin'
+        ? USER_FORM_ROLES_SUPER_ADMIN
+        : viewer === 'pdg'
+          ? USER_FORM_ROLES_PDG
+          : ASSIGNABLE_ROLES;
+    return this.roles().filter((r) => allowed.includes(r.nom));
+  });
 
   readonly editableRoles = computed(() =>
     this.roles().filter((r) => !SYSTEM_ROLES.includes(r.nom)),

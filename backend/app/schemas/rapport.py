@@ -44,14 +44,19 @@ class JournalCaisseRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    date_jour: date
-    total_encaisse: Decimal
-    total_depenses: Decimal
-    solde: Decimal
+    reference: str
+    date_paiement: datetime
+    type_paiement: str
+    client_nom: str | None = None
+    montant: Decimal
+    moyen_paiement: str
     statut: str
-    cloture_le: datetime | None = None
-    cloture_par_nom: str | None = None
-    created_at: datetime
+    encaisse_par_nom: str
+    role_encaisseur: str
+    abonnement_id: uuid.UUID | None = None
+    abonnement_date_debut: date | None = None
+    abonnement_date_fin: date | None = None
+    abonnement_statut: str | None = None
 
 
 class JournalClientRead(BaseModel):
@@ -67,3 +72,17 @@ class JournalClientRead(BaseModel):
     created_at: datetime
     derniere_presence: datetime | None = None
     dernier_abonnement_fin: date | None = None
+
+
+class JournalDepenseRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    reference: str
+    libelle: str
+    categorie_id: uuid.UUID
+    categorie_nom: str
+    montant: Decimal
+    date_depense: date
+    justificatif_url: str | None = None
+    created_at: datetime

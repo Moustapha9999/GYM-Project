@@ -39,8 +39,11 @@ export class ApiService {
     return this.http.delete<ApiResponse<T>>(this.buildUrl(path));
   }
 
-  getBlob(path: string): Observable<Blob> {
-    return this.http.get(this.buildUrl(path), { responseType: 'blob' });
+  getBlob(path: string, params?: Record<string, string | number | boolean>): Observable<Blob> {
+    return this.http.get(this.buildUrl(path), {
+      params: this.toHttpParams(params),
+      responseType: 'blob',
+    });
   }
 
   uploadFile<T>(path: string, file: File, fieldName = 'file'): Observable<ApiResponse<T>> {

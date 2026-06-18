@@ -1,27 +1,61 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { map, Observable } from 'rxjs';
 
 import { ApiService } from '@core/services/api.service';
-import { environment } from '@env/environment';
 import {
   FichePaieRapport,
+  GenererFichePaieRequest,
   JournalAuditRapport,
   JournalCaisseRapport,
   JournalClientRapport,
+  JournalDepenseRapport,
+  MasseSalarialeRapport,
   RapportFilters,
 } from '@features/rapports/models/rapport.model';
 
 @Injectable({ providedIn: 'root' })
 export class RapportsService {
-  private readonly filterKeys = ['date_debut', 'date_fin', 'module'] as const;
+  private readonly filterKeys = [
+    'date_debut',
+    'date_fin',
+    'mois',
+    'annee',
+    'statut',
+    'employe_id',
+    'module',
+    'categorie_id',
+    'type_paiement',
+  ] as const;
 
   private readonly api = inject(ApiService);
-  private readonly http = inject(HttpClient);
 
   listFichesPaie(filters?: RapportFilters): Observable<FichePaieRapport[]> {
     return this.api
       .get<FichePaieRapport[]>('rapports/fiches-paie', this.toParams(filters))
+      .pipe(map((r) => r.data));
+  }
+
+  getMasseSalariale(mois: number, annee: number): Observable<MasseSalarialeRapport> {
+    return this.api
+      .get<MasseSalarialeRapport>('rapports/fiches-paie/masse-salariale', { mois, annee })
+      .pipe(map((r) => r.data));
+  }
+
+  genererFichePaie(payload: GenererFichePaieRequest): Observable<FichePaieRapport> {
+    return this.api.post<FichePaieRapport>('rh/fiches-paie/generer', payload).pipe(map((r) => r.data));
+  }
+
+  marquerFichePayee(ficheId: string): Observable<FichePaieRapport> {
+    return this.api.patch<FichePaieRapport>(`rh/fiches-paie/${ficheId}/payer`, {}).pipe(map((r) => r.data));
+  }
+
+  downloadFichePdf(ficheId: string): Observable<Blob> {
+    return this.api.getBlob(`rapports/fiches-paie/${ficheId}/pdf`);
+  }
+
+  listJournalDepenses(filters?: RapportFilters): Observable<JournalDepenseRapport[]> {
+    return this.api
+      .get<JournalDepenseRapport[]>('rapports/journal-depenses', this.toParams(filters))
       .pipe(map((r) => r.data));
   }
 
@@ -44,31 +78,22 @@ export class RapportsService {
   }
 
   download(endpoint: string, filters?: RapportFilters & { module?: string }): Observable<Blob> {
-    return this.http.get(`${environment.apiUrl}/${endpoint}`, {
-      params: this.toHttpParams(filters),
-      responseType: 'blob',
-    });
+    return this.api.getBlob(endpoint, this.toParams(filters));
+  }
+
+  listCategories(): Observable<{ id: string; nom: string }[]> {
+    return this.api.get<{ id: string; nom: string }[]>('finances/categories-depenses').pipe(map((r) => r.data));
   }
 
   private toParams(
     filters?: RapportFilters & { module?: string },
-  ): Record<string, string> | undefined {
+  ): Record<string, string | number> | undefined {
     if (!filters) return undefined;
-    const result: Record<string, string> = {};
+    const result: Record<string, string | number> = {};
     for (const key of this.filterKeys) {
       const v = filters[key];
       if (v) result[key] = v;
     }
-    return result;
-  }
-
-  private toHttpParams(filters?: RapportFilters & { module?: string }): HttpParams {
-    let params = new HttpParams();
-    if (!filters) return params;
-    for (const key of this.filterKeys) {
-      const v = filters[key];
-      if (v) params = params.set(key, v);
-    }
-    return params;
+    return Object.keys(result).length ? result : undefined;
   }
 }

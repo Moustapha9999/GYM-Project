@@ -9,8 +9,29 @@ from app.models.role import Role
 from app.models.utilisateur import Utilisateur
 from app.schemas.utilisateur import UtilisateurCreate, UtilisateurUpdate
 
-ROLES_ASSIGNABLES = {"receptionniste", "coach", "pdg", "manager", "responsable_rh", "comptable"}
+ROLES_ASSIGNABLES = {
+    "receptionniste",
+    "coach",
+    "pdg",
+    "manager",
+    "responsable_rh",
+    "comptable",
+    "super_admin",
+}
 ROLES_NON_SUPPRIMABLES = {"super_admin"}
+
+
+def _verifier_role_assignable(role_nom: str, creator_role: str | None = None) -> None:
+    if role_nom not in ROLES_ASSIGNABLES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Rôle non autorisé pour la création : {role_nom}",
+        )
+    if role_nom == "super_admin" and creator_role != "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Seul un super administrateur peut attribuer ce rôle.",
+        )
 
 
 def lister(db: Session) -> list[Utilisateur]:
@@ -31,12 +52,8 @@ def obtenir(db: Session, utilisateur_id: uuid.UUID) -> Utilisateur | None:
     )
 
 
-def creer(db: Session, payload: UtilisateurCreate) -> Utilisateur:
-    if payload.role_nom not in ROLES_ASSIGNABLES:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Rôle non autorisé pour la création : {payload.role_nom}",
-        )
+def creer(db: Session, payload: UtilisateurCreate, creator_role: str | None = None) -> Utilisateur:
+    _verifier_role_assignable(payload.role_nom, creator_role)
 
     role = db.query(Role).filter(Role.nom == payload.role_nom).first()
     if role is None:
@@ -74,7 +91,7 @@ def creer(db: Session, payload: UtilisateurCreate) -> Utilisateur:
 
 
 def modifier(
-    db: Session, utilisateur: Utilisateur, payload: UtilisateurUpdate
+    db: Session, utilisateur: Utilisateur, payload: UtilisateurUpdate, creator_role: str | None = None
 ) -> Utilisateur:
     if utilisateur.role and utilisateur.role.nom in ROLES_NON_SUPPRIMABLES:
         raise HTTPException(
@@ -86,11 +103,7 @@ def modifier(
 
     if "role_nom" in data:
         role_nom = data.pop("role_nom")
-        if role_nom not in ROLES_ASSIGNABLES:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Rôle non autorisé : {role_nom}",
-            )
+        _verifier_role_assignable(role_nom, creator_role)
         role = db.query(Role).filter(Role.nom == role_nom).first()
         if role is None:
             raise HTTPException(

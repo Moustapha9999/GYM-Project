@@ -1,72 +1,379 @@
 <section class="rep-page">
   <div class="rep-page__head">
     <div>
-      <h1>Rapports</h1>
-      <p>Fiche de paie, journal audit, journal caisse, journal client avec filtres et exports.</p>
+      <h1>{{ 'modules.rapports.title' | translate }}</h1>
+      <p>{{ 'modules.rapports.subtitle' | translate }}</p>
     </div>
-    <div class="rep-page__actions">
-      <button type="button" class="rep-btn rep-btn--ghost" [disabled]="exporting()" (click)="exportCurrent('excel')">
-        Export Excel
-      </button>
-      <button type="button" class="rep-btn" [disabled]="exporting()" (click)="exportCurrent('pdf')">
-        Export PDF
-      </button>
-    </div>
+    @if (canExportCurrent()) {
+      <div class="rep-page__actions">
+        <button
+          type="button"
+          class="rep-btn rep-btn--ghost"
+          [disabled]="exporting() || loading()"
+          (click)="exportCurrent('excel')"
+        >
+          {{ 'modules.rapports.exportExcel' | translate }}
+        </button>
+        <button
+          type="button"
+          class="rep-btn"
+          [disabled]="exporting() || loading()"
+          (click)="exportCurrent('pdf')"
+        >
+          {{ 'modules.rapports.exportPdf' | translate }}
+        </button>
+      </div>
+    }
   </div>
 
-  <nav class="rep-tabs">
-    <button type="button" class="rep-tabs__btn" [class.is-active]="activeTab() === 'fiches'" (click)="setTab('fiches')">Fiches de paie</button>
-    <button type="button" class="rep-tabs__btn" [class.is-active]="activeTab() === 'audit'" (click)="setTab('audit')">Journal audit</button>
-    <button type="button" class="rep-tabs__btn" [class.is-active]="activeTab() === 'caisse'" (click)="setTab('caisse')">Journal caisse</button>
-    <button type="button" class="rep-tabs__btn" [class.is-active]="activeTab() === 'clients'" (click)="setTab('clients')">Journal client</button>
-  </nav>
+  @if (visibleTabs().length) {
+    <nav class="rep-tabs">
+      @for (tab of visibleTabs(); track tab.id) {
+        <button
+          type="button"
+          class="rep-tabs__btn"
+          [class.is-active]="activeTab() === tab.id"
+          (click)="setTab(tab.id)"
+        >
+          {{ tab.labelKey | translate }}
+        </button>
+      }
+    </nav>
 
-  <form class="rep-filters" [formGroup]="filters" (ngSubmit)="applyFilters()">
-    <label>
-      Date début
-      <input type="date" formControlName="date_debut" />
-    </label>
-    <label>
-      Date fin
-      <input type="date" formControlName="date_fin" />
-    </label>
-    @if (activeTab() === 'audit') {
-      <label>
-        Module (audit)
-        <input type="text" formControlName="module" placeholder="clients, paiements..." />
-      </label>
-    }
-    <button type="submit" class="rep-btn rep-btn--primary">Filtrer</button>
-    <button type="button" class="rep-btn rep-btn--ghost" (click)="resetFilters()">Réinitialiser</button>
-  </form>
+    <div class="rep-kpis">
+      <article class="rep-kpi">
+        <span>{{ 'modules.rapports.kpi.rows' | translate }}</span>
+        <strong>{{ rowCount() }}</strong>
+      </article>
+      @if (activeTab() === 'fiches') {
+        <article class="rep-kpi">
+          <span>{{ 'modules.rapports.kpi.payrollGross' | translate }}</span>
+          <strong>{{ totalPayrollBrut() | mruCurrency }}</strong>
+        </article>
+        <article class="rep-kpi rep-kpi--highlight">
+          <span>{{ 'modules.rapports.kpi.payrollNet' | translate }}</span>
+          <strong>{{ totalPayrollNet() | mruCurrency }}</strong>
+        </article>
+        <article class="rep-kpi">
+          <span>{{ 'modules.rapports.kpi.payrollPaid' | translate }}</span>
+          <strong>{{ payrollPaidCount() }}</strong>
+        </article>
+        <article class="rep-kpi">
+          <span>{{ 'modules.rapports.kpi.payrollPending' | translate }}</span>
+          <strong>{{ payrollPendingCount() }}</strong>
+        </article>
+        @if (masseSalariale(); as masse) {
+          <article class="rep-kpi rep-kpi--accent">
+            <span>{{ 'modules.rapports.kpi.payrollMass' | translate }}</span>
+            <strong>{{ masse.total_net | mruCurrency }}</strong>
+            <small>{{ masse.nombre_fiches }} {{ 'modules.rapports.kpi.payrollSlips' | translate }}</small>
+          </article>
+        }
+      }
+      @if (activeTab() === 'depenses') {
+        <article class="rep-kpi rep-kpi--highlight">
+          <span>{{ 'modules.rapports.kpi.expensesTotal' | translate }}</span>
+          <strong>{{ totalExpenses() | mruCurrency }}</strong>
+        </article>
+      }
+      @if (activeTab() === 'caisse') {
+        <article class="rep-kpi rep-kpi--highlight">
+          <span>{{ 'modules.rapports.kpi.cashIn' | translate }}</span>
+          <strong>{{ totalCashIn() | mruCurrency }}</strong>
+        </article>
+        <article class="rep-kpi">
+          <span>{{ 'modules.rapports.kpi.cashSubscriptions' | translate }}</span>
+          <strong>{{ cashSubscriptionCount() }}</strong>
+        </article>
+        <article class="rep-kpi">
+          <span>{{ 'modules.rapports.kpi.cashOtherPayments' | translate }}</span>
+          <strong>{{ cashOtherPaymentsCount() }}</strong>
+        </article>
+      }
+      @if (activeTab() === 'clients') {
+        <article class="rep-kpi rep-kpi--highlight">
+          <span>{{ 'modules.rapports.kpi.activeClients' | translate }}</span>
+          <strong>{{ activeClientsCount() }}</strong>
+        </article>
+      }
+    </div>
+
+    <form class="rep-filters" [formGroup]="filters" (ngSubmit)="applyFilters()">
+      @if (activeTab() === 'fiches') {
+        <label>
+          {{ 'modules.rapports.filters.month' | translate }}
+          <select formControlName="mois">
+            @for (m of monthOptions; track m) {
+              <option [value]="m">{{ m }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          {{ 'modules.rapports.filters.year' | translate }}
+          <select formControlName="annee">
+            @for (y of yearOptions; track y) {
+              <option [value]="y">{{ y }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          {{ 'modules.rapports.filters.status' | translate }}
+          <select formControlName="statut">
+            <option value="">{{ 'common.all' | translate }}</option>
+            @for (st of payrollStatuses; track st) {
+              <option [value]="st">{{ st }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          {{ 'modules.rapports.filters.employee' | translate }}
+          <select formControlName="employe_id">
+            <option value="">{{ 'common.all' | translate }}</option>
+            @for (emp of employes(); track emp.id) {
+              <option [value]="emp.id">{{ emp.prenom }} {{ emp.nom }} — {{ emp.fonction }}</option>
+            }
+          </select>
+        </label>
+      } @else {
+        <label>
+          {{ 'modules.rapports.filters.startDate' | translate }}
+          <input type="date" formControlName="date_debut" />
+        </label>
+        <label>
+          {{ 'modules.rapports.filters.endDate' | translate }}
+          <input type="date" formControlName="date_fin" />
+        </label>
+      }
+      @if (activeTab() === 'audit') {
+        <label>
+          {{ 'modules.rapports.filters.module' | translate }}
+          <select formControlName="module">
+            <option value="">{{ 'common.all' | translate }}</option>
+            @for (mod of auditModules; track mod) {
+              <option [value]="mod">{{ mod }}</option>
+            }
+          </select>
+        </label>
+      }
+      @if (activeTab() === 'depenses') {
+        <label>
+          {{ 'modules.rapports.filters.category' | translate }}
+          <select formControlName="categorie_id">
+            <option value="">{{ 'common.all' | translate }}</option>
+            @for (cat of categories(); track cat.id) {
+              <option [value]="cat.id">{{ cat.nom }}</option>
+            }
+          </select>
+        </label>
+      }
+      @if (activeTab() === 'caisse') {
+        <label>
+          {{ 'modules.rapports.filters.paymentType' | translate }}
+          <select formControlName="type_paiement">
+            <option value="">{{ 'common.all' | translate }}</option>
+            @for (pt of paymentTypes; track pt) {
+              <option [value]="pt">{{ pt }}</option>
+            }
+          </select>
+        </label>
+      }
+      <button type="submit" class="rep-btn rep-btn--primary">{{ 'common.apply' | translate }}</button>
+      <button type="button" class="rep-btn rep-btn--ghost" (click)="resetFilters()">
+        {{ 'common.resetFilters' | translate }}
+      </button>
+    </form>
+  }
 
   @if (error()) {
     <p class="rep-alert rep-alert--error">{{ error() }}</p>
   }
+  @if (success()) {
+    <p class="rep-alert rep-alert--success">{{ success() }}</p>
+  }
 
   @if (loading()) {
-    <app-loading-spinner label="Chargement des rapports..." />
-  } @else {
+    <app-loading-spinner [label]="'modules.rapports.loading' | translate" />
+  } @else if (visibleTabs().length) {
     <div class="rep-table-wrap">
       @if (activeTab() === 'fiches') {
+        <div class="rep-payroll">
+          <div class="rep-payroll__intro">
+            <h2>{{ 'modules.rapports.payroll.title' | translate }}</h2>
+            <p>{{ 'modules.rapports.payroll.subtitle' | translate }}</p>
+            <p class="rep-payroll__formula">{{ 'modules.rapports.payroll.formula' | translate }}</p>
+            @if (canCreatePayroll()) {
+              <button type="button" class="rep-btn" (click)="toggleGeneratePanel()">
+                {{
+                  showGeneratePanel()
+                    ? ('modules.rapports.payroll.hideGenerate' | translate)
+                    : ('modules.rapports.payroll.generate' | translate)
+                }}
+              </button>
+            }
+          </div>
+
+          @if (showGeneratePanel() && canCreatePayroll()) {
+            <form class="rep-payroll__generate" [formGroup]="generateForm" (ngSubmit)="generatePayroll()">
+              <h3>{{ 'modules.rapports.payroll.generateTitle' | translate }}</h3>
+              <div class="rep-payroll__generate-grid">
+                <label>
+                  {{ 'modules.rapports.filters.employee' | translate }}
+                  <select formControlName="employe_id">
+                    <option value="">{{ 'modules.rapports.payroll.selectEmployee' | translate }}</option>
+                    @for (emp of employes(); track emp.id) {
+                      <option [value]="emp.id">
+                        {{ emp.prenom }} {{ emp.nom }} — {{ emp.salaire_base | mruCurrency }}
+                      </option>
+                    }
+                  </select>
+                </label>
+                <label>
+                  {{ 'modules.rapports.filters.month' | translate }}
+                  <select formControlName="mois">
+                    @for (m of monthOptions; track m) {
+                      <option [value]="m">{{ m }}</option>
+                    }
+                  </select>
+                </label>
+                <label>
+                  {{ 'modules.rapports.filters.year' | translate }}
+                  <select formControlName="annee">
+                    @for (y of yearOptions; track y) {
+                      <option [value]="y">{{ y }}</option>
+                    }
+                  </select>
+                </label>
+                <label>
+                  {{ 'modules.rapports.columns.bonus' | translate }}
+                  <input type="number" min="0" step="1" formControlName="primes" />
+                </label>
+                <label>
+                  {{ 'modules.rapports.columns.extraBonus' | translate }}
+                  <input type="number" min="0" step="1" formControlName="bonus" />
+                </label>
+                <label>
+                  {{ 'modules.rapports.columns.deductions' | translate }}
+                  <input type="number" min="0" step="1" formControlName="retenues" />
+                </label>
+              </div>
+              @if (selectedEmployeForGenerate(); as emp) {
+                <p class="rep-payroll__preview">
+                  {{ 'modules.rapports.payroll.preview' | translate }}:
+                  <strong>{{ emp.salaire_base | mruCurrency }}</strong>
+                  + {{ generateForm.controls.primes.value | mruCurrency }}
+                  + {{ generateForm.controls.bonus.value | mruCurrency }}
+                  − {{ generateForm.controls.retenues.value | mruCurrency }}
+                  =
+                  <strong class="rep-payroll__preview-net">{{ previewNetSalary() | mruCurrency }}</strong>
+                </p>
+              }
+              <button type="submit" class="rep-btn rep-btn--primary" [disabled]="generating()">
+                {{ 'modules.rapports.payroll.generateSubmit' | translate }}
+              </button>
+            </form>
+          }
+        </div>
+
         <table class="rep-table">
           <thead>
             <tr>
-              <th>Employé</th><th>Période</th><th>Salaire base</th><th>Net</th><th>Statut</th><th>Paiement</th>
+              <th>{{ 'modules.rapports.columns.employee' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.period' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.baseSalary' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.bonus' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.extraBonus' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.deductions' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.net' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.status' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.paidOn' | translate }}</th>
+              @if (canExportCurrent() || canValidatePayroll()) {
+                <th>{{ 'modules.rapports.columns.action' | translate }}</th>
+              }
             </tr>
           </thead>
           <tbody>
             @for (r of fiches(); track r.id) {
               <tr>
-                <td>{{ r.employe_nom }}</td>
+                <td>
+                  <span class="rep-table__primary">{{ r.employe_nom }}</span>
+                  @if (r.fonction) {
+                    <small class="rep-table__muted">{{ r.fonction }}</small>
+                  }
+                </td>
                 <td>{{ r.mois }}/{{ r.annee }}</td>
-                <td>{{ r.salaire_base | number: '1.0-0' }} MRU</td>
-                <td>{{ (r.salaire_final ?? 0) | number: '1.0-0' }} MRU</td>
-                <td>{{ r.statut_paiement }}</td>
+                <td>{{ r.salaire_base | mruCurrency }}</td>
+                <td class="rep-table__positive">+{{ r.primes | mruCurrency }}</td>
+                <td class="rep-table__positive">+{{ r.bonus | mruCurrency }}</td>
+                <td class="rep-table__negative">−{{ r.retenues | mruCurrency }}</td>
+                <td class="rep-table__amount">{{ (r.salaire_final ?? 0) | mruCurrency }}</td>
+                <td>
+                  <span class="rep-badge" [class.is-paid]="r.statut_paiement === 'Payé'">
+                    {{ r.statut_paiement }}
+                  </span>
+                </td>
                 <td>{{ r.date_paiement ? (r.date_paiement | date: 'dd/MM/yyyy') : '—' }}</td>
+                @if (canExportCurrent() || canValidatePayroll()) {
+                  <td>
+                    <div class="rep-row-actions">
+                      @if (canExportCurrent()) {
+                        <button
+                          type="button"
+                          class="rep-act-btn"
+                          [disabled]="downloadingPdfId() === r.id"
+                          (click)="downloadFichePdf(r)"
+                        >
+                          PDF
+                        </button>
+                      }
+                      @if (canValidatePayroll() && r.statut_paiement !== 'Payé') {
+                        <button
+                          type="button"
+                          class="rep-act-btn rep-act-btn--primary"
+                          [disabled]="markingPaidId() === r.id"
+                          (click)="markAsPaid(r)"
+                        >
+                          {{ 'modules.rapports.payroll.markPaid' | translate }}
+                        </button>
+                      }
+                    </div>
+                  </td>
+                }
               </tr>
             } @empty {
-              <tr><td colspan="6" class="rep-empty">Aucune fiche sur cette période.</td></tr>
+              <tr>
+                <td [attr.colspan]="canExportCurrent() || canValidatePayroll() ? 10 : 9" class="rep-empty">
+                  {{ 'modules.rapports.empty.payroll' | translate }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      @if (activeTab() === 'depenses') {
+        <table class="rep-table">
+          <thead>
+            <tr>
+              <th>{{ 'modules.rapports.columns.reference' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.label' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.category' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.amount' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.date' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of depenses(); track r.id) {
+              <tr>
+                <td class="rep-table__mono">{{ r.reference }}</td>
+                <td class="rep-table__primary">{{ r.libelle }}</td>
+                <td>{{ r.categorie_nom }}</td>
+                <td class="rep-table__amount">{{ r.montant | mruCurrency }}</td>
+                <td>{{ r.date_depense | date: 'dd/MM/yyyy' }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="rep-empty">{{ 'modules.rapports.empty.expenses' | translate }}</td>
+              </tr>
             }
           </tbody>
         </table>
@@ -76,45 +383,86 @@
         <table class="rep-table">
           <thead>
             <tr>
-              <th>Date</th><th>Action</th><th>Module</th><th>Utilisateur</th><th>Rôle</th><th>IP</th>
+              <th>{{ 'modules.rapports.columns.date' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.action' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.module' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.user' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.role' | translate }}</th>
+              <th>IP</th>
             </tr>
           </thead>
           <tbody>
             @for (r of audits(); track r.id) {
               <tr>
                 <td>{{ r.created_at | date: 'dd/MM/yyyy HH:mm' }}</td>
-                <td>{{ r.action }}</td>
+                <td><span class="rep-badge">{{ r.action }}</span></td>
                 <td>{{ r.module }}</td>
                 <td>{{ r.utilisateur_nom ?? '—' }}</td>
                 <td>{{ r.role_nom ?? '—' }}</td>
                 <td>{{ r.adresse_ip ?? '—' }}</td>
               </tr>
             } @empty {
-              <tr><td colspan="6" class="rep-empty">Aucune trace audit.</td></tr>
+              <tr>
+                <td colspan="6" class="rep-empty">{{ 'modules.rapports.empty.audit' | translate }}</td>
+              </tr>
             }
           </tbody>
         </table>
       }
 
       @if (activeTab() === 'caisse') {
+        <div class="rep-payroll">
+          <div class="rep-payroll__intro">
+            <h2>{{ 'modules.rapports.cash.title' | translate }}</h2>
+            <p>{{ 'modules.rapports.cash.subtitle' | translate }}</p>
+          </div>
+        </div>
         <table class="rep-table">
           <thead>
             <tr>
-              <th>Date</th><th>Encaisse</th><th>Dépenses</th><th>Solde</th><th>Statut</th><th>Clôturé par</th>
+              <th>{{ 'modules.rapports.columns.date' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.reference' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.paymentType' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.name' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.amount' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.paymentMethod' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.cashier' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.role' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.subscriptionPeriod' | translate }}</th>
             </tr>
           </thead>
           <tbody>
             @for (r of caisses(); track r.id) {
               <tr>
-                <td>{{ r.date_jour | date: 'dd/MM/yyyy' }}</td>
-                <td>{{ r.total_encaisse | number: '1.0-0' }} MRU</td>
-                <td>{{ r.total_depenses | number: '1.0-0' }} MRU</td>
-                <td>{{ r.solde | number: '1.0-0' }} MRU</td>
-                <td>{{ r.statut }}</td>
-                <td>{{ r.cloture_par_nom ?? '—' }}</td>
+                <td>{{ r.date_paiement | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td class="rep-table__mono">{{ r.reference }}</td>
+                <td>
+                  <span class="rep-badge" [class.is-active]="r.type_paiement === 'Abonnement'">
+                    {{ r.type_paiement }}
+                  </span>
+                </td>
+                <td class="rep-table__primary">{{ r.client_nom ?? '—' }}</td>
+                <td class="rep-table__amount">{{ r.montant | mruCurrency }}</td>
+                <td>{{ r.moyen_paiement }}</td>
+                <td>{{ r.encaisse_par_nom }}</td>
+                <td>{{ r.role_encaisseur }}</td>
+                <td>
+                  @if (r.abonnement_date_debut && r.abonnement_date_fin) {
+                    {{ r.abonnement_date_debut | date: 'dd/MM/yyyy' }}
+                    →
+                    {{ r.abonnement_date_fin | date: 'dd/MM/yyyy' }}
+                    @if (r.abonnement_statut) {
+                      <small class="rep-table__muted">{{ r.abonnement_statut }}</small>
+                    }
+                  } @else {
+                    —
+                  }
+                </td>
               </tr>
             } @empty {
-              <tr><td colspan="6" class="rep-empty">Aucun journal caisse.</td></tr>
+              <tr>
+                <td colspan="9" class="rep-empty">{{ 'modules.rapports.empty.cash' | translate }}</td>
+              </tr>
             }
           </tbody>
         </table>
@@ -124,21 +472,32 @@
         <table class="rep-table">
           <thead>
             <tr>
-              <th>N° membre</th><th>Nom</th><th>Téléphone</th><th>Email</th><th>Statut</th><th>Dernière présence</th>
+              <th>{{ 'modules.rapports.columns.memberNo' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.name' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.phone' | translate }}</th>
+              <th>Email</th>
+              <th>{{ 'modules.rapports.columns.status' | translate }}</th>
+              <th>{{ 'modules.rapports.columns.lastPresence' | translate }}</th>
             </tr>
           </thead>
           <tbody>
             @for (r of clients(); track r.id) {
               <tr>
-                <td>{{ r.numero_membre }}</td>
-                <td>{{ r.prenom }} {{ r.nom }}</td>
+                <td class="rep-table__mono">{{ r.numero_membre }}</td>
+                <td class="rep-table__primary">{{ r.prenom }} {{ r.nom }}</td>
                 <td>{{ r.telephone }}</td>
                 <td>{{ r.email ?? '—' }}</td>
-                <td>{{ r.actif ? 'Actif' : 'Inactif' }}</td>
+                <td>
+                  <span class="rep-badge" [class.is-active]="r.actif">
+                    {{ r.actif ? ('common.active' | translate) : ('common.inactive' | translate) }}
+                  </span>
+                </td>
                 <td>{{ r.derniere_presence ? (r.derniere_presence | date: 'dd/MM/yyyy HH:mm') : '—' }}</td>
               </tr>
             } @empty {
-              <tr><td colspan="6" class="rep-empty">Aucun client trouvé.</td></tr>
+              <tr>
+                <td colspan="6" class="rep-empty">{{ 'modules.rapports.empty.clients' | translate }}</td>
+              </tr>
             }
           </tbody>
         </table>

@@ -3,7 +3,7 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy import Computed, Date, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -32,8 +32,12 @@ class FichePaie(Base):
     bonus: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0)
     retenues: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0)
     
-    # salaire_final est une colonne générée côté DB (voir migration)
-    salaire_final: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    # Colonne générée PostgreSQL — ne jamais inclure dans INSERT/UPDATE
+    salaire_final: Mapped[Decimal | None] = mapped_column(
+        Numeric(10, 2),
+        Computed("salaire_base + primes + bonus - retenues", persisted=True),
+        nullable=True,
+    )
     statut_paiement: Mapped[str] = mapped_column(String(20), default="En attente")
     date_paiement: Mapped[date | None] = mapped_column(Date, nullable=True)
     fiche_pdf_url: Mapped[str | None] = mapped_column(String, nullable=True)

@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import require_permission
+from app.core.dependencies import require_any_permission, require_permission
 from app.models.employe import Employe
 from app.models.fiche_paie import FichePaie
 from app.models.utilisateur import Utilisateur
@@ -17,16 +17,30 @@ from app.schemas.rapport import (
     JournalAuditRead,
     JournalCaisseRead,
     JournalClientRead,
+    JournalDepenseRead,
 )
+from app.schemas.rh import MasseSalariale
 from app.services import (
     client_service,
     export_service,
+    fiche_paie_service,
     paiement_service,
     pdf_service,
     rapport_service,
 )
 
 router = APIRouter(prefix="/rapports", tags=["Rapports / Exports"])
+
+PERMS_FICHES_LECTURE = ("rapports.lecture", "salaires.lecture")
+PERMS_FICHES_EXPORT = ("rapports.export", "salaires.export")
+PERMS_DEPENSES_LECTURE = ("rapports.lecture", "finances.lecture")
+PERMS_DEPENSES_EXPORT = ("rapports.export", "finances.export")
+PERMS_AUDIT_LECTURE = ("rapports.lecture", "audit.lecture")
+PERMS_AUDIT_EXPORT = ("rapports.export", "audit.export")
+PERMS_CAISSE_LECTURE = ("rapports.lecture", "finances.lecture")
+PERMS_CAISSE_EXPORT = ("rapports.export", "finances.export")
+PERMS_CLIENTS_LECTURE = ("rapports.lecture", "clients.lecture")
+PERMS_CLIENTS_EXPORT = ("rapports.export", "clients.export")
 
 
 def _stream(contenu: bytes, media_type: str, filename: str) -> StreamingResponse:
@@ -80,34 +94,6 @@ def recu_pdf(
     return _stream(pdf, "application/pdf", f"recu_{paiement.reference}.pdf")
 
 
-# ── Fiche de paie PDF ───────────────────────────────────────
-@router.get("/fiches-paie/{fiche_id}/pdf")
-def fiche_paie_pdf(
-    fiche_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("salaires.export")),
-):
-    fiche = db.query(FichePaie).filter(FichePaie.id == fiche_id).first()
-    if fiche is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fiche introuvable.")
-    employe = db.query(Employe).filter(Employe.id == fiche.employe_id).first()
-
-    data = {
-        "employe_nom": f"{employe.prenom} {employe.nom}" if employe else "—",
-        "fonction": employe.fonction if employe else "—",
-        "mois": fiche.mois,
-        "annee": fiche.annee,
-        "salaire_base": str(fiche.salaire_base),
-        "primes": str(fiche.primes),
-        "bonus": str(fiche.bonus),
-        "retenues": str(fiche.retenues),
-        "salaire_final": str(fiche.salaire_final),
-        "statut_paiement": fiche.statut_paiement,
-    }
-    pdf = pdf_service.generer_fiche_paie(data)
-    return _stream(pdf, "application/pdf", f"fiche_paie_{fiche.mois}_{fiche.annee}.pdf")
-
-
 # ── Export Excel des paiements ──────────────────────────────
 @router.get("/export/paiements-excel")
 def export_paiements_excel(
@@ -155,11 +141,54 @@ def export_clients_excel(
 def rapport_fiches_paie(
     date_debut: date | None = Query(None),
     date_fin: date | None = Query(None),
+    mois: int | None = Query(None, ge=1, le=12),
+    annee: int | None = Query(None),
+    statut: str | None = Query(None),
+    employe_id: uuid.UUID | None = Query(None),
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("salaires.lecture")),
+    _: Utilisateur = Depends(require_any_permission(*PERMS_FICHES_LECTURE)),
 ):
-    data = rapport_service.lister_fiches_paie(db, date_debut=date_debut, date_fin=date_fin)
+    data = rapport_service.lister_fiches_paie(
+        db,
+        date_debut=date_debut,
+        date_fin=date_fin,
+        mois=mois,
+        annee=annee,
+        statut=statut,
+        employe_id=employe_id,
+    )
+    return ApiResponse(
+        success=True,
+        data=[FichePaieRapportRead.model_validate(row) for row in data],
+    )
+
+
+@router.get("/fiches-paie/masse-salariale", response_model=ApiResponse[MasseSalariale])
+def rapport_masse_salariale(
+    mois: int = Query(..., ge=1, le=12),
+    annee: int = Query(...),
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_any_permission(*PERMS_FICHES_LECTURE)),
+):
+    data = fiche_paie_service.masse_salariale(db, mois, annee)
     return ApiResponse(success=True, data=data)
+
+
+@router.get("/journal-depenses", response_model=ApiResponse[list[JournalDepenseRead]])
+def rapport_journal_depenses(
+    date_debut: date | None = Query(None),
+    date_fin: date | None = Query(None),
+    categorie_id: uuid.UUID | None = Query(None),
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_any_permission(*PERMS_DEPENSES_LECTURE)),
+):
+    data = rapport_service.lister_journal_depenses(
+        db, date_debut=date_debut, date_fin=date_fin, categorie_id=categorie_id
+    )
+    return ApiResponse(
+        success=True,
+        data=[JournalDepenseRead.model_validate(row) for row in data],
+    )
 
 
 @router.get("/journal-audit", response_model=ApiResponse[list[JournalAuditRead]])
@@ -168,21 +197,30 @@ def rapport_journal_audit(
     date_fin: date | None = Query(None),
     module: str | None = Query(None),
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("audit.lecture")),
+    _: Utilisateur = Depends(require_any_permission(*PERMS_AUDIT_LECTURE)),
 ):
     data = rapport_service.lister_journal_audit(db, date_debut=date_debut, date_fin=date_fin, module=module)
-    return ApiResponse(success=True, data=data)
+    return ApiResponse(
+        success=True,
+        data=[JournalAuditRead.model_validate(row) for row in data],
+    )
 
 
 @router.get("/journal-caisse", response_model=ApiResponse[list[JournalCaisseRead]])
 def rapport_journal_caisse(
     date_debut: date | None = Query(None),
     date_fin: date | None = Query(None),
+    type_paiement: str | None = Query(None),
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("finances.lecture")),
+    _: Utilisateur = Depends(require_any_permission(*PERMS_CAISSE_LECTURE)),
 ):
-    data = rapport_service.lister_journal_caisse(db, date_debut=date_debut, date_fin=date_fin)
-    return ApiResponse(success=True, data=data)
+    data = rapport_service.lister_journal_caisse(
+        db, date_debut=date_debut, date_fin=date_fin, type_paiement=type_paiement
+    )
+    return ApiResponse(
+        success=True,
+        data=[JournalCaisseRead.model_validate(row) for row in data],
+    )
 
 
 @router.get("/journal-clients", response_model=ApiResponse[list[JournalClientRead]])
@@ -190,10 +228,13 @@ def rapport_journal_clients(
     date_debut: date | None = Query(None),
     date_fin: date | None = Query(None),
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("clients.lecture")),
+    _: Utilisateur = Depends(require_any_permission(*PERMS_CLIENTS_LECTURE)),
 ):
     data = rapport_service.lister_journal_clients(db, date_debut=date_debut, date_fin=date_fin)
-    return ApiResponse(success=True, data=data)
+    return ApiResponse(
+        success=True,
+        data=[JournalClientRead.model_validate(row) for row in data],
+    )
 
 
 # ── Exports détaillés Excel/PDF ─────────────────────────────
@@ -201,10 +242,22 @@ def rapport_journal_clients(
 def export_fiches_paie_excel(
     date_debut: date | None = Query(None),
     date_fin: date | None = Query(None),
+    mois: int | None = Query(None, ge=1, le=12),
+    annee: int | None = Query(None),
+    statut: str | None = Query(None),
+    employe_id: uuid.UUID | None = Query(None),
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("salaires.export")),
+    _: Utilisateur = Depends(require_any_permission(*PERMS_FICHES_EXPORT)),
 ):
-    data = rapport_service.lister_fiches_paie(db, date_debut=date_debut, date_fin=date_fin)
+    data = rapport_service.lister_fiches_paie(
+        db,
+        date_debut=date_debut,
+        date_fin=date_fin,
+        mois=mois,
+        annee=annee,
+        statut=statut,
+        employe_id=employe_id,
+    )
     entetes = [
         "Employé",
         "Fonction",
@@ -244,16 +297,42 @@ def export_fiches_paie_excel(
 def export_fiches_paie_pdf(
     date_debut: date | None = Query(None),
     date_fin: date | None = Query(None),
+    mois: int | None = Query(None, ge=1, le=12),
+    annee: int | None = Query(None),
+    statut: str | None = Query(None),
+    employe_id: uuid.UUID | None = Query(None),
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("salaires.export")),
+    _: Utilisateur = Depends(require_any_permission(*PERMS_FICHES_EXPORT)),
 ):
-    data = rapport_service.lister_fiches_paie(db, date_debut=date_debut, date_fin=date_fin)
-    entetes = ["Employé", "Période", "Net MRU", "Statut", "Date paiement"]
+    data = rapport_service.lister_fiches_paie(
+        db,
+        date_debut=date_debut,
+        date_fin=date_fin,
+        mois=mois,
+        annee=annee,
+        statut=statut,
+        employe_id=employe_id,
+    )
+    entetes = [
+        "Employé",
+        "Période",
+        "Base",
+        "Primes",
+        "Bonus",
+        "Retenues",
+        "Net MRU",
+        "Statut",
+        "Date paiement",
+    ]
     lignes = [
         [
             row["employe_nom"],
             f'{row["mois"]:02d}/{row["annee"]}',
-            f'{row["salaire_final"] or 0}',
+            str(row["salaire_base"]),
+            str(row["primes"]),
+            str(row["bonus"]),
+            str(row["retenues"]),
+            str(row["salaire_final"] or 0),
             row["statut_paiement"],
             _fmt_date(row["date_paiement"]),
         ]
@@ -263,13 +342,97 @@ def export_fiches_paie_pdf(
     return _stream(pdf, "application/pdf", "rapport_fiches_paie.pdf")
 
 
+@router.get("/fiches-paie/{fiche_id}/pdf")
+def fiche_paie_pdf(
+    fiche_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_any_permission(*PERMS_FICHES_EXPORT)),
+):
+    fiche = db.query(FichePaie).filter(FichePaie.id == fiche_id).first()
+    if fiche is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fiche introuvable.")
+    employe = db.query(Employe).filter(Employe.id == fiche.employe_id).first()
+
+    data = {
+        "employe_nom": f"{employe.prenom} {employe.nom}" if employe else "—",
+        "fonction": employe.fonction if employe else "—",
+        "mois": fiche.mois,
+        "annee": fiche.annee,
+        "salaire_base": str(fiche.salaire_base),
+        "primes": str(fiche.primes),
+        "bonus": str(fiche.bonus),
+        "retenues": str(fiche.retenues),
+        "salaire_final": str(fiche.salaire_final),
+        "statut_paiement": fiche.statut_paiement,
+    }
+    pdf = pdf_service.generer_fiche_paie(data)
+    return _stream(pdf, "application/pdf", f"fiche_paie_{fiche.mois}_{fiche.annee}.pdf")
+
+
+@router.get("/journal-depenses/export/excel")
+def export_journal_depenses_excel(
+    date_debut: date | None = Query(None),
+    date_fin: date | None = Query(None),
+    categorie_id: uuid.UUID | None = Query(None),
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_any_permission(*PERMS_DEPENSES_EXPORT)),
+):
+    data = rapport_service.lister_journal_depenses(
+        db, date_debut=date_debut, date_fin=date_fin, categorie_id=categorie_id
+    )
+    entetes = ["Référence", "Libellé", "Catégorie", "Montant MRU", "Date", "Enregistré le"]
+    lignes = [
+        [
+            row["reference"],
+            row["libelle"],
+            row["categorie_nom"],
+            float(row["montant"]),
+            _fmt_date(row["date_depense"]),
+            _fmt_datetime(row["created_at"]),
+        ]
+        for row in data
+    ]
+    xl = export_service.exporter_rapport_detaille("Journal des dépenses", entetes, lignes)
+    return _stream(
+        xl,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "rapport_journal_depenses.xlsx",
+    )
+
+
+@router.get("/journal-depenses/export/pdf")
+def export_journal_depenses_pdf(
+    date_debut: date | None = Query(None),
+    date_fin: date | None = Query(None),
+    categorie_id: uuid.UUID | None = Query(None),
+    db: Session = Depends(get_db),
+    _: Utilisateur = Depends(require_any_permission(*PERMS_DEPENSES_EXPORT)),
+):
+    data = rapport_service.lister_journal_depenses(
+        db, date_debut=date_debut, date_fin=date_fin, categorie_id=categorie_id
+    )
+    entetes = ["Référence", "Libellé", "Catégorie", "Montant", "Date"]
+    lignes = [
+        [
+            row["reference"],
+            row["libelle"],
+            row["categorie_nom"],
+            f'{row["montant"]}',
+            _fmt_date(row["date_depense"]),
+        ]
+        for row in data
+    ]
+    pdf = pdf_service.generer_rapport_tableau("JOURNAL DES DÉPENSES", entetes, lignes)
+    return _stream(pdf, "application/pdf", "rapport_journal_depenses.pdf")
+
+
 @router.get("/journal-audit/export/excel")
 def export_journal_audit_excel(
     date_debut: date | None = Query(None),
     date_fin: date | None = Query(None),
     module: str | None = Query(None),
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("audit.export")),
+    _: Utilisateur = Depends(require_any_permission(*PERMS_AUDIT_EXPORT)),
 ):
     data = rapport_service.lister_journal_audit(db, date_debut=date_debut, date_fin=date_fin, module=module)
     entetes = ["Date", "Action", "Module", "Utilisateur", "Rôle", "IP", "Table", "Cible ID"]
@@ -300,7 +463,7 @@ def export_journal_audit_pdf(
     date_fin: date | None = Query(None),
     module: str | None = Query(None),
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("audit.export")),
+    _: Utilisateur = Depends(require_any_permission(*PERMS_AUDIT_EXPORT)),
 ):
     data = rapport_service.lister_journal_audit(db, date_debut=date_debut, date_fin=date_fin, module=module)
     entetes = ["Date", "Action", "Module", "Utilisateur", "IP"]
@@ -322,20 +485,39 @@ def export_journal_audit_pdf(
 def export_journal_caisse_excel(
     date_debut: date | None = Query(None),
     date_fin: date | None = Query(None),
+    type_paiement: str | None = Query(None),
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("finances.export")),
+    _: Utilisateur = Depends(require_any_permission(*PERMS_CAISSE_EXPORT)),
 ):
-    data = rapport_service.lister_journal_caisse(db, date_debut=date_debut, date_fin=date_fin)
-    entetes = ["Date", "Encaisse", "Dépenses", "Solde", "Statut", "Clôturé par", "Clôturé le"]
+    data = rapport_service.lister_journal_caisse(
+        db, date_debut=date_debut, date_fin=date_fin, type_paiement=type_paiement
+    )
+    entetes = [
+        "Date",
+        "Référence",
+        "Type",
+        "Client",
+        "Montant",
+        "Moyen",
+        "Encaissé par",
+        "Rôle",
+        "Abonnement début",
+        "Abonnement fin",
+        "Statut abo.",
+    ]
     lignes = [
         [
-            _fmt_date(row["date_jour"]),
-            float(row["total_encaisse"]),
-            float(row["total_depenses"]),
-            float(row["solde"]),
-            row["statut"],
-            row["cloture_par_nom"] or "—",
-            _fmt_datetime(row["cloture_le"]),
+            _fmt_datetime(row["date_paiement"]),
+            row["reference"],
+            row["type_paiement"],
+            row["client_nom"] or "—",
+            float(row["montant"]),
+            row["moyen_paiement"],
+            row["encaisse_par_nom"],
+            row["role_encaisseur"],
+            _fmt_date(row["abonnement_date_debut"]),
+            _fmt_date(row["abonnement_date_fin"]),
+            row["abonnement_statut"] or "—",
         ]
         for row in data
     ]
@@ -351,18 +533,22 @@ def export_journal_caisse_excel(
 def export_journal_caisse_pdf(
     date_debut: date | None = Query(None),
     date_fin: date | None = Query(None),
+    type_paiement: str | None = Query(None),
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("finances.export")),
+    _: Utilisateur = Depends(require_any_permission(*PERMS_CAISSE_EXPORT)),
 ):
-    data = rapport_service.lister_journal_caisse(db, date_debut=date_debut, date_fin=date_fin)
-    entetes = ["Date", "Encaisse", "Dépenses", "Solde", "Statut"]
+    data = rapport_service.lister_journal_caisse(
+        db, date_debut=date_debut, date_fin=date_fin, type_paiement=type_paiement
+    )
+    entetes = ["Date", "Référence", "Type", "Client", "Montant MRU", "Encaissé par"]
     lignes = [
         [
-            _fmt_date(row["date_jour"]),
-            float(row["total_encaisse"]),
-            float(row["total_depenses"]),
-            float(row["solde"]),
-            row["statut"],
+            _fmt_datetime(row["date_paiement"]),
+            row["reference"],
+            row["type_paiement"],
+            row["client_nom"] or "—",
+            str(row["montant"]),
+            row["encaisse_par_nom"],
         ]
         for row in data
     ]
@@ -375,7 +561,7 @@ def export_journal_clients_excel(
     date_debut: date | None = Query(None),
     date_fin: date | None = Query(None),
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("clients.export")),
+    _: Utilisateur = Depends(require_any_permission(*PERMS_CLIENTS_EXPORT)),
 ):
     data = rapport_service.lister_journal_clients(db, date_debut=date_debut, date_fin=date_fin)
     entetes = [
@@ -414,7 +600,7 @@ def export_journal_clients_pdf(
     date_debut: date | None = Query(None),
     date_fin: date | None = Query(None),
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("clients.export")),
+    _: Utilisateur = Depends(require_any_permission(*PERMS_CLIENTS_EXPORT)),
 ):
     data = rapport_service.lister_journal_clients(db, date_debut=date_debut, date_fin=date_fin)
     entetes = ["N° Membre", "Nom", "Statut", "Inscrit le", "Dernière présence"]

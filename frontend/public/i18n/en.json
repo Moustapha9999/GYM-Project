@@ -416,6 +416,100 @@
         "noCategoryData": "No category expenses for this period.",
         "noTrendData": "Not enough data to draw the trend."
       }
+    },
+    "rapports": {
+      "title": "Reports",
+      "subtitle": "Staff payroll, expenses, audit, cash and clients with filters and exports.",
+      "loading": "Loading reports…",
+      "exportExcel": "Export Excel",
+      "exportPdf": "Export PDF",
+      "tabs": {
+        "payroll": "Payroll slips",
+        "expenses": "Expense journal",
+        "audit": "Audit log",
+        "cash": "Cash journal",
+        "clients": "Client journal"
+      },
+      "payroll": {
+        "title": "Payroll management",
+        "subtitle": "Monthly payslips for gym staff (coaches, receptionists, maintenance…). Generate slips, track payments and export PDFs.",
+        "formula": "final_salary = base_salary + bonuses + extra_bonus − deductions",
+        "generate": "Generate payslip",
+        "hideGenerate": "Hide form",
+        "generateTitle": "New payslip",
+        "selectEmployee": "Select employee",
+        "preview": "Net preview",
+        "generateSubmit": "Generate payslip",
+        "markPaid": "Mark paid"
+      },
+      "cash": {
+        "title": "Cash journal",
+        "subtitle": "Subscriptions and payments collected by Manager and Receptionist accounts."
+      },
+      "filters": {
+        "startDate": "Start date",
+        "endDate": "End date",
+        "month": "Month",
+        "year": "Year",
+        "status": "Status",
+        "employee": "Employee",
+        "module": "Module",
+        "category": "Category",
+        "paymentType": "Payment type"
+      },
+      "kpi": {
+        "rows": "Rows",
+        "payrollGross": "Gross total",
+        "payrollNet": "Total net payroll",
+        "payrollPaid": "Paid slips",
+        "payrollPending": "Pending",
+        "payrollMass": "Monthly payroll mass",
+        "payrollSlips": "slips",
+        "expensesTotal": "Total expenses",
+        "cashIn": "Total cash in",
+        "cashSubscriptions": "Subscriptions",
+        "cashOtherPayments": "Other payments",
+        "activeClients": "Active clients"
+      },
+      "columns": {
+        "reference": "Reference",
+        "label": "Label",
+        "category": "Category",
+        "amount": "Amount",
+        "employee": "Employee",
+        "period": "Period",
+        "baseSalary": "Base salary",
+        "bonus": "Bonuses",
+        "extraBonus": "Extra bonus",
+        "deductions": "Deductions",
+        "net": "Net",
+        "status": "Status",
+        "paidOn": "Paid on",
+        "date": "Date",
+        "action": "Action",
+        "module": "Module",
+        "user": "User",
+        "role": "Role",
+        "cashIn": "Cash in",
+        "cashOut": "Expenses",
+        "balance": "Balance",
+        "closedBy": "Closed by",
+        "memberNo": "Member no.",
+        "name": "Name",
+        "phone": "Phone",
+        "lastPresence": "Last check-in",
+        "paymentType": "Type",
+        "paymentMethod": "Payment method",
+        "cashier": "Collected by",
+        "subscriptionPeriod": "Subscription period"
+      },
+      "empty": {
+        "payroll": "No payroll slips for this period.",
+        "expenses": "No expenses for this period.",
+        "audit": "No audit entries for this period.",
+        "cash": "No payments or subscriptions collected by Manager/Receptionist for this period.",
+        "clients": "No clients for this period."
+      }
     }
   }
 }

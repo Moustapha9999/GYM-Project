@@ -75,7 +75,9 @@ def creer_utilisateur(
     current_user: Utilisateur = Depends(require_permission("utilisateurs.creation")),
 ):
     """Crée un utilisateur (réceptionniste, coach…)."""
-    utilisateur = utilisateur_service.creer(db, payload)
+    utilisateur = utilisateur_service.creer(
+        db, payload, creator_role=current_user.role.nom
+    )
     audit_service.enregistrer(
         db,
         utilisateur_id=current_user.id,
@@ -111,7 +113,9 @@ def modifier_utilisateur(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur introuvable."
         )
-    utilisateur = utilisateur_service.modifier(db, utilisateur, payload)
+    utilisateur = utilisateur_service.modifier(
+        db, utilisateur, payload, creator_role=current_user.role.nom
+    )
     audit_service.enregistrer(
         db,
         utilisateur_id=current_user.id,

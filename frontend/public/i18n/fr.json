@@ -416,6 +416,100 @@
         "noCategoryData": "Aucune dépense par catégorie sur cette période.",
         "noTrendData": "Pas assez de données pour tracer l'évolution."
       }
+    },
+    "rapports": {
+      "title": "Rapports",
+      "subtitle": "Paie du personnel, dépenses, audit, caisse et clients avec filtres et exports.",
+      "loading": "Chargement des rapports…",
+      "exportExcel": "Export Excel",
+      "exportPdf": "Export PDF",
+      "tabs": {
+        "payroll": "Fiches de paie",
+        "expenses": "Journal des dépenses",
+        "audit": "Journal audit",
+        "cash": "Journal caisse",
+        "clients": "Journal clients"
+      },
+      "payroll": {
+        "title": "Gestion des salaires",
+        "subtitle": "Bulletins mensuels du personnel (coachs, réceptionnistes, agents d'entretien…). Générez les fiches, suivez les paiements et exportez les PDF.",
+        "formula": "salaire_final = salaire_base + primes + bonus − retenues",
+        "generate": "Générer un bulletin",
+        "hideGenerate": "Masquer le formulaire",
+        "generateTitle": "Nouveau bulletin de salaire",
+        "selectEmployee": "Choisir un employé",
+        "preview": "Aperçu du net",
+        "generateSubmit": "Générer le bulletin",
+        "markPaid": "Marquer payé"
+      },
+      "cash": {
+        "title": "Journal caisse",
+        "subtitle": "Abonnements et paiements encaissés par les comptes Manager et Réceptionniste."
+      },
+      "filters": {
+        "startDate": "Date début",
+        "endDate": "Date fin",
+        "month": "Mois",
+        "year": "Année",
+        "status": "Statut",
+        "employee": "Employé",
+        "module": "Module",
+        "category": "Catégorie",
+        "paymentType": "Type de paiement"
+      },
+      "kpi": {
+        "rows": "Lignes",
+        "payrollGross": "Total brut",
+        "payrollNet": "Total net paie",
+        "payrollPaid": "Bulletins payés",
+        "payrollPending": "En attente",
+        "payrollMass": "Masse salariale du mois",
+        "payrollSlips": "bulletins",
+        "expensesTotal": "Total dépenses",
+        "cashIn": "Total encaissé",
+        "cashSubscriptions": "Abonnements",
+        "cashOtherPayments": "Autres paiements",
+        "activeClients": "Clients actifs"
+      },
+      "columns": {
+        "reference": "Référence",
+        "label": "Libellé",
+        "category": "Catégorie",
+        "amount": "Montant",
+        "employee": "Employé",
+        "period": "Période",
+        "baseSalary": "Salaire base",
+        "bonus": "Primes",
+        "extraBonus": "Bonus",
+        "deductions": "Retenues",
+        "net": "Net",
+        "status": "Statut",
+        "paidOn": "Paiement",
+        "date": "Date",
+        "action": "Action",
+        "module": "Module",
+        "user": "Utilisateur",
+        "role": "Rôle",
+        "cashIn": "Encaisse",
+        "cashOut": "Dépenses",
+        "balance": "Solde",
+        "closedBy": "Clôturé par",
+        "memberNo": "N° membre",
+        "name": "Nom",
+        "phone": "Téléphone",
+        "lastPresence": "Dernière présence",
+        "paymentType": "Type",
+        "paymentMethod": "Moyen de paiement",
+        "cashier": "Encaissé par",
+        "subscriptionPeriod": "Période abonnement"
+      },
+      "empty": {
+        "payroll": "Aucune fiche de paie sur cette période.",
+        "expenses": "Aucune dépense sur cette période.",
+        "audit": "Aucune trace d'audit sur cette période.",
+        "cash": "Aucun paiement ou abonnement encaissé par Manager/Réceptionniste sur cette période.",
+        "clients": "Aucun client sur cette période."
+      }
     }
   }
 }
