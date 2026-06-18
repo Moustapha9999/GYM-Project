@@ -23,12 +23,14 @@ services:
     restart: unless-stopped
     entrypoint: >
       /bin/sh -c "
-      echo \"db:5432:*:$${POSTGRES_USER:-gym_user}:$${POSTGRES_PASSWORD:-gym_password_dev_only}\" > /pgadmin4/pgpass &&
-      chmod 600 /pgadmin4/pgpass &&
+      echo \"db:5432:*:$${POSTGRES_USER:-gym_user}:$${POSTGRES_PASSWORD:-gym_password_dev_only}\" > /var/lib/pgadmin/pgpass &&
+      chmod 600 /var/lib/pgadmin/pgpass &&
       exec /entrypoint.sh
       "
+
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@localhost}
+      #PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@localhost}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@totalfitness.mr}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-changeme_pgadmin}
       PGADMIN_CONFIG_SERVER_MODE: "False"
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
@@ -38,7 +40,7 @@ services:
       - "5050:80"
     volumes:
       - gym_sylla_pgadmin:/var/lib/pgadmin
-      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json
+      - ./docker/pgadmin/servers.json:/pgadmin/servers.json
     depends_on:
       db:
         condition: service_healthy
