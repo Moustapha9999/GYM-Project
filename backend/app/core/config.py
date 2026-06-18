@@ -1,5 +1,7 @@
 """Configuration centralisée de l'application (lecture du .env)."""
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 class Settings(BaseSettings):
     # ── Application ──────────────────────────────────────────
@@ -13,7 +15,7 @@ class Settings(BaseSettings):
     # ── Sécurité / JWT ───────────────────────────────────────
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24h
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 8  # 8h
 
     # ── Métier ───────────────────────────────────────────────
     DEVISE: str = "MRU"
@@ -24,8 +26,23 @@ class Settings(BaseSettings):
 
     # ── Service de notifications ─────────────────────────────
     NOTIFICATION_SERVICE_URL: str = "http://localhost:3001"
+    NOTIFICATION_API_SECRET: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
+
+    @model_validator(mode="after")
+    def validate_production_security(self) -> "Settings":
+        if self.APP_ENV != "production":
+            return self
+
+        weak_markers = ("changez-moi", "changeme", "change_me", "example", "your-secret")
+        if len(self.SECRET_KEY) < 32 or any(m in self.SECRET_KEY.lower() for m in weak_markers):
+            raise ValueError(
+                "SECRET_KEY doit faire au moins 32 caractères aléatoires en production."
+            )
+        if not self.NOTIFICATION_API_SECRET or len(self.NOTIFICATION_API_SECRET) < 16:
+            raise ValueError("NOTIFICATION_API_SECRET est obligatoire en production (min. 16 car.).")
+        return self
 
 
 settings = Settings()

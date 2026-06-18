@@ -99,14 +99,17 @@
                 <th>Montant</th>
                 <th>Date</th>
                 <th>Statut</th>
-                <th></th>
               </tr>
             </thead>
             <tbody>
               @for (p of paiements(); track p.id) {
-                <tr>
+                <tr
+                  class="pay-table__row--clickable"
+                  (click)="viewPaiement(p)"
+                  [title]="'common.details' | translate"
+                >
                   <td class="pay-table__ref">{{ p.reference }}</td>
-                  <td>{{ p.client_nom ?? '—' }}</td>
+                  <td class="pay-table__client">{{ p.client_nom ?? '—' }}</td>
                   <td>{{ p.type_paiement }}</td>
                   <td>{{ p.moyen_paiement }}</td>
                   <td class="pay-table__amount">{{ p.montant | mruCurrency }}</td>
@@ -116,13 +119,10 @@
                       {{ p.statut }}
                     </span>
                   </td>
-                  <td class="pay-table__actions">
-                    <button type="button" class="pay-link-btn" (click)="viewPaiement(p)">Voir</button>
-                  </td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="8" class="pay-table__empty">Aucun paiement pour ces filtres.</td>
+                  <td colspan="7" class="pay-table__empty">Aucun paiement pour ces filtres.</td>
                 </tr>
               }
             </tbody>
@@ -268,24 +268,6 @@
       </article>
       }
 
-      @if (caisse()) {
-        <article class="pay-card">
-          <h2>{{ 'modules.paiements.cashRegisterTitle' | translate: { date: caisseDateLabel() } }}</h2>
-          <ul class="pay-repartition">
-            @for (item of caisse()!.repartition; track item.moyen_paiement) {
-              <li>
-                <div>
-                  <strong>{{ item.moyen_paiement }}</strong>
-                  <span>{{ item.nombre }} paiement(s)</span>
-                </div>
-                <strong>{{ item.total | mruCurrency }}</strong>
-              </li>
-            } @empty {
-              <li class="pay-repartition__empty">Aucun encaissement ce jour.</li>
-            }
-          </ul>
-        </article>
-      }
     </aside>
   </div>
 </section>

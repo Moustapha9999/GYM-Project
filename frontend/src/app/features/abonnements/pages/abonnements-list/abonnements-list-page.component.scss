@@ -128,12 +128,17 @@
 }
 
 .abo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   padding: 0.6rem 1rem;
   border-radius: 999px;
   font-size: 0.85rem;
   font-weight: 600;
   border: none;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .abo-btn--primary {
@@ -154,13 +159,38 @@
   display: inline-block;
 }
 
-.abo-btn--block {
-  width: 100%;
+.abo-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.abo-btn--ghost:hover:not(:disabled),
+.abo-btn--secondary:hover {
+  background: var(--color-hover);
 }
 
 .abo-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.abo-btn--block {
+  width: 100%;
+}
+
+.abo-btn--danger-text {
+  color: var(--color-danger);
+  border-color: color-mix(in srgb, var(--color-danger) 35%, var(--color-border));
+}
+
+.abo-checkbox {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem !important;
+  font-weight: 500 !important;
+}
+
+.abo-checkbox input {
+  width: auto;
 }
 
 .abo-table-wrap {
@@ -186,17 +216,94 @@
   padding: 0.75rem 0.5rem;
   border-bottom: 1px solid var(--color-border);
   color: var(--color-text);
+  vertical-align: middle;
+}
+
+.abo-table__row--clickable {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover:not(.abo-table__row--late):not(.abo-table__row--grace-expired) {
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+  }
+}
+
+.abo-table__client {
+  white-space: nowrap;
+}
+
+.abo-table__client:not(.abo-table__client--late) .abo-table__client-name {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.abo-table__client-name {
+  display: block;
+}
+
+.abo-table__client--late .abo-table__client-name {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.abo-table__row--late {
+  background: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-danger) 14%, var(--color-surface));
+  }
+}
+
+.abo-table__row--late td {
+  border-bottom-color: color-mix(in srgb, var(--color-danger) 22%, var(--color-border));
+}
+
+.abo-table__row--grace-expired {
+  background: color-mix(in srgb, var(--color-danger) 14%, var(--color-surface));
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-danger) 20%, var(--color-surface));
+  }
+}
+
+.abo-late-tag {
+  display: inline-block;
+  margin-top: 0.2rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.abo-table__formula {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
 }
 
 .abo-table__amount {
   font-weight: 600;
   color: var(--color-text);
+  white-space: nowrap;
 }
 
 .abo-table__actions {
-  display: flex;
-  gap: 0.5rem;
-  white-space: nowrap;
+  width: 1%;
+  min-width: 14rem;
+  cursor: default;
+}
+
+.abo-table__actions-head {
+  text-align: right;
+  width: 1%;
+  min-width: 14rem;
+}
+
+.abo-table__actions .row-actions {
+  justify-content: flex-end;
 }
 
 .abo-table__empty {
@@ -207,7 +314,6 @@
 
 .abo-tag {
   display: inline-block;
-  margin-left: 0.35rem;
   padding: 0.15rem 0.45rem;
   border-radius: 999px;
   font-size: 0.7rem;
@@ -232,19 +338,6 @@
 
 .abo-badge--expired {
   background: var(--color-danger-bg);
-  color: var(--color-danger);
-}
-
-.abo-link-btn {
-  background: none;
-  border: none;
-  color: var(--color-primary);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.abo-link-btn--danger {
   color: var(--color-danger);
 }
 
@@ -391,6 +484,14 @@
   flex-direction: column;
   gap: 0.5rem;
 }
+
+.abo-detail__actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+@import '../../../../shared/styles/list-row-actions';
 
 .abo-card--tarifs {
   margin-top: 0;

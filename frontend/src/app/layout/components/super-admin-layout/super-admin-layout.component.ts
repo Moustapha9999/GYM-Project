@@ -37,6 +37,12 @@ import { SuperAdminHeaderComponent } from '@layout/components/super-admin-header
       width: 100%;
       margin: 0 auto;
     }
+
+    @media (max-width: 960px) {
+      .sa-layout__content {
+        padding: 1rem 1rem 1.5rem;
+      }
+    }
   `,
 })
 export class SuperAdminLayoutComponent {}

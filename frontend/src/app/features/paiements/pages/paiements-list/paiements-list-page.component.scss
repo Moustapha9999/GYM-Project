@@ -177,6 +177,16 @@
   padding: 0.75rem 0.5rem;
   border-bottom: 1px solid var(--color-border);
   color: var(--color-text);
+  vertical-align: middle;
+}
+
+.pay-table__row--clickable {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+  }
 }
 
 .pay-table__ref {
@@ -185,13 +195,15 @@
   color: var(--color-text-muted);
 }
 
+.pay-table__client {
+  font-weight: 600;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
 .pay-table__amount {
   font-weight: 600;
   color: var(--color-text);
-}
-
-.pay-table__actions {
-  white-space: nowrap;
 }
 
 .pay-table__empty {
@@ -352,32 +364,6 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-
-.pay-repartition {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.pay-repartition li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.65rem 0;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.pay-repartition li div span {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-.pay-repartition__empty {
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
 }
 
 @media (max-width: 1100px) {

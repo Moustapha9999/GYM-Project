@@ -96,3 +96,21 @@ def require_any_permission(*permission_codes: str):
         return current_user
 
     return checker
+
+
+def require_any_role(*role_names: str):
+    """Fabrique de dépendance : l'utilisateur doit avoir l'un des rôles listés."""
+
+    def checker(current_user: Utilisateur = Depends(get_current_user)) -> Utilisateur:
+        if current_user.role and current_user.role.nom == "super_admin":
+            return current_user
+
+        role = current_user.role.nom if current_user.role else None
+        if role not in role_names:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Accès refusé pour votre rôle.",
+            )
+        return current_user
+
+    return checker

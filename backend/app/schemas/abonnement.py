@@ -2,14 +2,30 @@
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 # ── Entrée : souscription / renouvellement ──────────────────
 class AbonnementCreate(BaseModel):
     client_id: uuid.UUID
     moyen_paiement_id: uuid.UUID
+
+
+class AbonnementUpdate(BaseModel):
+    """Modification manuelle (super administrateur)."""
+    date_debut: date | None = None
+    date_fin: date | None = None
+    montant: Decimal | None = Field(None, ge=0)
+    statut: Literal["Actif", "Suspendu", "Résilié", "Expiré"] | None = None
+    est_inscription: bool | None = None
+
+    @model_validator(mode="after")
+    def validate_dates(self) -> "AbonnementUpdate":
+        if self.date_debut and self.date_fin and self.date_fin < self.date_debut:
+            raise ValueError("La date de fin doit être postérieure à la date de début.")
+        return self
 
 
 # ── Sortie : carte liée ─────────────────────────────────────
@@ -58,6 +74,9 @@ class AbonnementListItem(BaseModel):
     statut: str
     est_inscription: bool
     created_at: datetime
+    jours_retard: int = 0
+    en_retard: bool = False
+    hors_delai_grace: bool = False
 
 
 class TypeAbonnementRead(BaseModel):

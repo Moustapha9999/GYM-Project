@@ -1,25 +1,27 @@
 """Router du module Abonnements."""
 import uuid
 import io
+from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_permission
+from app.core.dependencies import get_current_user, require_any_role, require_permission
 from app.models.utilisateur import Utilisateur
 from app.schemas.abonnement import (
     AbonnementCreate,
     AbonnementListItem,
     AbonnementRead,
+    AbonnementUpdate,
     CarteInfo,
     SouscriptionResult,
     TypeAbonnementRead,
 )
 from app.schemas.common import ApiResponse, PaginatedResponse
 from app.schemas.tarif import TarifsRead
-from app.services import abonnement_service, export_service, tarif_service
+from app.services import abonnement_service, audit_service, export_service, tarif_service
 from app.services.abonnement_service import AbonnementError
 from app.services.tarif_service import TarifError
 from app.utils.pagination import paginate
@@ -36,8 +38,17 @@ def _stream(contenu: bytes, media_type: str, filename: str) -> StreamingResponse
     )
 
 
-def _to_list_item(abonnement) -> AbonnementListItem:
+def _to_list_item(abonnement, aujourdhui: date, delai_grace: int) -> AbonnementListItem:
     client_nom = f"{abonnement.client.prenom} {abonnement.client.nom}"
+    jours_retard = 0
+    en_retard = False
+    hors_delai_grace = False
+
+    if abonnement.statut == "Actif" and abonnement.date_fin < aujourdhui:
+        jours_retard = (aujourdhui - abonnement.date_fin).days
+        en_retard = True
+        hors_delai_grace = jours_retard > delai_grace
+
     return AbonnementListItem(
         id=abonnement.id,
         client_id=abonnement.client_id,
@@ -49,6 +60,9 @@ def _to_list_item(abonnement) -> AbonnementListItem:
         statut=abonnement.statut,
         est_inscription=abonnement.est_inscription,
         created_at=abonnement.created_at,
+        jours_retard=jours_retard,
+        en_retard=en_retard,
+        hors_delai_grace=hors_delai_grace,
     )
 
 
@@ -64,9 +78,11 @@ def lister_abonnements(
     """Liste paginée des abonnements."""
     query = abonnement_service.lister(db, client_id=client_id, statut=statut)
     items, meta = paginate(query, page, per_page)
+    aujourdhui = date.today()
+    delai_grace = abonnement_service.get_delai_grace_jours(db)
     return PaginatedResponse(
         success=True,
-        data=[_to_list_item(a) for a in items],
+        data=[_to_list_item(a, aujourdhui, delai_grace) for a in items],
         meta=meta,
     )
 
@@ -159,6 +175,66 @@ def verifier_eligibilite(
     """
     result = abonnement_service.peut_renouveler_au_tarif_normal(db, client_id)
     return ApiResponse(success=True, data=result)
+
+
+@router.put("/{abonnement_id}", response_model=ApiResponse[AbonnementRead])
+def modifier_abonnement(
+    abonnement_id: uuid.UUID,
+    payload: AbonnementUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(require_any_role("super_admin")),
+):
+    """Modifie manuellement un abonnement (super administrateur uniquement)."""
+    abo = abonnement_service.obtenir(db, abonnement_id)
+    if abo is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Abonnement introuvable.")
+    try:
+        abo = abonnement_service.modifier(db, abo, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+
+    audit_service.enregistrer(
+        db,
+        utilisateur_id=current_user.id,
+        action="modification",
+        module="abonnements",
+        cible_table="abonnements",
+        cible_id=abo.id,
+        details=payload.model_dump(exclude_unset=True, mode="json"),
+        request=request,
+    )
+    db.commit()
+    return ApiResponse(success=True, data=AbonnementRead.model_validate(abo), message="Abonnement modifié.")
+
+
+@router.delete("/{abonnement_id}", response_model=ApiResponse[None])
+def supprimer_abonnement(
+    abonnement_id: uuid.UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(require_any_role("super_admin")),
+):
+    """Supprime définitivement un abonnement (super administrateur uniquement)."""
+    abo = abonnement_service.obtenir(db, abonnement_id)
+    if abo is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Abonnement introuvable.")
+
+    client_id = abo.client_id
+    abonnement_service.supprimer(db, abo)
+
+    audit_service.enregistrer(
+        db,
+        utilisateur_id=current_user.id,
+        action="suppression",
+        module="abonnements",
+        cible_table="abonnements",
+        cible_id=abonnement_id,
+        details={"client_id": str(client_id)},
+        request=request,
+    )
+    db.commit()
+    return ApiResponse(success=True, data=None, message="Abonnement supprimé.")
 
 
 @router.patch("/{abonnement_id}/suspendre", response_model=ApiResponse[AbonnementRead])

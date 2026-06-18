@@ -13,6 +13,7 @@ from app.models.paiement import Paiement
 from app.models.planning_coach import PlanningCoach
 from app.models.seance_journaliere import SeanceJournaliere
 from app.schemas.client import ClientCreate, ClientUpdate
+from app.utils.upload_validation import validate_image_data_url
 
 
 def generer_numero_membre(db: Session) -> str:
@@ -113,6 +114,8 @@ def modifier_photo(db: Session, client: Client, photo_base64: str) -> Client:
     photo = photo_base64.strip()
     if photo and not photo.startswith("data:"):
         photo = f"data:image/jpeg;base64,{photo}"
+    if photo:
+        photo = validate_image_data_url(photo, field_name="Photo")
     client.photo_url = photo or None
     db.commit()
     db.refresh(client)

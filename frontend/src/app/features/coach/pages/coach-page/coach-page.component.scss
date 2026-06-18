@@ -368,4 +368,36 @@ $accent: #0d5c3b;
   .co-form__row {
     grid-template-columns: 1fr;
   }
+
+  .co-tabs {
+    flex-wrap: wrap;
+  }
+
+  .co-tab {
+    flex: 1 1 calc(50% - 0.25rem);
+    justify-content: center;
+  }
+
+  .co-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .co-toolbar__spacer {
+    display: none;
+  }
+
+  .co-toolbar select,
+  .co-toolbar input {
+    width: 100%;
+  }
+
+  .co-modal__box {
+    width: min(100%, calc(100vw - 2rem));
+    margin: 1rem;
+  }
+
+  .co-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }

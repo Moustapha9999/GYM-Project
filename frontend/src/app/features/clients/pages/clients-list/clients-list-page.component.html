@@ -4,22 +4,26 @@
       <h1>{{ 'modules.clients.title' | translate }}</h1>
       <p>{{ 'modules.clients.subtitle' | translate }}</p>
     </div>
-    <div class="cli-page__head-actions">
-      <button type="button" class="cli-btn cli-btn--ghost" (click)="downloadImportTemplate()">
-        Modèle Excel
-      </button>
-      <label class="cli-import">
-        <input
-          type="file"
-          accept=".xlsx"
-          (change)="onImportFileSelected($event)"
-          [disabled]="importing()"
-        />
-        <span class="cli-btn cli-btn--secondary">
-          @if (importing()) { Import… } @else { Importer Excel }
-        </span>
-      </label>
-      <button type="button" class="cli-btn cli-btn--ghost" (click)="startCreate()">
+    <div class="cli-page__head-actions page-toolbar">
+      <div class="page-toolbar__group">
+        <button type="button" class="cli-btn cli-btn--ghost" (click)="downloadImportTemplate()">
+          <app-icon name="clipboard" [size]="16" />
+          Modèle Excel
+        </button>
+        <label class="cli-import">
+          <input
+            type="file"
+            accept=".xlsx"
+            (change)="onImportFileSelected($event)"
+            [disabled]="importing()"
+          />
+          <span class="cli-btn cli-btn--secondary">
+            @if (importing()) { Import… } @else { Importer Excel }
+          </span>
+        </label>
+      </div>
+      <button type="button" class="cli-btn cli-btn--primary" (click)="startCreate()">
+        <app-icon name="users" [size]="16" />
         Nouveau client
       </button>
     </div>
@@ -110,14 +114,18 @@
                 <th>Sexe</th>
                 <th>Statut</th>
                 <th>Inscrit le</th>
-                <th></th>
+                <th class="cli-table__actions-head">Actions</th>
               </tr>
             </thead>
             <tbody>
               @for (c of clients(); track c.id) {
-                <tr>
+                <tr
+                  class="cli-table__row--clickable"
+                  (click)="viewClient(c)"
+                  [title]="'common.details' | translate"
+                >
                   <td class="cli-table__num">{{ c.numero_membre }}</td>
-                  <td>{{ c.prenom }} {{ c.nom }}</td>
+                  <td class="cli-table__name">{{ c.prenom }} {{ c.nom }}</td>
                   <td>{{ c.telephone }}</td>
                   <td>{{ c.sexe ?? '—' }}</td>
                   <td>
@@ -126,12 +134,31 @@
                     </span>
                   </td>
                   <td>{{ c.created_at | date: 'dd/MM/yyyy' }}</td>
-                  <td class="cli-table__actions">
-                    <button type="button" class="cli-link-btn" (click)="startEdit(c)">Modifier</button>
-                    <button type="button" class="cli-link-btn cli-link-btn--danger" (click)="deleteClient(c)">
-                      Supprimer
-                    </button>
-                    <button type="button" class="cli-link-btn" (click)="viewClient(c)">Voir</button>
+                  <td class="cli-table__actions" (click)="$event.stopPropagation()">
+                    <div class="row-actions">
+                      <div class="row-actions__group">
+                        <div class="row-actions__subgroup">
+                          <button
+                            type="button"
+                            class="act-btn act-btn--soft"
+                            (click)="startEdit(c)"
+                            [title]="'common.edit' | translate"
+                          >
+                            <app-icon name="pencil" [size]="14" />
+                            <span>{{ 'common.edit' | translate }}</span>
+                          </button>
+                          <button
+                            type="button"
+                            class="act-btn act-btn--soft-danger"
+                            (click)="deleteClient(c)"
+                            [title]="'common.delete' | translate"
+                          >
+                            <app-icon name="trash" [size]="14" />
+                            <span>{{ 'common.delete' | translate }}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               } @empty {
@@ -251,10 +278,11 @@
 
             <div class="cli-detail__actions">
               <button type="button" class="cli-btn cli-btn--primary cli-btn--block" (click)="startEdit(client)">
-                Modifier
+                <app-icon name="pencil" [size]="16" />
+                {{ 'common.edit' | translate }}
               </button>
               <button type="button" class="cli-btn cli-btn--ghost cli-btn--block" (click)="closeView()">
-                Fermer
+                {{ 'common.cancel' | translate }}
               </button>
             </div>
           }

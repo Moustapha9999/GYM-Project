@@ -1,0 +1,3 @@
+# Exemple — ne pas commiter le fichier pgpass réel.
+# Format : hostname:port:database:username:password
+*:5432:*:gym_user:CHANGE_ME

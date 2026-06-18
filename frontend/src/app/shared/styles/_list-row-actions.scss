@@ -1,0 +1,142 @@
+// Boutons d'action des lignes de tableau (Clients, Abonnements…)
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.row-actions__group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-text) 4%, var(--color-surface));
+  border: 1px solid var(--color-border-light);
+}
+
+.row-actions__subgroup {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.act-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+
+  span {
+    display: inline-block;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.act-btn--primary {
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-primary) 28%, var(--color-border));
+  color: var(--color-primary);
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-primary) 16%, var(--color-surface));
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+  }
+}
+
+.act-btn--soft {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-text-muted);
+
+  &:hover:not(:disabled) {
+    background: var(--color-hover);
+    color: var(--color-text);
+  }
+}
+
+.act-btn--soft-danger {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-danger);
+
+  &:hover:not(:disabled) {
+    background: var(--color-danger-bg);
+  }
+}
+
+.act-btn--alert {
+  background: var(--color-danger-bg);
+  border-color: color-mix(in srgb, var(--color-danger) 35%, transparent);
+  color: var(--color-danger);
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-danger) 12%, var(--color-danger-bg));
+  }
+}
+
+.act-btn--icon-only {
+  min-width: 2rem;
+  padding-inline: 0.45rem;
+}
+
+@media (max-width: 960px) {
+  .row-actions .act-btn:not(.act-btn--keep-label) span {
+    display: none;
+  }
+
+  .row-actions .act-btn:not(.act-btn--keep-label):not(.act-btn--icon-only) {
+    min-width: 2rem;
+    padding-inline: 0.45rem;
+  }
+}
+
+// Barre d'outils en-tête de page
+.page-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.page-toolbar__group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem;
+  border-radius: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+}
+
+.page-toolbar__divider {
+  width: 1px;
+  align-self: stretch;
+  min-height: 1.75rem;
+  margin: 0 0.15rem;
+  background: var(--color-border);
+}

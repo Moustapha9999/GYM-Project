@@ -163,33 +163,52 @@
                 <th>{{ 'modules.finances.columns.category' | translate }}</th>
                 <th>{{ 'modules.finances.columns.amount' | translate }}</th>
                 <th>{{ 'modules.finances.columns.date' | translate }}</th>
-                <th></th>
+                <th class="fin-table__actions-head">Actions</th>
               </tr>
             </thead>
             <tbody>
               @for (d of depenses(); track d.id) {
-                <tr>
+                <tr
+                  class="fin-table__row--clickable"
+                  (click)="viewDepense(d)"
+                  [title]="'common.details' | translate"
+                >
                   <td class="fin-table__ref">{{ d.reference }}</td>
-                  <td>{{ d.libelle }}</td>
+                  <td class="fin-table__label">{{ d.libelle }}</td>
                   <td>{{ categoryLabel(d.categorie_id) }}</td>
                   <td class="fin-table__amount">{{ d.montant | mruCurrency }}</td>
                   <td>{{ d.date_depense | date: 'dd/MM/yyyy' }}</td>
-                  <td>
-                    <div class="fin-table__actions">
-                      <button type="button" class="fin-link-btn" (click)="viewDepense(d)">
-                        {{ 'common.details' | translate }}
-                      </button>
-                      @if (canEdit()) {
-                        <button type="button" class="fin-link-btn" (click)="startEdit(d)">
-                          {{ 'common.edit' | translate }}
-                        </button>
-                      }
-                      @if (canDelete()) {
-                        <button type="button" class="fin-link-btn fin-link-btn--danger" (click)="deleteDepense(d)">
-                          {{ 'common.delete' | translate }}
-                        </button>
-                      }
-                    </div>
+                  <td class="fin-table__actions" (click)="$event.stopPropagation()">
+                    @if (canEdit() || canDelete()) {
+                      <div class="row-actions">
+                        <div class="row-actions__group">
+                          <div class="row-actions__subgroup">
+                            @if (canEdit()) {
+                              <button
+                                type="button"
+                                class="act-btn act-btn--soft"
+                                (click)="startEdit(d)"
+                                [title]="'common.edit' | translate"
+                              >
+                                <app-icon name="pencil" [size]="14" />
+                                <span>{{ 'common.edit' | translate }}</span>
+                              </button>
+                            }
+                            @if (canDelete()) {
+                              <button
+                                type="button"
+                                class="act-btn act-btn--soft-danger"
+                                (click)="deleteDepense(d)"
+                                [title]="'common.delete' | translate"
+                              >
+                                <app-icon name="trash" [size]="14" />
+                                <span>{{ 'common.delete' | translate }}</span>
+                              </button>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
                   </td>
                 </tr>
               } @empty {

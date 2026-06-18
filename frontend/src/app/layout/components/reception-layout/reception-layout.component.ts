@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { MobileNavService } from '@core/services/mobile-nav.service';
 import { ReceptionHeaderComponent } from '@layout/components/reception-header/reception-header.component';
 import { ReceptionSidebarComponent } from '@layout/components/reception-sidebar/reception-sidebar.component';
 
@@ -9,6 +10,15 @@ import { ReceptionSidebarComponent } from '@layout/components/reception-sidebar/
   imports: [RouterOutlet, ReceptionSidebarComponent, ReceptionHeaderComponent],
   template: `
     <div class="rec-layout">
+      @if (mobileNav.open()) {
+        <button
+          type="button"
+          class="layout-backdrop"
+          (click)="mobileNav.close()"
+          aria-label="Fermer le menu"
+        ></button>
+      }
+
       <app-reception-sidebar />
       <div class="rec-layout__main">
         <app-reception-header />
@@ -55,6 +65,14 @@ import { ReceptionSidebarComponent } from '@layout/components/reception-sidebar/
       overflow-y: auto;
       padding: 1.25rem 1.5rem 2rem;
     }
+
+    @media (max-width: 960px) {
+      .rec-layout__content {
+        padding: 1rem 1rem 1.5rem;
+      }
+    }
   `,
 })
-export class ReceptionLayoutComponent {}
+export class ReceptionLayoutComponent {
+  readonly mobileNav = inject(MobileNavService);
+}

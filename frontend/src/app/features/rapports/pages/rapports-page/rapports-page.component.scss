@@ -134,3 +134,36 @@
   color: #94a3b8;
   padding: 1.2rem;
 }
+
+@media (max-width: 960px) {
+  .rep-page__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rep-page__actions {
+    flex-wrap: wrap;
+  }
+
+  .rep-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rep-filters label {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .rep-page__head h1 {
+    font-size: 1.45rem;
+  }
+
+  .rep-tabs__btn {
+    flex: 1 1 calc(50% - 0.25rem);
+    text-align: center;
+    font-size: 0.8rem;
+    padding: 0.45rem 0.6rem;
+  }
+}

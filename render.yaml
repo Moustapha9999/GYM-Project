@@ -18,6 +18,8 @@ services:
         value: https://total-fitness.netlify.app
       - key: NOTIFICATION_SERVICE_URL
         value: https://total-fitness-notifications.onrender.com
+      - key: NOTIFICATION_API_SECRET
+        sync: false
     healthCheckPath: /health
 
   # ── Micro-service Notifications (Node.js + Baileys) ───────
@@ -32,6 +34,8 @@ services:
         value: 3001
       - key: API_SECRET
         sync: false
+      - key: NODE_ENV
+        value: production
 
   # ── Cron : expiration quotidienne (00h05) ─────────────────
   - type: cron

@@ -8,7 +8,7 @@ import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/load
 import { AppIconComponent } from '@shared/components/app-icon/app-icon.component';
 import { DialogService } from '@shared/components/app-dialog/dialog.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
-import { Employe } from '@features/admin/models/employe.model';
+import { Employe, fonctionAvecRole } from '@features/admin/models/employe.model';
 import {
   Permission,
   Role,
@@ -459,8 +459,16 @@ export class AdminPageComponent implements OnInit {
   viewEmploye(employe: Employe): void {
     this.formMode.set('view');
     this.editingEmploye.set(null);
-    this.viewingEmploye.set(employe);
+    this.viewingEmploye.set(null);
     this.clearMessages();
+    this.adminService.getEmploye(employe.id).subscribe({
+      next: (full) => this.viewingEmploye.set(full),
+      error: () => this.formError.set('Impossible de charger l\'employé.'),
+    });
+  }
+
+  employeNeedsEmail(fonction: string): boolean {
+    return fonctionAvecRole(fonction);
   }
 
   submitEmploye(): void {
@@ -473,6 +481,12 @@ export class AdminPageComponent implements OnInit {
     this.clearMessages();
     const raw = this.employeForm.getRawValue();
     const mode = this.formMode();
+
+    if (this.employeNeedsEmail(raw.fonction) && !raw.email?.trim()) {
+      this.submitting.set(false);
+      this.formError.set('Un email est requis pour les fonctions associées à un rôle système.');
+      return;
+    }
 
     if (mode === 'create') {
       this.adminService
@@ -488,9 +502,13 @@ export class AdminPageComponent implements OnInit {
           type_contrat: raw.type_contrat || undefined,
         })
         .subscribe({
-          next: () => {
+          next: (created) => {
             this.submitting.set(false);
-            this.formSuccess.set('Employé créé.');
+            this.formSuccess.set(
+              created.compte_utilisateur
+                ? 'Employé créé. Un compte utilisateur inactif a été généré automatiquement.'
+                : 'Employé créé.',
+            );
             this.startCreateEmploye();
             this.loadEmployes(1);
           },

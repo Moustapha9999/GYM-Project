@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { PaginationMeta } from '@core/models/api-response.model';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
+import { AppIconComponent } from '@shared/components/app-icon/app-icon.component';
 import { DialogService } from '@shared/components/app-dialog/dialog.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { Client, ClientImportResult } from '@features/clients/models/client.model';
@@ -13,7 +14,7 @@ type FormMode = 'create' | 'edit' | 'view';
 
 @Component({
   selector: 'app-clients-list-page',
-  imports: [ReactiveFormsModule, LoadingSpinnerComponent, DatePipe, TranslatePipe],
+  imports: [ReactiveFormsModule, LoadingSpinnerComponent, DatePipe, TranslatePipe, AppIconComponent],
   templateUrl: './clients-list-page.component.html',
   styleUrl: './clients-list-page.component.scss',
 })

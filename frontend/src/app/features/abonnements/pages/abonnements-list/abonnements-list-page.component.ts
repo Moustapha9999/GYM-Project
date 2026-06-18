@@ -1,10 +1,12 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { PaginationMeta } from '@core/models/api-response.model';
+import { AuthService } from '@core/services/auth.service';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
+import { AppIconComponent } from '@shared/components/app-icon/app-icon.component';
 import { DialogService } from '@shared/components/app-dialog/dialog.service';
 import { MruCurrencyPipe } from '@shared/pipes/mru-currency.pipe';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
@@ -20,11 +22,11 @@ import { WhatsappMessageService } from '@core/services/whatsapp-message.service'
 import { MoyenPaiement } from '@features/paiements/models/paiement.model';
 import { PaiementsService } from '@features/paiements/services/paiements.service';
 
-type SidePanelMode = 'subscribe' | 'view';
+type SidePanelMode = 'subscribe' | 'view' | 'edit';
 
 @Component({
   selector: 'app-abonnements-list-page',
-  imports: [ReactiveFormsModule, LoadingSpinnerComponent, MruCurrencyPipe, DatePipe, TranslatePipe],
+  imports: [ReactiveFormsModule, LoadingSpinnerComponent, MruCurrencyPipe, DatePipe, TranslatePipe, AppIconComponent],
   templateUrl: './abonnements-list-page.component.html',
   styleUrl: './abonnements-list-page.component.scss',
 })
@@ -35,6 +37,9 @@ export class AbonnementsListPageComponent implements OnInit {
   private readonly paiementsService = inject(PaiementsService);
   private readonly dialog = inject(DialogService);
   private readonly whatsapp = inject(WhatsappMessageService);
+  private readonly auth = inject(AuthService);
+
+  readonly isSuperAdmin = computed(() => this.auth.roleName() === 'super_admin');
 
   readonly loading = signal(true);
   readonly submitting = signal(false);
@@ -57,10 +62,19 @@ export class AbonnementsListPageComponent implements OnInit {
   readonly detailSuccess = signal<string | null>(null);
   readonly detailError = signal<string | null>(null);
   readonly renewing = signal(false);
+  readonly savingEdit = signal(false);
   readonly importing = signal(false);
 
   readonly renewForm = this.fb.nonNullable.group({
     moyen_paiement_id: [''],
+  });
+
+  readonly editForm = this.fb.nonNullable.group({
+    date_debut: ['', Validators.required],
+    date_fin: ['', Validators.required],
+    montant: [0, [Validators.required, Validators.min(0)]],
+    statut: ['Actif', Validators.required],
+    est_inscription: [false],
   });
 
   readonly perPage = 15;
@@ -81,6 +95,8 @@ export class AbonnementsListPageComponent implements OnInit {
     { value: 'Suspendu', label: 'Suspendu' },
     { value: 'Résilié', label: 'Résilié' },
   ];
+
+  readonly statutEditOptions = ['Actif', 'Suspendu', 'Résilié', 'Expiré'] as const;
 
   ngOnInit(): void {
     this.loadFormulesTarifs();
@@ -169,6 +185,10 @@ export class AbonnementsListPageComponent implements OnInit {
     return fin < this.today && abo.statut === 'Actif';
   }
 
+  envoyerAlerte(abo: AbonnementListItem): void {
+    this.whatsapp.offerSend(abo.client_id, abo.client_nom, 'alerte_fin');
+  }
+
   viewAbonnement(abonnement: AbonnementListItem): void {
     this.sidePanelMode.set('view');
     this.viewingAbonnement.set(abonnement);
@@ -181,6 +201,100 @@ export class AbonnementsListPageComponent implements OnInit {
       next: (data) => this.viewEligibilite.set(data),
       error: () => this.viewEligibilite.set(null),
     });
+  }
+
+  editAbonnement(abonnement: AbonnementListItem): void {
+    this.sidePanelMode.set('edit');
+    this.viewingAbonnement.set(abonnement);
+    this.detailSuccess.set(null);
+    this.detailError.set(null);
+    this.editForm.reset({
+      date_debut: this.toDateInput(abonnement.date_debut),
+      date_fin: this.toDateInput(abonnement.date_fin),
+      montant: abonnement.montant,
+      statut: this.normalizeStatut(abonnement.statut),
+      est_inscription: abonnement.est_inscription,
+    });
+  }
+
+  closeEdit(): void {
+    this.sidePanelMode.set('subscribe');
+    this.viewingAbonnement.set(null);
+    this.detailSuccess.set(null);
+    this.detailError.set(null);
+  }
+
+  submitEdit(): void {
+    const abonnement = this.viewingAbonnement();
+    if (!abonnement || this.editForm.invalid) {
+      this.editForm.markAllAsTouched();
+      return;
+    }
+
+    this.savingEdit.set(true);
+    this.detailError.set(null);
+    this.detailSuccess.set(null);
+
+    const raw = this.editForm.getRawValue();
+    this.abonnementsService
+      .modifier(abonnement.id, {
+        date_debut: raw.date_debut,
+        date_fin: raw.date_fin,
+        montant: Number(raw.montant),
+        statut: raw.statut as 'Actif' | 'Suspendu' | 'Résilié' | 'Expiré',
+        est_inscription: raw.est_inscription,
+      })
+      .subscribe({
+        next: () => {
+          this.savingEdit.set(false);
+          this.detailSuccess.set('Abonnement modifié avec succès.');
+          this.formSuccess.set(this.detailSuccess());
+          this.closeEdit();
+          this.loadStats();
+          this.loadAbonnements(this.meta()?.current_page ?? 1);
+        },
+        error: (err) => {
+          this.savingEdit.set(false);
+          this.handleDetailError(err);
+        },
+      });
+  }
+
+  supprimerAbonnement(abo: AbonnementListItem): void {
+    this.dialog
+      .confirm({
+        title: 'Supprimer l\'abonnement',
+        message: `Supprimer définitivement l'abonnement de ${abo.client_nom} ? Cette action est irréversible.`,
+        variant: 'danger',
+        confirmLabel: 'Supprimer',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+
+        this.abonnementsService.supprimer(abo.id).subscribe({
+          next: () => {
+            this.formSuccess.set('Abonnement supprimé.');
+            if (this.viewingAbonnement()?.id === abo.id) {
+              this.closeEdit();
+              this.closeView();
+            }
+            this.loadStats();
+            this.loadAbonnements(this.meta()?.current_page ?? 1);
+          },
+          error: (err) => this.handleFormError(err),
+        });
+      });
+  }
+
+  private toDateInput(value: string): string {
+    return value.slice(0, 10);
+  }
+
+  private normalizeStatut(statut: string): 'Actif' | 'Suspendu' | 'Résilié' | 'Expiré' {
+    if (statut === 'Suspendu' || statut === 'Résilié' || statut === 'Expiré') {
+      return statut;
+    }
+    return 'Actif';
   }
 
   closeView(): void {

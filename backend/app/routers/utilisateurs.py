@@ -1,7 +1,7 @@
 """Router Administration — utilisateurs, rôles et permissions."""
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -18,7 +18,7 @@ from app.schemas.utilisateur import (
     UtilisateurRead,
     UtilisateurUpdate,
 )
-from app.services import role_service, tarif_service, utilisateur_service
+from app.services import audit_service, role_service, tarif_service, utilisateur_service
 from app.services.tarif_service import TarifError
 
 router = APIRouter(tags=["Administration"])
@@ -70,11 +70,23 @@ def detail_utilisateur(
 )
 def creer_utilisateur(
     payload: UtilisateurCreate,
+    request: Request,
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("utilisateurs.creation")),
+    current_user: Utilisateur = Depends(require_permission("utilisateurs.creation")),
 ):
     """Crée un utilisateur (réceptionniste, coach…)."""
     utilisateur = utilisateur_service.creer(db, payload)
+    audit_service.enregistrer(
+        db,
+        utilisateur_id=current_user.id,
+        action="creation",
+        module="utilisateurs",
+        cible_table="utilisateurs",
+        cible_id=utilisateur.id,
+        details={"email": utilisateur.email, "role": utilisateur.role.nom},
+        request=request,
+    )
+    db.commit()
     return ApiResponse(
         success=True,
         data=UtilisateurRead.model_validate(utilisateur),
@@ -89,8 +101,9 @@ def creer_utilisateur(
 def modifier_utilisateur(
     utilisateur_id: uuid.UUID,
     payload: UtilisateurUpdate,
+    request: Request,
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("utilisateurs.modification")),
+    current_user: Utilisateur = Depends(require_permission("utilisateurs.modification")),
 ):
     """Modifie un utilisateur existant."""
     utilisateur = utilisateur_service.obtenir(db, utilisateur_id)
@@ -99,6 +112,16 @@ def modifier_utilisateur(
             status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur introuvable."
         )
     utilisateur = utilisateur_service.modifier(db, utilisateur, payload)
+    audit_service.enregistrer(
+        db,
+        utilisateur_id=current_user.id,
+        action="modification",
+        module="utilisateurs",
+        cible_table="utilisateurs",
+        cible_id=utilisateur.id,
+        request=request,
+    )
+    db.commit()
     return ApiResponse(
         success=True,
         data=UtilisateurRead.model_validate(utilisateur),
@@ -112,8 +135,9 @@ def modifier_utilisateur(
 )
 def desactiver_utilisateur(
     utilisateur_id: uuid.UUID,
+    request: Request,
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("utilisateurs.suppression")),
+    current_user: Utilisateur = Depends(require_permission("utilisateurs.suppression")),
 ):
     """Désactive un compte utilisateur."""
     utilisateur = utilisateur_service.obtenir(db, utilisateur_id)
@@ -122,6 +146,16 @@ def desactiver_utilisateur(
             status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur introuvable."
         )
     utilisateur_service.desactiver(db, utilisateur)
+    audit_service.enregistrer(
+        db,
+        utilisateur_id=current_user.id,
+        action="desactivation",
+        module="utilisateurs",
+        cible_table="utilisateurs",
+        cible_id=utilisateur_id,
+        request=request,
+    )
+    db.commit()
     return ApiResponse(success=True, data=None, message="Compte désactivé.")
 
 
@@ -171,8 +205,9 @@ def detail_role(
 def modifier_permissions_role(
     role_id: uuid.UUID,
     payload: RolePermissionsUpdate,
+    request: Request,
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("roles.modification")),
+    current_user: Utilisateur = Depends(require_permission("roles.modification")),
 ):
     """Attribue les permissions à un rôle."""
     role = role_service.obtenir_role(db, role_id)
@@ -181,6 +216,17 @@ def modifier_permissions_role(
             status_code=status.HTTP_404_NOT_FOUND, detail="Rôle introuvable."
         )
     role = role_service.mettre_a_jour_permissions(db, role, payload.permission_ids)
+    audit_service.enregistrer(
+        db,
+        utilisateur_id=current_user.id,
+        action="modification_permissions",
+        module="roles",
+        cible_table="roles",
+        cible_id=role.id,
+        details={"role": role.nom, "permissions": len(payload.permission_ids)},
+        request=request,
+    )
+    db.commit()
     return ApiResponse(
         success=True,
         data=RoleDetailRead.model_validate(role),
@@ -227,12 +273,22 @@ def lire_tarifs(
 )
 def modifier_tarifs(
     payload: TarifsUpdate,
+    request: Request,
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("parametres.modification")),
+    current_user: Utilisateur = Depends(require_permission("parametres.modification")),
 ):
     """Met à jour les tarifs normaux (séance, abonnements homme et femme)."""
     try:
         tarifs = tarif_service.mettre_a_jour_tarifs(db, payload)
     except TarifError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    audit_service.enregistrer(
+        db,
+        utilisateur_id=current_user.id,
+        action="modification_tarifs",
+        module="parametres",
+        cible_table="types_abonnement",
+        request=request,
+    )
+    db.commit()
     return ApiResponse(success=True, data=tarifs, message="Tarifs enregistrés.")

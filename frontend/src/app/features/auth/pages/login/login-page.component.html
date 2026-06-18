@@ -1,0 +1,72 @@
+<div class="login">
+  <aside class="login__hero">
+    <div class="login__hero-overlay" aria-hidden="true"></div>
+
+    <div class="login__hero-inner">
+      <div class="login__mark">
+        @if (logoUrl()) {
+          <img [src]="logoUrl()!" alt="" class="login__mark-img" />
+        } @else {
+          <span class="login__mark-icon" aria-hidden="true">
+            <app-icon name="gym" [size]="40" />
+          </span>
+        }
+      </div>
+
+      <p class="login__hero-label">{{ 'auth.loginHeroLabel' | translate }}</p>
+      <h1 class="login__brand">{{ gymName() }}</h1>
+      <p class="login__tagline">{{ slogan() }}</p>
+      <p class="login__hero-note">{{ 'auth.loginHeroNote' | translate }}</p>
+    </div>
+
+    <p class="login__hero-footer">{{ gymName() }} · {{ currentYear }}</p>
+  </aside>
+
+  <main class="login__panel">
+    <div class="login__panel-inner">
+      <header class="login__header">
+        <h2>{{ 'auth.loginTitle' | translate }}</h2>
+        <p class="login__subtitle">{{ 'auth.loginSubtitle' | translate }}</p>
+      </header>
+
+      <form class="login__form" [formGroup]="form" (ngSubmit)="submit()">
+        <label class="login__field">
+          <span class="login__label">{{ 'auth.email' | translate }}</span>
+          <input
+            class="login__input"
+            type="email"
+            formControlName="email"
+            placeholder="admin@totalfitness.mr"
+            autocomplete="email"
+          />
+        </label>
+
+        <label class="login__field">
+          <span class="login__label">{{ 'auth.password' | translate }}</span>
+          <input
+            class="login__input"
+            type="password"
+            formControlName="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+          />
+        </label>
+
+        @if (errorMessage()) {
+          <p class="login__error" role="alert">{{ errorMessage() }}</p>
+        }
+
+        <button type="submit" class="login__submit" [disabled]="form.invalid || loading()">
+          @if (loading()) {
+            <span class="login__submit-spinner" aria-hidden="true"></span>
+            {{ 'auth.loggingIn' | translate }}
+          } @else {
+            {{ 'auth.login' | translate }}
+          }
+        </button>
+      </form>
+
+      <p class="login__secure">{{ 'auth.loginSecureNote' | translate }}</p>
+    </div>
+  </main>
+</div>

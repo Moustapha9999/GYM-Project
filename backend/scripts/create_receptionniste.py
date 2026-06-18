@@ -43,9 +43,8 @@ def main():
         db.add(user)
         db.commit()
         print("✅ Réceptionniste créé !")
-        print(f"   Email    : {RECEPTIONNISTE['email']}")
-        print(f"   Password : {RECEPTIONNISTE['password']}")
-        print(f"   Rôle     : receptionniste")
+        print(f"   Email : {RECEPTIONNISTE['email']}")
+        print("   Mot de passe : celui défini dans le script (à changer après la 1ère connexion)")
     except Exception as e:
         db.rollback()
         print(f"❌ Erreur : {e}")

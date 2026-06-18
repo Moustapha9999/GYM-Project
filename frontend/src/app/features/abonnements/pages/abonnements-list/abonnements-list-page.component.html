@@ -4,21 +4,24 @@
       <h1>{{ 'modules.abonnements.title' | translate }}</h1>
       <p>{{ 'modules.abonnements.subtitle' | translate }}</p>
     </div>
-    <div class="abo-page__head-actions">
-      <button type="button" class="abo-btn abo-btn--ghost" (click)="downloadImportTemplate()">
-        Modèle Excel
-      </button>
-      <label class="abo-import">
-        <input
-          type="file"
-          accept=".xlsx,.csv"
-          (change)="onImportFileSelected($event)"
-          [disabled]="importing()"
-        />
-        <span class="abo-btn abo-btn--secondary">
-          @if (importing()) { Import… } @else { Importer Excel }
-        </span>
-      </label>
+    <div class="abo-page__head-actions page-toolbar">
+      <div class="page-toolbar__group">
+        <button type="button" class="abo-btn abo-btn--ghost" (click)="downloadImportTemplate()">
+          <app-icon name="clipboard" [size]="16" />
+          Modèle Excel
+        </button>
+        <label class="abo-import">
+          <input
+            type="file"
+            accept=".xlsx,.csv"
+            (change)="onImportFileSelected($event)"
+            [disabled]="importing()"
+          />
+          <span class="abo-btn abo-btn--secondary">
+            @if (importing()) { Import… } @else { Importer Excel }
+          </span>
+        </label>
+      </div>
     </div>
   </div>
 
@@ -75,18 +78,33 @@
                 <th>Fin</th>
                 <th>Montant</th>
                 <th>Statut</th>
-                <th></th>
+                <th class="abo-table__actions-head">Actions</th>
               </tr>
             </thead>
             <tbody>
               @for (a of abonnements(); track a.id) {
-                <tr>
-                  <td>{{ a.client_nom }}</td>
-                  <td>
-                    {{ a.type_abonnement }}
-                    @if (a.est_inscription) {
-                      <span class="abo-tag">Inscription</span>
+                <tr
+                  class="abo-table__row--clickable"
+                  [class.abo-table__row--late]="a.en_retard"
+                  [class.abo-table__row--grace-expired]="a.hors_delai_grace"
+                  (click)="viewAbonnement(a)"
+                  [title]="'common.details' | translate"
+                >
+                  <td class="abo-table__client" [class.abo-table__client--late]="a.en_retard">
+                    <span class="abo-table__client-name">{{ a.client_nom }}</span>
+                    @if (a.en_retard) {
+                      <span class="abo-late-tag">
+                        {{ 'modules.abonnements.lateDays' | translate: { days: a.jours_retard } }}
+                      </span>
                     }
+                  </td>
+                  <td>
+                    <div class="abo-table__formula">
+                      <span>{{ a.type_abonnement }}</span>
+                      @if (a.est_inscription) {
+                        <span class="abo-tag">Inscription</span>
+                      }
+                    </div>
                   </td>
                   <td>{{ a.date_debut | date: 'dd/MM/yyyy' }}</td>
                   <td>{{ a.date_fin | date: 'dd/MM/yyyy' }}</td>
@@ -100,14 +118,69 @@
                       </span>
                     }
                   </td>
-                  <td class="abo-table__actions">
-                    @if (a.statut === 'Actif') {
-                      <button type="button" class="abo-link-btn" (click)="suspendre(a)">Suspendre</button>
-                      <button type="button" class="abo-link-btn abo-link-btn--danger" (click)="resilier(a)">
-                        Résilier
-                      </button>
-                    }
-                    <button type="button" class="abo-link-btn" (click)="viewAbonnement(a)">Voir</button>
+                  <td class="abo-table__actions" (click)="$event.stopPropagation()">
+                    <div class="row-actions">
+                      @if (a.en_retard) {
+                        <button
+                          type="button"
+                          class="act-btn act-btn--alert"
+                          (click)="envoyerAlerte(a)"
+                          [title]="'modules.abonnements.alertWhatsapp' | translate"
+                        >
+                          <app-icon name="alert-triangle" [size]="14" />
+                          <span>{{ 'modules.abonnements.alertBtn' | translate }}</span>
+                        </button>
+                      }
+
+                      @if (a.statut === 'Actif' || isSuperAdmin()) {
+                        <div class="row-actions__group">
+                          @if (a.statut === 'Actif') {
+                            <div class="row-actions__subgroup">
+                              <button
+                                type="button"
+                                class="act-btn act-btn--soft act-btn--keep-label"
+                                (click)="suspendre(a)"
+                                [title]="'modules.abonnements.suspendBtn' | translate"
+                              >
+                                <app-icon name="minus" [size]="14" />
+                                <span>{{ 'modules.abonnements.suspendBtn' | translate }}</span>
+                              </button>
+                              <button
+                                type="button"
+                                class="act-btn act-btn--soft-danger act-btn--keep-label"
+                                (click)="resilier(a)"
+                                [title]="'modules.abonnements.resignBtn' | translate"
+                              >
+                                <app-icon name="log-out" [size]="14" />
+                                <span>{{ 'modules.abonnements.resignBtn' | translate }}</span>
+                              </button>
+                            </div>
+                          }
+                          @if (isSuperAdmin()) {
+                            <div class="row-actions__subgroup">
+                              <button
+                                type="button"
+                                class="act-btn act-btn--soft"
+                                (click)="editAbonnement(a)"
+                                [title]="'common.edit' | translate"
+                              >
+                                <app-icon name="pencil" [size]="14" />
+                                <span>{{ 'common.edit' | translate }}</span>
+                              </button>
+                              <button
+                                type="button"
+                                class="act-btn act-btn--soft-danger"
+                                (click)="supprimerAbonnement(a)"
+                                [title]="'common.delete' | translate"
+                              >
+                                <app-icon name="trash" [size]="14" />
+                                <span>{{ 'common.delete' | translate }}</span>
+                              </button>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
                   </td>
                 </tr>
               } @empty {
@@ -149,7 +222,62 @@
     </article>
 
     <aside class="abo-side">
-      @if (sidePanelMode() === 'view' && viewingAbonnement(); as abo) {
+      @if (sidePanelMode() === 'edit' && viewingAbonnement(); as abo) {
+        <article class="abo-card abo-card--detail">
+          <h2>{{ 'modules.abonnements.editTitle' | translate }}</h2>
+          <p class="abo-card__hint">{{ abo.client_nom }} — {{ abo.type_abonnement }}</p>
+
+          @if (detailSuccess()) {
+            <p class="abo-alert abo-alert--success">{{ detailSuccess() }}</p>
+          }
+          @if (detailError()) {
+            <p class="abo-alert abo-alert--error">{{ detailError() }}</p>
+          }
+
+          <form class="abo-form" [formGroup]="editForm" (ngSubmit)="submitEdit()">
+            <label>
+              {{ 'modules.abonnements.fields.startDate' | translate }}
+              <input type="date" formControlName="date_debut" />
+            </label>
+            <label>
+              {{ 'modules.abonnements.fields.endDate' | translate }}
+              <input type="date" formControlName="date_fin" />
+            </label>
+            <label>
+              {{ 'modules.abonnements.fields.amount' | translate }}
+              <input type="number" formControlName="montant" min="0" step="1" />
+            </label>
+            <label>
+              {{ 'modules.abonnements.fields.status' | translate }}
+              <select formControlName="statut">
+                @for (s of statutEditOptions; track s) {
+                  <option [value]="s">{{ s }}</option>
+                }
+              </select>
+            </label>
+            <label class="abo-checkbox">
+              <input type="checkbox" formControlName="est_inscription" />
+              <span>{{ 'modules.abonnements.fields.isRegistration' | translate }}</span>
+            </label>
+
+            <div class="abo-detail__actions">
+              <button type="submit" class="abo-btn abo-btn--primary abo-btn--block" [disabled]="savingEdit()">
+                {{ savingEdit() ? ('common.saving' | translate) : ('common.save' | translate) }}
+              </button>
+              <button type="button" class="abo-btn abo-btn--ghost abo-btn--block" (click)="closeEdit()">
+                {{ 'common.cancel' | translate }}
+              </button>
+              <button
+                type="button"
+                class="abo-btn abo-btn--ghost abo-btn--block abo-btn--danger-text"
+                (click)="supprimerAbonnement(abo)"
+              >
+                {{ 'common.delete' | translate }}
+              </button>
+            </div>
+          </form>
+        </article>
+      } @else if (sidePanelMode() === 'view' && viewingAbonnement(); as abo) {
         <article class="abo-card abo-card--detail">
           <h2>{{ 'modules.abonnements.detailsTitle' | translate }}</h2>
           <p class="abo-card__hint">{{ abo.type_abonnement }}</p>
@@ -233,6 +361,18 @@
               <button type="submit" class="abo-btn abo-btn--primary abo-btn--block" [disabled]="renewing()">
                 {{ renewing() ? 'Renouvellement...' : 'Renouveler l\'abonnement' }}
               </button>
+              @if (isSuperAdmin()) {
+                <div class="abo-detail__actions-row">
+                  <button type="button" class="act-btn act-btn--soft" (click)="editAbonnement(abo)">
+                    <app-icon name="pencil" [size]="14" />
+                    <span>{{ 'common.edit' | translate }}</span>
+                  </button>
+                  <button type="button" class="act-btn act-btn--soft-danger" (click)="supprimerAbonnement(abo)">
+                    <app-icon name="trash" [size]="14" />
+                    <span>{{ 'common.delete' | translate }}</span>
+                  </button>
+                </div>
+              }
               <button type="button" class="abo-btn abo-btn--ghost abo-btn--block" (click)="closeView()">
                 Fermer
               </button>

@@ -24,4 +24,6 @@ export type AppIconName =
   | 'clipboard'
   | 'alert-triangle'
   | 'minus'
-  | 'clock';
+  | 'clock'
+  | 'pencil'
+  | 'trash';

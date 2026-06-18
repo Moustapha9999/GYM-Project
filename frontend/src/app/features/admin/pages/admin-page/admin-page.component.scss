@@ -272,10 +272,39 @@
   padding: 0.75rem 0.5rem;
   border-bottom: 1px solid var(--color-border);
   color: var(--color-text);
+  vertical-align: middle;
+}
+
+.adm-table__row--clickable {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+  }
+}
+
+.adm-table__name {
+  font-weight: 600;
+  color: var(--color-primary);
+  white-space: nowrap;
 }
 
 .adm-table__actions {
+  width: 1%;
+  min-width: 9rem;
+  cursor: default;
   white-space: nowrap;
+}
+
+.adm-table__actions-head {
+  text-align: right;
+  width: 1%;
+  min-width: 9rem;
+}
+
+.adm-table__actions .row-actions {
+  justify-content: flex-end;
 }
 
 .adm-table__empty {
@@ -284,20 +313,7 @@
   padding: 1.5rem;
 }
 
-.adm-link-btn {
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--color-primary);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  margin-right: 0.5rem;
-}
-
-.adm-link-btn--danger {
-  color: var(--color-danger);
-}
+@import '../../../../shared/styles/list-row-actions';
 
 .adm-badge {
   display: inline-block;

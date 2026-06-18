@@ -46,6 +46,7 @@ notification-service/dist/
 *.pem
 *.key
 !*.env.example
+docker/pgadmin/pgpass
 
 # ── OS / Éditeurs ───────────────────────────────────────────
 .DS_Store

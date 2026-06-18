@@ -5,12 +5,14 @@ Orchestre l'envoi WhatsApp via le micro-service Baileys (HTTP).
 Si WhatsApp échoue et que le fallback SMS est actif, bascule sur SMS.
 Toutes les tentatives sont tracées en base.
 """
+import base64
 import uuid
 from datetime import datetime, timezone
 
 import httpx
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.notification import Notification
 from app.models.parametre_systeme import ParametreSysteme
 
@@ -18,6 +20,18 @@ from app.models.parametre_systeme import ParametreSysteme
 def _get_param(db: Session, cle: str, defaut: str = "") -> str:
     p = db.query(ParametreSysteme).filter(ParametreSysteme.cle == cle).first()
     return p.valeur if p and p.valeur is not None else defaut
+
+
+def _notification_service_url() -> str:
+    """URL du micro-service — uniquement depuis la config (évite SSRF via paramètres DB)."""
+    return settings.NOTIFICATION_SERVICE_URL.rstrip("/")
+
+
+def _notification_headers() -> dict[str, str]:
+    headers: dict[str, str] = {}
+    if settings.NOTIFICATION_API_SECRET:
+        headers["x-api-secret"] = settings.NOTIFICATION_API_SECRET
+    return headers
 
 
 def lister(db: Session, statut: str | None = None, type_notification: str | None = None):
@@ -36,6 +50,7 @@ def _envoyer_whatsapp(service_url: str, numero: str, message: str) -> dict:
             resp = client.post(
                 f"{service_url}/send",
                 json={"numero": numero, "message": message},
+                headers=_notification_headers(),
             )
             if resp.status_code == 200:
                 data = resp.json()
@@ -53,8 +68,6 @@ def _envoyer_document_whatsapp(
     caption: str,
 ) -> dict:
     """Envoie un document PDF via le micro-service Baileys."""
-    import base64
-
     try:
         with httpx.Client(timeout=30.0) as client:
             resp = client.post(
@@ -65,6 +78,7 @@ def _envoyer_document_whatsapp(
                     "document_base64": base64.b64encode(document_bytes).decode(),
                     "caption": caption,
                 },
+                headers=_notification_headers(),
             )
             if resp.status_code == 200:
                 data = resp.json()
@@ -79,7 +93,6 @@ def _envoyer_sms(numero: str, message: str) -> dict:
     STUB SMS — à brancher sur un vrai provider (Twilio, etc.).
     Pour l'instant, simule un échec contrôlé (pas de provider configuré).
     """
-    # TODO: intégrer un vrai provider SMS
     return {"success": False, "erreur": "Provider SMS non configuré"}
 
 
@@ -107,7 +120,7 @@ def envoyer(
     db.commit()
     db.refresh(notif)
 
-    service_url = _get_param(db, "whatsapp_service_url", "http://localhost:3001")
+    service_url = _notification_service_url()
     resultat = _envoyer_whatsapp(service_url, numero_telephone, message)
 
     if resultat["success"]:
@@ -115,7 +128,6 @@ def envoyer(
         notif.provider_message_id = resultat.get("message_id")
         notif.date_envoi = datetime.now(timezone.utc)
     else:
-        # Tenter le fallback SMS si activé
         sms_actif = _get_param(db, "sms_fallback_actif", "false").lower() == "true"
         if sms_actif:
             notif.canal = "sms"
@@ -160,7 +172,7 @@ def envoyer_document(
     db.commit()
     db.refresh(notif)
 
-    service_url = _get_param(db, "whatsapp_service_url", "http://localhost:3001")
+    service_url = _notification_service_url()
     resultat = _envoyer_document_whatsapp(
         service_url, numero_telephone, filename, document_bytes, message
     )

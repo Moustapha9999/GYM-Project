@@ -392,6 +392,16 @@
   padding: 0.75rem 0.5rem;
   border-bottom: 1px solid var(--color-border);
   color: var(--color-text);
+  vertical-align: middle;
+}
+
+.fin-table__row--clickable {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+  }
 }
 
 .fin-table__ref {
@@ -399,14 +409,29 @@
   font-size: 0.8rem;
 }
 
+.fin-table__label {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
 .fin-table__amount {
   font-weight: 600;
 }
 
 .fin-table__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.5rem;
+  width: 1%;
+  min-width: 9rem;
+  cursor: default;
+}
+
+.fin-table__actions-head {
+  text-align: right;
+  width: 1%;
+  min-width: 9rem;
+}
+
+.fin-table__actions .row-actions {
+  justify-content: flex-end;
 }
 
 .fin-table__empty {
@@ -415,20 +440,7 @@
   padding: 2rem;
 }
 
-.fin-link-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-primary);
-  cursor: pointer;
-}
-
-.fin-link-btn--danger {
-  color: var(--color-danger-text, #c0392b);
-}
+@import '../../../../shared/styles/list-row-actions';
 
 .fin-pagination {
   display: flex;

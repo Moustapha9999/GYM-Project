@@ -160,12 +160,26 @@
 }
 
 .cli-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   padding: 0.6rem 1rem;
   border-radius: 999px;
   font-size: 0.85rem;
   font-weight: 600;
   border: none;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, filter 0.15s ease;
+}
+
+.cli-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.cli-btn--ghost:hover:not(:disabled),
+.cli-btn--secondary:hover {
+  background: var(--color-hover);
 }
 
 .cli-btn--primary {
@@ -211,18 +225,45 @@
   padding: 0.75rem 0.5rem;
   border-bottom: 1px solid var(--color-border);
   color: var(--color-text);
+  vertical-align: middle;
+}
+
+.cli-table__row--clickable {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+  }
+}
+
+.cli-table__name {
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--color-primary);
 }
 
 .cli-table__num {
   font-family: ui-monospace, monospace;
   font-size: 0.8rem;
   color: var(--color-text-muted);
+  white-space: nowrap;
 }
 
 .cli-table__actions {
-  display: flex;
-  gap: 0.5rem;
-  white-space: nowrap;
+  width: 1%;
+  min-width: 9rem;
+  cursor: default;
+}
+
+.cli-table__actions-head {
+  text-align: right;
+  width: 1%;
+  min-width: 9rem;
+}
+
+.cli-table__actions .row-actions {
+  justify-content: flex-end;
 }
 
 .cli-table__empty {
@@ -244,19 +285,6 @@
 .cli-badge.is-active {
   background: var(--color-success-bg);
   color: var(--color-success-text);
-}
-
-.cli-link-btn {
-  background: none;
-  border: none;
-  color: var(--color-primary);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.cli-link-btn--danger {
-  color: var(--color-danger);
 }
 
 .cli-pagination {
@@ -359,6 +387,8 @@
   flex-direction: column;
   gap: 0.5rem;
 }
+
+@import '../../../../shared/styles/list-row-actions';
 
 @media (max-width: 1100px) {
   .cli-kpis {

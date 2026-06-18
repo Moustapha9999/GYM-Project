@@ -36,7 +36,11 @@ def lister_employes(
 ):
     query = employe_service.lister(db, search=search, statut=statut, fonction=fonction)
     items, meta = paginate(query, page, per_page)
-    return PaginatedResponse(success=True, data=[EmployeRead.model_validate(e) for e in items], meta=meta)
+    return PaginatedResponse(
+        success=True,
+        data=[employe_service.to_read(db, e) for e in items],
+        meta=meta,
+    )
 
 
 @router.post("/employes", response_model=ApiResponse[EmployeRead], status_code=status.HTTP_201_CREATED)
@@ -46,7 +50,11 @@ def creer_employe(
     _: Utilisateur = Depends(require_permission("employes.creation")),
 ):
     employe = employe_service.creer(db, payload)
-    return ApiResponse(success=True, data=EmployeRead.model_validate(employe), message="Employé créé.")
+    return ApiResponse(
+        success=True,
+        data=employe_service.to_read(db, employe),
+        message="Employé créé.",
+    )
 
 
 @router.get("/employes/{employe_id}", response_model=ApiResponse[EmployeRead])
@@ -58,7 +66,7 @@ def detail_employe(
     employe = employe_service.obtenir(db, employe_id)
     if employe is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employé introuvable.")
-    return ApiResponse(success=True, data=EmployeRead.model_validate(employe))
+    return ApiResponse(success=True, data=employe_service.to_read(db, employe))
 
 
 @router.put("/employes/{employe_id}", response_model=ApiResponse[EmployeRead])
@@ -72,7 +80,11 @@ def modifier_employe(
     if employe is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employé introuvable.")
     employe = employe_service.modifier(db, employe, payload)
-    return ApiResponse(success=True, data=EmployeRead.model_validate(employe), message="Employé modifié.")
+    return ApiResponse(
+        success=True,
+        data=employe_service.to_read(db, employe),
+        message="Employé modifié.",
+    )
 
 
 @router.delete("/employes/{employe_id}", response_model=ApiResponse[None])

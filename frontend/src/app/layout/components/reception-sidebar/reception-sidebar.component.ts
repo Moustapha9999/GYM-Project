@@ -2,6 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService } from '@core/services/auth.service';
+import { MobileNavService } from '@core/services/mobile-nav.service';
 import { ThemeService } from '@core/services/theme.service';
 import { RECEPTION_MENU_NAV } from '@layout/config/reception-nav.config';
 import { AppIconComponent } from '@shared/components/app-icon/app-icon.component';
@@ -16,6 +17,7 @@ import { TranslatePipe } from '@shared/pipes/translate.pipe';
 export class ReceptionSidebarComponent {
   private readonly auth = inject(AuthService);
   private readonly theme = inject(ThemeService);
+  readonly mobileNav = inject(MobileNavService);
 
   readonly menuItems = computed(() =>
     RECEPTION_MENU_NAV.filter(
@@ -48,6 +50,7 @@ export class ReceptionSidebarComponent {
   });
 
   logout(): void {
+    this.mobileNav.close();
     this.auth.logout();
   }
 }

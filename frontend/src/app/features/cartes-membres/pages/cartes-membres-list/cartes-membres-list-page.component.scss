@@ -393,3 +393,17 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 640px) {
+  .cm-page__head {
+    margin-bottom: 1rem;
+  }
+
+  .cm-page__head h1 {
+    font-size: 1.45rem;
+  }
+
+  .cm-filters {
+    grid-template-columns: 1fr;
+  }
+}

@@ -43,6 +43,13 @@ import { TranslatePipe } from '@shared/pipes/translate.pipe';
       </button>
 
       @if (open()) {
+        <button
+          type="button"
+          class="notif-panel__backdrop"
+          (click)="open.set(false)"
+          aria-label="Fermer les notifications"
+        ></button>
+
         <section class="notif-panel" role="dialog" [attr.aria-label]="'notifications.panelTitle' | translate">
           <header class="notif-panel__head">
             <div>
@@ -93,6 +100,7 @@ import { TranslatePipe } from '@shared/pipes/translate.pipe';
   styles: `
     .notif-bell {
       position: relative;
+      flex-shrink: 0;
     }
 
     .notif-bell__btn {
@@ -152,6 +160,10 @@ import { TranslatePipe } from '@shared/pipes/translate.pipe';
       border-radius: 14px;
       box-shadow: var(--shadow-md);
       z-index: 120;
+    }
+
+    .notif-panel__backdrop {
+      display: none;
     }
 
     .notif-panel__head {
@@ -260,6 +272,74 @@ import { TranslatePipe } from '@shared/pipes/translate.pipe';
     .notif-item__body small {
       font-size: 0.68rem;
       color: var(--color-disabled-text);
+    }
+
+    @media (max-width: 720px) {
+      .notif-panel__backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 450;
+        border: none;
+        padding: 0;
+        background: rgba(15, 23, 42, 0.4);
+        cursor: pointer;
+      }
+
+      .notif-panel {
+        position: fixed;
+        top: auto;
+        right: 0;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        max-width: none;
+        max-height: min(78vh, 32rem);
+        border-radius: 1rem 1rem 0 0;
+        border-bottom: none;
+        z-index: 460;
+        box-shadow: 0 -8px 32px rgba(15, 23, 42, 0.18);
+        padding-bottom: env(safe-area-inset-bottom, 0);
+      }
+
+      .notif-panel__head {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.65rem;
+        padding: 1rem 1rem 0.85rem;
+      }
+
+      .notif-panel__head h2 {
+        font-size: 1rem;
+      }
+
+      .notif-panel__head p {
+        font-size: 0.8rem;
+      }
+
+      .notif-panel__mark-all {
+        align-self: flex-start;
+        padding: 0.35rem 0;
+        font-size: 0.8rem;
+      }
+
+      .notif-list {
+        flex: 1;
+        min-height: 0;
+        max-height: none;
+      }
+
+      .notif-item {
+        padding: 0.85rem 1rem;
+      }
+
+      .notif-item__body strong {
+        font-size: 0.88rem;
+      }
+
+      .notif-item__body span {
+        font-size: 0.82rem;
+      }
     }
   `,
 })

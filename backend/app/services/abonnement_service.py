@@ -15,10 +15,12 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.models.abonnement import Abonnement
+from app.models.carte_membre import CarteMembre
 from app.models.client import Client
 from app.models.paiement import Paiement
 from app.models.parametre_systeme import ParametreSysteme
 from app.models.type_abonnement import TypeAbonnement
+from app.schemas.abonnement import AbonnementUpdate
 from app.services import carte_qr_service
 
 
@@ -31,6 +33,10 @@ def _get_param_int(db: Session, cle: str, defaut: int) -> int:
     if p and p.valeur and p.valeur.isdigit():
         return int(p.valeur)
     return defaut
+
+
+def get_delai_grace_jours(db: Session) -> int:
+    return _get_param_int(db, "delai_grace_jours", 3)
 
 
 def _generer_reference_paiement() -> str:
@@ -203,7 +209,7 @@ def peut_renouveler_au_tarif_normal(db: Session, client_id: uuid.UUID) -> dict:
     Retourne un dict explicatif : si l'abonnement est expiré depuis plus
     que le délai de grâce, le client doit passer par une séance journalière.
     """
-    delai_grace = _get_param_int(db, "delai_grace_jours", 3)
+    delai_grace = get_delai_grace_jours(db)
     abo = abonnement_actuel(db, client_id)
 
     if abo is None:
@@ -236,3 +242,42 @@ def resilier(db: Session, abonnement: Abonnement) -> Abonnement:
     db.commit()
     db.refresh(abonnement)
     return abonnement
+
+
+def modifier(db: Session, abonnement: Abonnement, payload: AbonnementUpdate) -> Abonnement:
+    """Met à jour un abonnement (réservé au super administrateur)."""
+    data = payload.model_dump(exclude_unset=True)
+
+    for champ, valeur in data.items():
+        setattr(abonnement, champ, valeur)
+
+    if "statut" in data and data["statut"] in carte_qr_service.STATUTS_ABONNEMENT_INACTIFS:
+        carte_qr_service.desactiver_cartes_abonnement(db, abonnement)
+
+    if "date_fin" in data:
+        db.query(CarteMembre).filter(
+            CarteMembre.abonnement_id == abonnement.id,
+            CarteMembre.statut == "Actif",
+        ).update({"date_expiration": abonnement.date_fin}, synchronize_session=False)
+
+    db.commit()
+    db.refresh(abonnement)
+    return abonnement
+
+
+def supprimer(db: Session, abonnement: Abonnement) -> None:
+    """Supprime définitivement un abonnement et ses données liées directes."""
+    abo_id = abonnement.id
+
+    db.query(Paiement).filter(Paiement.abonnement_id == abo_id).delete(
+        synchronize_session=False
+    )
+    db.query(CarteMembre).filter(CarteMembre.abonnement_id == abo_id).delete(
+        synchronize_session=False
+    )
+    db.query(Abonnement).filter(Abonnement.renouvele_de == abo_id).update(
+        {"renouvele_de": None},
+        synchronize_session=False,
+    )
+    db.delete(abonnement)
+    db.commit()

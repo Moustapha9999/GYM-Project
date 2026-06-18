@@ -11,6 +11,7 @@ import {
 } from '@features/finances/models/finance.model';
 import { FinancesService } from '@features/finances/services/finances.service';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
+import { AppIconComponent } from '@shared/components/app-icon/app-icon.component';
 import { DialogService } from '@shared/components/app-dialog/dialog.service';
 import { MruCurrencyPipe } from '@shared/pipes/mru-currency.pipe';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
@@ -19,7 +20,7 @@ type FormMode = 'create' | 'edit' | 'view';
 
 @Component({
   selector: 'app-finances-list-page',
-  imports: [ReactiveFormsModule, LoadingSpinnerComponent, MruCurrencyPipe, DatePipe, TranslatePipe],
+  imports: [ReactiveFormsModule, LoadingSpinnerComponent, MruCurrencyPipe, DatePipe, TranslatePipe, AppIconComponent],
   templateUrl: './finances-list-page.component.html',
   styleUrl: './finances-list-page.component.scss',
 })

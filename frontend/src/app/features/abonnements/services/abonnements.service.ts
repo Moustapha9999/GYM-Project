@@ -6,6 +6,7 @@ import { ApiService } from '@core/services/api.service';
 import {
   AbonnementFilters,
   AbonnementListItem,
+  AbonnementUpdatePayload,
   Eligibilite,
   SouscriptionPayload,
   SouscriptionResult,
@@ -57,6 +58,16 @@ export class AbonnementsService {
 
   resilier(id: string): Observable<void> {
     return this.api.patch<void>(`abonnements/${id}/resilier`).pipe(map(() => undefined));
+  }
+
+  modifier(id: string, payload: AbonnementUpdatePayload): Observable<AbonnementListItem> {
+    return this.api
+      .put<AbonnementListItem>(`abonnements/${id}`, payload)
+      .pipe(map((response) => response.data));
+  }
+
+  supprimer(id: string): Observable<void> {
+    return this.api.delete<void>(`abonnements/${id}`).pipe(map(() => undefined));
   }
 
   count(statut?: string): Observable<number> {

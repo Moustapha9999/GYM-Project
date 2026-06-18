@@ -221,7 +221,7 @@ def seed():
             )
             db.add(admin)
             db.commit()
-            print(f"  + Super admin créé : {ADMIN['email']} / {ADMIN['password']}")
+            print(f"  + Super admin créé : {ADMIN['email']} (mot de passe défini — à changer immédiatement)")
         else:
             print(f"  = Super admin existant : {ADMIN['email']}")
 

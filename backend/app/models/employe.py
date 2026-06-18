@@ -39,6 +39,7 @@ class Employe(Base):
     )
 
     # Relations
+    utilisateur = relationship("Utilisateur", foreign_keys=[utilisateur_id])
     fiches_paie = relationship("FichePaie", back_populates="employe")
     programmes = relationship("ProgrammeSportif", back_populates="coach")
     plannings = relationship("PlanningCoach", back_populates="coach")

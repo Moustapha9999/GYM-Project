@@ -1,7 +1,7 @@
 """Router du module Clients — CRUD complet avec RBAC."""
 import uuid
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -16,8 +16,9 @@ from app.schemas.client import (
     ClientUpdate,
 )
 from app.schemas.common import ApiResponse, PaginatedResponse
-from app.services import client_service, export_service, import_service
+from app.services import audit_service, client_service, export_service, import_service
 from app.utils.pagination import paginate
+from app.utils.upload_validation import validate_excel_size
 
 router = APIRouter(prefix="/clients", tags=["Clients"])
 
@@ -81,6 +82,7 @@ def telecharger_modele_import(
 
 @router.post("/import-excel", response_model=ApiResponse[ClientImportResult])
 async def importer_clients_excel(
+    request: Request,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: Utilisateur = Depends(require_permission("clients.creation")),
@@ -97,9 +99,21 @@ async def importer_clients_excel(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Fichier vide.")
 
     try:
+        validate_excel_size(contenu)
         resultat = import_service.importer_excel(db, contenu, created_by=current_user.id)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    audit_service.enregistrer(
+        db,
+        utilisateur_id=current_user.id,
+        action="import_excel",
+        module="clients",
+        cible_table="clients",
+        details={"crees": resultat["crees"], "echecs": resultat["echecs"]},
+        request=request,
+    )
+    db.commit()
 
     message = f"{resultat['crees']} client(s) importé(s)."
     if resultat["echecs"]:
@@ -128,11 +142,23 @@ def obtenir_client(
 @router.post("", response_model=ApiResponse[ClientRead], status_code=status.HTTP_201_CREATED)
 def creer_client(
     payload: ClientCreate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: Utilisateur = Depends(require_permission("clients.creation")),
 ):
     """Crée un nouveau client (numéro de membre auto-généré)."""
     client = client_service.creer(db, payload, created_by=current_user.id)
+    audit_service.enregistrer(
+        db,
+        utilisateur_id=current_user.id,
+        action="creation",
+        module="clients",
+        cible_table="clients",
+        cible_id=client.id,
+        details={"numero_membre": client.numero_membre},
+        request=request,
+    )
+    db.commit()
     return ApiResponse(
         success=True,
         data=ClientRead.model_validate(client),
@@ -144,14 +170,25 @@ def creer_client(
 def modifier_client(
     client_id: uuid.UUID,
     payload: ClientUpdate,
+    request: Request,
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("clients.modification")),
+    current_user: Utilisateur = Depends(require_permission("clients.modification")),
 ):
     """Modifie un client existant."""
     client = client_service.obtenir(db, client_id)
     if client is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client introuvable.")
     client = client_service.modifier(db, client, payload)
+    audit_service.enregistrer(
+        db,
+        utilisateur_id=current_user.id,
+        action="modification",
+        module="clients",
+        cible_table="clients",
+        cible_id=client.id,
+        request=request,
+    )
+    db.commit()
     return ApiResponse(
         success=True,
         data=ClientRead.model_validate(client),
@@ -163,14 +200,30 @@ def modifier_client(
 def modifier_photo_client(
     client_id: uuid.UUID,
     payload: ClientPhotoUpdate,
+    request: Request,
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("clients.modification")),
+    current_user: Utilisateur = Depends(require_permission("clients.modification")),
 ):
     """Met à jour la photo du client (base64 data URL)."""
     client = client_service.obtenir(db, client_id)
     if client is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client introuvable.")
-    client = client_service.modifier_photo(db, client, payload.photo_base64)
+    try:
+        client = client_service.modifier_photo(db, client, payload.photo_base64)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
+    audit_service.enregistrer(
+        db,
+        utilisateur_id=current_user.id,
+        action="modification_photo",
+        module="clients",
+        cible_table="clients",
+        cible_id=client.id,
+        request=request,
+    )
+    db.commit()
     return ApiResponse(
         success=True,
         data=ClientRead.model_validate(client),
@@ -181,12 +234,25 @@ def modifier_photo_client(
 @router.delete("/{client_id}", response_model=ApiResponse[None])
 def supprimer_client(
     client_id: uuid.UUID,
+    request: Request,
     db: Session = Depends(get_db),
-    _: Utilisateur = Depends(require_permission("clients.suppression")),
+    current_user: Utilisateur = Depends(require_permission("clients.suppression")),
 ):
     """Supprime définitivement un client (hard delete)."""
     client = client_service.obtenir(db, client_id)
     if client is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client introuvable.")
+    numero = client.numero_membre
     client_service.supprimer(db, client)
+    audit_service.enregistrer(
+        db,
+        utilisateur_id=current_user.id,
+        action="suppression",
+        module="clients",
+        cible_table="clients",
+        cible_id=client_id,
+        details={"numero_membre": numero},
+        request=request,
+    )
+    db.commit()
     return ApiResponse(success=True, data=None, message="Client supprimé.")

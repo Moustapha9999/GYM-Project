@@ -31,6 +31,14 @@ class EmployeUpdate(BaseModel):
     statut: str | None = None
 
 
+class EmployeCompteUtilisateur(BaseModel):
+    id: uuid.UUID
+    email: str
+    actif: bool
+    role_nom: str
+    role_libelle: str
+
+
 class EmployeRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
@@ -45,6 +53,9 @@ class EmployeRead(BaseModel):
     salaire_base: Decimal
     statut: str
     created_at: datetime
+    utilisateur_id: uuid.UUID | None = None
+    role_associe: str | None = None
+    compte_utilisateur: EmployeCompteUtilisateur | None = None
 
 
 # ── Fiches de paie ──────────────────────────────────────────

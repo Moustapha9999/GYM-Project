@@ -1,8 +1,10 @@
 """Service métier des paramètres système."""
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models.parametre_systeme import ParametreSysteme
 from app.schemas.parametre import AppSettingsRead, AppSettingsUpdate
+from app.utils.upload_validation import validate_image_data_url
 
 APP_KEYS = {
     "nom_salle": "TOTAL FITNESS",
@@ -60,6 +62,14 @@ def mettre_a_jour_app_settings(db: Session, data: AppSettingsUpdate) -> AppSetti
             logo = valeur.strip()
             if logo and not logo.startswith("data:") and not logo.startswith("http"):
                 logo = f"data:image/png;base64,{logo}"
+            if logo:
+                try:
+                    logo = validate_image_data_url(logo, field_name="Logo")
+                except ValueError as exc:
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail=str(exc),
+                    ) from exc
             valeur = logo or ""
         _set(db, cle, valeur, descriptions.get(cle))
     db.commit()

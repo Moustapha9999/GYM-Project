@@ -114,13 +114,17 @@
                   <th>Rôle</th>
                   <th>Statut</th>
                   <th>Créé le</th>
-                  <th></th>
+                  <th class="adm-table__actions-head">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 @for (user of filteredUsers(); track user.id) {
-                  <tr>
-                    <td>{{ user.prenom }} {{ user.nom }}</td>
+                  <tr
+                    class="adm-table__row--clickable"
+                    (click)="viewUser(user)"
+                    [title]="'common.details' | translate"
+                  >
+                    <td class="adm-table__name">{{ user.prenom }} {{ user.nom }}</td>
                     <td>{{ user.email }}</td>
                     <td>{{ user.telephone ?? '—' }}</td>
                     <td>{{ user.role.libelle }}</td>
@@ -130,21 +134,34 @@
                       </span>
                     </td>
                     <td>{{ user.created_at | date: 'dd/MM/yyyy' }}</td>
-                    <td class="adm-table__actions">
-                      <button type="button" class="adm-link-btn" (click)="viewUser(user)">Voir</button>
+                    <td class="adm-table__actions" (click)="$event.stopPropagation()">
                       @if (!isSystemUser(user)) {
-                        <button type="button" class="adm-link-btn" (click)="startEditUser(user)">
-                          Modifier
-                        </button>
-                        @if (user.actif) {
-                          <button
-                            type="button"
-                            class="adm-link-btn adm-link-btn--danger"
-                            (click)="deactivateUser(user)"
-                          >
-                            Désactiver
-                          </button>
-                        }
+                        <div class="row-actions">
+                          <div class="row-actions__group">
+                            <div class="row-actions__subgroup">
+                              <button
+                                type="button"
+                                class="act-btn act-btn--soft"
+                                (click)="startEditUser(user)"
+                                [title]="'common.edit' | translate"
+                              >
+                                <app-icon name="pencil" [size]="14" />
+                                <span>{{ 'common.edit' | translate }}</span>
+                              </button>
+                              @if (user.actif) {
+                                <button
+                                  type="button"
+                                  class="act-btn act-btn--soft-danger"
+                                  (click)="deactivateUser(user)"
+                                  title="Désactiver"
+                                >
+                                  <app-icon name="minus" [size]="14" />
+                                  <span>Désactiver</span>
+                                </button>
+                              }
+                            </div>
+                          </div>
+                        </div>
                       }
                     </td>
                   </tr>
@@ -302,13 +319,17 @@
                   <th>Embauche</th>
                   <th>Salaire base</th>
                   <th>Statut</th>
-                  <th></th>
+                  <th class="adm-table__actions-head">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 @for (e of employes(); track e.id) {
-                  <tr>
-                    <td>{{ e.prenom }} {{ e.nom }}</td>
+                  <tr
+                    class="adm-table__row--clickable"
+                    (click)="viewEmploye(e)"
+                    [title]="'common.details' | translate"
+                  >
+                    <td class="adm-table__name">{{ e.prenom }} {{ e.nom }}</td>
                     <td>{{ e.fonction }}</td>
                     <td>{{ e.telephone ?? '—' }}</td>
                     <td>{{ e.date_embauche | date: 'dd/MM/yyyy' }}</td>
@@ -318,18 +339,31 @@
                         {{ e.statut }}
                       </span>
                     </td>
-                    <td class="adm-table__actions">
-                      <button type="button" class="adm-link-btn" (click)="viewEmploye(e)">Voir</button>
-                      <button type="button" class="adm-link-btn" (click)="startEditEmploye(e)">
-                        Modifier
-                      </button>
-                      <button
-                        type="button"
-                        class="adm-link-btn adm-link-btn--danger"
-                        (click)="deleteEmploye(e)"
-                      >
-                        Supprimer
-                      </button>
+                    <td class="adm-table__actions" (click)="$event.stopPropagation()">
+                      <div class="row-actions">
+                        <div class="row-actions__group">
+                          <div class="row-actions__subgroup">
+                            <button
+                              type="button"
+                              class="act-btn act-btn--soft"
+                              (click)="startEditEmploye(e)"
+                              [title]="'common.edit' | translate"
+                            >
+                              <app-icon name="pencil" [size]="14" />
+                              <span>{{ 'common.edit' | translate }}</span>
+                            </button>
+                            <button
+                              type="button"
+                              class="act-btn act-btn--soft-danger"
+                              (click)="deleteEmploye(e)"
+                              [title]="'common.delete' | translate"
+                            >
+                              <app-icon name="trash" [size]="14" />
+                              <span>{{ 'common.delete' | translate }}</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 } @empty {
@@ -392,6 +426,27 @@
             <dd>{{ e.salaire_base | number: '1.0-0' }} MRU</dd>
             <dt>Statut</dt>
             <dd>{{ e.statut }}</dd>
+            @if (e.role_associe) {
+              <dt>{{ 'modules.admin.linkedRole' | translate }}</dt>
+              <dd>{{ e.role_associe }}</dd>
+            }
+            @if (e.compte_utilisateur; as compte) {
+              <dt>{{ 'modules.admin.linkedAccount' | translate }}</dt>
+              <dd>{{ compte.email }}</dd>
+              <dt>{{ 'modules.admin.platformAccess' | translate }}</dt>
+              <dd>
+                <span class="adm-badge" [class.is-active]="compte.actif">
+                  {{
+                    compte.actif
+                      ? ('modules.admin.platformAccessActive' | translate)
+                      : ('modules.admin.platformAccessPending' | translate)
+                  }}
+                </span>
+              </dd>
+            } @else if (e.role_associe) {
+              <dt>{{ 'modules.admin.linkedAccount' | translate }}</dt>
+              <dd>{{ 'modules.admin.accountPendingCreation' | translate }}</dd>
+            }
           </dl>
           <button type="button" class="adm-btn adm-btn--ghost" (click)="startCreateEmploye()">Fermer</button>
         } @else {
@@ -417,6 +472,9 @@
                   <option [value]="f">{{ f }}</option>
                 }
               </select>
+              @if (employeNeedsEmail(employeForm.controls.fonction.value)) {
+                <span class="adm-label-hint">{{ 'modules.admin.emailRequiredForRole' | translate }}</span>
+              }
             </label>
 
             <div class="adm-form__row">
@@ -426,7 +484,11 @@
               </label>
               <label>
                 Email
-                <input type="email" formControlName="email" />
+                <input
+                  type="email"
+                  formControlName="email"
+                  [required]="employeNeedsEmail(employeForm.controls.fonction.value)"
+                />
               </label>
             </div>
 

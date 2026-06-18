@@ -1,4 +1,4 @@
-import { DatePipe, formatDate } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
@@ -66,11 +66,6 @@ export class PaiementsListPageComponent implements OnInit {
   readonly totalJournal = computed(() =>
     this.paiements().reduce((sum, p) => sum + Number(p.montant), 0),
   );
-
-  readonly caisseDateLabel = computed(() => {
-    const jour = this.caisse()?.jour;
-    return jour ? formatDate(jour, 'dd/MM/yyyy', 'fr-FR') : '';
-  });
 
   readonly createType = computed(() => this.createForm.controls.type_paiement.value);
 

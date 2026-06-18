@@ -2,6 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService } from '@core/services/auth.service';
+import { MobileNavService } from '@core/services/mobile-nav.service';
 import { MAIN_NAV_ITEMS } from '@layout/config/navigation.config';
 import { NavItem } from '@layout/models/nav-item.model';
 import { AppIconComponent } from '@shared/components/app-icon/app-icon.component';
@@ -10,7 +11,7 @@ import { AppIconComponent } from '@shared/components/app-icon/app-icon.component
   selector: 'app-sidebar',
   imports: [RouterLink, RouterLinkActive, AppIconComponent],
   template: `
-    <aside class="sidebar">
+    <aside class="sidebar" [class.is-open]="mobileNav.open()">
       <div class="sidebar__brand">
         <span class="sidebar__logo"><app-icon name="gym" [size]="28" /></span>
         <div>
@@ -26,6 +27,7 @@ import { AppIconComponent } from '@shared/components/app-icon/app-icon.component
             routerLinkActive="is-active"
             [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
             class="sidebar__link"
+            (click)="mobileNav.close()"
           >
             <span aria-hidden="true"><app-icon [name]="item.icon" [size]="18" /></span>
             <span>{{ item.label }}</span>
@@ -44,6 +46,7 @@ import { AppIconComponent } from '@shared/components/app-icon/app-icon.component
       flex-direction: column;
       padding: 1.25rem 1rem;
       border-right: 1px solid rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
     }
 
     .sidebar__brand {
@@ -94,10 +97,28 @@ import { AppIconComponent } from '@shared/components/app-icon/app-icon.component
       background: rgba(255, 255, 255, 0.1);
       color: #fff;
     }
+
+    @media (max-width: 960px) {
+      .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 300;
+        width: min(85vw, var(--sidebar-width));
+        min-height: 100%;
+        transform: translateX(-100%);
+        transition: transform 0.22s ease;
+      }
+
+      .sidebar.is-open {
+        transform: translateX(0);
+        box-shadow: 8px 0 32px rgba(0, 0, 0, 0.35);
+      }
+    }
   `,
 })
 export class SidebarComponent {
   private readonly auth = inject(AuthService);
+  readonly mobileNav = inject(MobileNavService);
 
   readonly visibleItems = computed(() =>
     MAIN_NAV_ITEMS.filter((item) => this.canSeeItem(item)),

@@ -4,15 +4,31 @@ import { sendSMS } from "../sms/sms.provider.js";
 
 const router = express.Router();
 
+function isProduction() {
+  return process.env.NODE_ENV === "production" || process.env.APP_ENV === "production";
+}
+
 function checkSecret(req, res, next) {
+  const configured = process.env.API_SECRET;
+
+  if (!configured) {
+    if (isProduction()) {
+      return res.status(503).json({
+        success: false,
+        erreur: "API_SECRET non configuré — service indisponible.",
+      });
+    }
+    return next();
+  }
+
   const secret = req.headers["x-api-secret"];
-  if (process.env.API_SECRET && secret !== process.env.API_SECRET) {
+  if (secret !== configured) {
     return res.status(401).json({ success: false, erreur: "Secret invalide" });
   }
   next();
 }
 
-router.get("/status", (req, res) => {
+router.get("/status", checkSecret, (req, res) => {
   res.json({ whatsapp_connecte: isConnected() });
 });
 

@@ -9,6 +9,9 @@ export interface AbonnementListItem {
   statut: string;
   est_inscription: boolean;
   created_at: string;
+  jours_retard: number;
+  en_retard: boolean;
+  hors_delai_grace: boolean;
 }
 
 export interface TarifAbonnement {
@@ -42,6 +45,14 @@ export interface AbonnementFilters {
   client_id?: string;
   page?: number;
   per_page?: number;
+}
+
+export interface AbonnementUpdatePayload {
+  date_debut?: string;
+  date_fin?: string;
+  montant?: number;
+  statut?: 'Actif' | 'Suspendu' | 'Résilié' | 'Expiré';
+  est_inscription?: boolean;
 }
 
 export interface SouscriptionPayload {
