@@ -131,6 +131,30 @@ def obtenir(db: Session, paiement_id: uuid.UUID) -> Paiement | None:
     return db.query(Paiement).filter(Paiement.id == paiement_id).first()
 
 
+def modifier(db: Session, paiement: Paiement, payload) -> Paiement:
+    """Met à jour un paiement (montant, moyen, statut)."""
+    data = payload.model_dump(exclude_unset=True)
+
+    if "moyen_paiement_id" in data:
+        moyen = (
+            db.query(MoyenPaiement)
+            .filter(
+                MoyenPaiement.id == data["moyen_paiement_id"],
+                MoyenPaiement.actif == True,  # noqa: E712
+            )
+            .first()
+        )
+        if moyen is None:
+            raise PaiementError("Moyen de paiement invalide ou inactif.")
+
+    for champ, valeur in data.items():
+        setattr(paiement, champ, valeur)
+
+    db.commit()
+    db.refresh(paiement)
+    return paiement
+
+
 def creer(
     db: Session,
     type_paiement: str,

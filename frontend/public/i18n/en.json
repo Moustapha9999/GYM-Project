@@ -262,6 +262,7 @@
       "subtitle": "Payment journal, daily cash register and local methods.",
       "listTitle": "Payment journal",
       "detailsTitle": "Payment details",
+      "editTitle": "Edit payment",
       "newPayment": "New payment",
       "cashRegisterTitle": "Cash register — {{date}}",
       "kpi": {

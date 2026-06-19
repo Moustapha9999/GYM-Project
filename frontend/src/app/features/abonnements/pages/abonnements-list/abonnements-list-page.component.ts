@@ -39,7 +39,8 @@ export class AbonnementsListPageComponent implements OnInit {
   private readonly whatsapp = inject(WhatsappMessageService);
   private readonly auth = inject(AuthService);
 
-  readonly isSuperAdmin = computed(() => this.auth.roleName() === 'super_admin');
+  readonly canModifyAbonnement = computed(() => this.auth.hasPermission('abonnements.modification'));
+  readonly canDeleteAbonnement = computed(() => this.auth.hasPermission('abonnements.suppression'));
 
   readonly loading = signal(true);
   readonly submitting = signal(false);

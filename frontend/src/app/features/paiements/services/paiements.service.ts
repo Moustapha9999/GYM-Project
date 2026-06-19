@@ -10,6 +10,7 @@ import {
   PaiementDetail,
   PaiementFilters,
   PaiementRead,
+  PaiementUpdatePayload,
 } from '@features/paiements/models/paiement.model';
 
 @Injectable({ providedIn: 'root' })
@@ -49,6 +50,10 @@ export class PaiementsService {
     return this.api
       .post<PaiementCreateResult>('paiements', payload)
       .pipe(map((response) => response.data));
+  }
+
+  modifier(id: string, payload: PaiementUpdatePayload): Observable<PaiementRead> {
+    return this.api.put<PaiementRead>(`paiements/${id}`, payload).pipe(map((response) => response.data));
   }
 
   downloadImportTemplate(): Observable<Blob> {

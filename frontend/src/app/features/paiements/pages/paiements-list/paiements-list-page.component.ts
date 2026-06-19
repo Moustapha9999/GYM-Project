@@ -3,6 +3,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
+import { AuthService } from '@core/services/auth.service';
 import { LoadingSpinnerComponent } from '@shared/components/loading-spinner/loading-spinner.component';
 import { MruCurrencyPipe } from '@shared/pipes/mru-currency.pipe';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
@@ -17,7 +18,7 @@ import {
 } from '@features/paiements/models/paiement.model';
 import { PaiementsService } from '@features/paiements/services/paiements.service';
 
-type SidePanelMode = 'create' | 'view';
+type SidePanelMode = 'create' | 'view' | 'edit';
 
 @Component({
   selector: 'app-paiements-list-page',
@@ -30,6 +31,9 @@ export class PaiementsListPageComponent implements OnInit {
   private readonly paiementsService = inject(PaiementsService);
   private readonly clientsService = inject(ClientsService);
   private readonly whatsapp = inject(WhatsappMessageService);
+  private readonly auth = inject(AuthService);
+
+  readonly canModifyPaiement = computed(() => this.auth.hasPermission('paiements.modification'));
 
   readonly loading = signal(true);
   readonly submitting = signal(false);
@@ -46,6 +50,8 @@ export class PaiementsListPageComponent implements OnInit {
   readonly viewingPaiementSummary = signal<PaiementDetail | null>(null);
   readonly detailLoading = signal(false);
   readonly detailError = signal<string | null>(null);
+  readonly detailSuccess = signal<string | null>(null);
+  readonly savingEdit = signal(false);
   readonly importing = signal(false);
 
   readonly filters = this.fb.nonNullable.group({
@@ -62,6 +68,14 @@ export class PaiementsListPageComponent implements OnInit {
     nom_client_occasionnel: [''],
     montant: [''],
   });
+
+  readonly editForm = this.fb.nonNullable.group({
+    montant: [0, [Validators.required, Validators.min(1)]],
+    moyen_paiement_id: ['', Validators.required],
+    statut: ['Validé', Validators.required],
+  });
+
+  readonly statutPaiementOptions = ['Validé', 'Annulé'];
 
   readonly totalJournal = computed(() =>
     this.paiements().reduce((sum, p) => sum + Number(p.montant), 0),
@@ -198,6 +212,69 @@ export class PaiementsListPageComponent implements OnInit {
     this.viewingPaiement.set(null);
     this.viewingPaiementSummary.set(null);
     this.detailError.set(null);
+    this.detailSuccess.set(null);
+  }
+
+  startEditPaiement(): void {
+    const payment = this.viewingPaiement();
+    if (!payment || !this.canModifyPaiement()) return;
+
+    this.sidePanelMode.set('edit');
+    this.detailError.set(null);
+    this.detailSuccess.set(null);
+    this.editForm.reset({
+      montant: Number(payment.montant),
+      moyen_paiement_id: payment.moyen_paiement_id,
+      statut: payment.statut,
+    });
+  }
+
+  cancelEditPaiement(): void {
+    this.sidePanelMode.set('view');
+    this.detailError.set(null);
+  }
+
+  submitEditPaiement(): void {
+    const payment = this.viewingPaiement();
+    if (!payment || this.editForm.invalid) {
+      this.editForm.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.editForm.getRawValue();
+    this.savingEdit.set(true);
+    this.detailError.set(null);
+    this.detailSuccess.set(null);
+
+    this.paiementsService
+      .modifier(payment.id, {
+        montant: Number(raw.montant),
+        moyen_paiement_id: raw.moyen_paiement_id,
+        statut: raw.statut,
+      })
+      .subscribe({
+        next: (updated) => {
+          this.savingEdit.set(false);
+          this.detailSuccess.set('Paiement modifié.');
+          this.viewingPaiement.set(updated);
+          const summary = this.viewingPaiementSummary();
+          if (summary) {
+            const moyen = this.moyens().find((m) => m.id === updated.moyen_paiement_id);
+            this.viewingPaiementSummary.set({
+              ...summary,
+              montant: Number(updated.montant),
+              moyen_paiement: moyen?.libelle ?? summary.moyen_paiement,
+              statut: updated.statut,
+            });
+          }
+          this.sidePanelMode.set('view');
+          this.loadData();
+        },
+        error: (err) => {
+          this.savingEdit.set(false);
+          this.detailError.set(err?.error?.detail ?? 'Impossible de modifier le paiement.');
+        },
+      });
   }
 
   submitCreate(): void {

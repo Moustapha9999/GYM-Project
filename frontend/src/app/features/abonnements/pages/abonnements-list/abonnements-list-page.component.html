@@ -132,52 +132,54 @@
                         </button>
                       }
 
-                      @if (a.statut === 'Actif' || isSuperAdmin()) {
+                      @if (a.statut === 'Actif') {
                         <div class="row-actions__group">
-                          @if (a.statut === 'Actif') {
-                            <div class="row-actions__subgroup">
-                              <button
-                                type="button"
-                                class="act-btn act-btn--soft act-btn--keep-label"
-                                (click)="suspendre(a)"
-                                [title]="'modules.abonnements.suspendBtn' | translate"
-                              >
-                                <app-icon name="minus" [size]="14" />
-                                <span>{{ 'modules.abonnements.suspendBtn' | translate }}</span>
-                              </button>
-                              <button
-                                type="button"
-                                class="act-btn act-btn--soft-danger act-btn--keep-label"
-                                (click)="resilier(a)"
-                                [title]="'modules.abonnements.resignBtn' | translate"
-                              >
-                                <app-icon name="log-out" [size]="14" />
-                                <span>{{ 'modules.abonnements.resignBtn' | translate }}</span>
-                              </button>
-                            </div>
-                          }
-                          @if (isSuperAdmin()) {
-                            <div class="row-actions__subgroup">
-                              <button
-                                type="button"
-                                class="act-btn act-btn--soft"
-                                (click)="editAbonnement(a)"
-                                [title]="'common.edit' | translate"
-                              >
-                                <app-icon name="pencil" [size]="14" />
-                                <span>{{ 'common.edit' | translate }}</span>
-                              </button>
-                              <button
-                                type="button"
-                                class="act-btn act-btn--soft-danger"
-                                (click)="supprimerAbonnement(a)"
-                                [title]="'common.delete' | translate"
-                              >
-                                <app-icon name="trash" [size]="14" />
-                                <span>{{ 'common.delete' | translate }}</span>
-                              </button>
-                            </div>
-                          }
+                          <div class="row-actions__subgroup">
+                            <button
+                              type="button"
+                              class="act-btn act-btn--soft act-btn--keep-label"
+                              (click)="suspendre(a)"
+                              [title]="'modules.abonnements.suspendBtn' | translate"
+                            >
+                              <app-icon name="minus" [size]="14" />
+                              <span>{{ 'modules.abonnements.suspendBtn' | translate }}</span>
+                            </button>
+                            <button
+                              type="button"
+                              class="act-btn act-btn--soft-danger act-btn--keep-label"
+                              (click)="resilier(a)"
+                              [title]="'modules.abonnements.resignBtn' | translate"
+                            >
+                              <app-icon name="log-out" [size]="14" />
+                              <span>{{ 'modules.abonnements.resignBtn' | translate }}</span>
+                            </button>
+                          </div>
+                        </div>
+                      }
+                      @if (canModifyAbonnement()) {
+                        <div class="row-actions__subgroup">
+                          <button
+                            type="button"
+                            class="act-btn act-btn--soft"
+                            (click)="editAbonnement(a)"
+                            [title]="'common.edit' | translate"
+                          >
+                            <app-icon name="pencil" [size]="14" />
+                            <span>{{ 'common.edit' | translate }}</span>
+                          </button>
+                        </div>
+                      }
+                      @if (canDeleteAbonnement()) {
+                        <div class="row-actions__subgroup">
+                          <button
+                            type="button"
+                            class="act-btn act-btn--soft-danger"
+                            (click)="supprimerAbonnement(a)"
+                            [title]="'common.delete' | translate"
+                          >
+                            <app-icon name="trash" [size]="14" />
+                            <span>{{ 'common.delete' | translate }}</span>
+                          </button>
                         </div>
                       }
                     </div>
@@ -267,13 +269,15 @@
               <button type="button" class="abo-btn abo-btn--ghost abo-btn--block" (click)="closeEdit()">
                 {{ 'common.cancel' | translate }}
               </button>
-              <button
-                type="button"
-                class="abo-btn abo-btn--ghost abo-btn--block abo-btn--danger-text"
-                (click)="supprimerAbonnement(abo)"
-              >
-                {{ 'common.delete' | translate }}
-              </button>
+              @if (canDeleteAbonnement()) {
+                <button
+                  type="button"
+                  class="abo-btn abo-btn--ghost abo-btn--block abo-btn--danger-text"
+                  (click)="supprimerAbonnement(abo)"
+                >
+                  {{ 'common.delete' | translate }}
+                </button>
+              }
             </div>
           </form>
         </article>
@@ -361,16 +365,18 @@
               <button type="submit" class="abo-btn abo-btn--primary abo-btn--block" [disabled]="renewing()">
                 {{ renewing() ? 'Renouvellement...' : 'Renouveler l\'abonnement' }}
               </button>
-              @if (isSuperAdmin()) {
+              @if (canModifyAbonnement()) {
                 <div class="abo-detail__actions-row">
                   <button type="button" class="act-btn act-btn--soft" (click)="editAbonnement(abo)">
                     <app-icon name="pencil" [size]="14" />
                     <span>{{ 'common.edit' | translate }}</span>
                   </button>
-                  <button type="button" class="act-btn act-btn--soft-danger" (click)="supprimerAbonnement(abo)">
-                    <app-icon name="trash" [size]="14" />
-                    <span>{{ 'common.delete' | translate }}</span>
-                  </button>
+                  @if (canDeleteAbonnement()) {
+                    <button type="button" class="act-btn act-btn--soft-danger" (click)="supprimerAbonnement(abo)">
+                      <app-icon name="trash" [size]="14" />
+                      <span>{{ 'common.delete' | translate }}</span>
+                    </button>
+                  }
                 </div>
               }
               <button type="button" class="abo-btn abo-btn--ghost abo-btn--block" (click)="closeView()">

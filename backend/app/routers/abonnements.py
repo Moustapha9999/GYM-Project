@@ -183,9 +183,9 @@ def modifier_abonnement(
     payload: AbonnementUpdate,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: Utilisateur = Depends(require_any_role("super_admin")),
+    current_user: Utilisateur = Depends(require_permission("abonnements.modification")),
 ):
-    """Modifie manuellement un abonnement (super administrateur uniquement)."""
+    """Modifie manuellement un abonnement (dates, montant, statut)."""
     abo = abonnement_service.obtenir(db, abonnement_id)
     if abo is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Abonnement introuvable.")
@@ -213,9 +213,9 @@ def supprimer_abonnement(
     abonnement_id: uuid.UUID,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: Utilisateur = Depends(require_any_role("super_admin")),
+    current_user: Utilisateur = Depends(require_permission("abonnements.suppression")),
 ):
-    """Supprime définitivement un abonnement (super administrateur uniquement)."""
+    """Supprime définitivement un abonnement."""
     abo = abonnement_service.obtenir(db, abonnement_id)
     if abo is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Abonnement introuvable.")

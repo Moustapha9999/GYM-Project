@@ -132,12 +132,53 @@
     </article>
 
     <aside class="pay-side">
-      @if (sidePanelMode() === 'view') {
+      @if (sidePanelMode() === 'edit' && viewingPaiement(); as payment) {
+        <article class="pay-card pay-card--detail">
+          <h2>{{ 'modules.paiements.editTitle' | translate }}</h2>
+          <p class="pay-card__hint">{{ payment.reference }}</p>
+
+          @if (detailError()) {
+            <p class="pay-alert pay-alert--error">{{ detailError() }}</p>
+          }
+
+          <form class="pay-create-form" [formGroup]="editForm" (ngSubmit)="submitEditPaiement()">
+            <label>
+              Montant (MRU)
+              <input type="number" min="1" step="1" formControlName="montant" />
+            </label>
+            <label>
+              Moyen de paiement
+              <select formControlName="moyen_paiement_id">
+                @for (m of moyens(); track m.id) {
+                  <option [value]="m.id">{{ m.libelle }}</option>
+                }
+              </select>
+            </label>
+            <label>
+              Statut
+              <select formControlName="statut">
+                @for (st of statutPaiementOptions; track st) {
+                  <option [value]="st">{{ st }}</option>
+                }
+              </select>
+            </label>
+            <button type="submit" class="pay-btn pay-btn--primary pay-btn--block" [disabled]="savingEdit()">
+              {{ savingEdit() ? ('common.saving' | translate) : ('common.save' | translate) }}
+            </button>
+            <button type="button" class="pay-btn pay-btn--ghost pay-btn--block" (click)="cancelEditPaiement()">
+              {{ 'common.cancel' | translate }}
+            </button>
+          </form>
+        </article>
+      } @else if (sidePanelMode() === 'view') {
         <article class="pay-card pay-card--detail">
           <h2>{{ 'modules.paiements.detailsTitle' | translate }}</h2>
 
           @if (detailError()) {
             <p class="pay-alert pay-alert--error">{{ detailError() }}</p>
+          }
+          @if (detailSuccess()) {
+            <p class="pay-alert pay-alert--success">{{ detailSuccess() }}</p>
           }
 
           @if (detailLoading()) {
@@ -181,6 +222,11 @@
                 </div>
               </dl>
 
+              @if (canModifyPaiement()) {
+                <button type="button" class="pay-btn pay-btn--primary pay-btn--block" (click)="startEditPaiement()">
+                  {{ 'common.edit' | translate }}
+                </button>
+              }
               <button type="button" class="pay-btn pay-btn--ghost pay-btn--block" (click)="closeView()">
                 Fermer
               </button>

@@ -3,7 +3,7 @@ import uuid
 import io
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -18,8 +18,9 @@ from app.schemas.paiement import (
     PaiementCreateResult,
     PaiementDetail,
     PaiementRead,
+    PaiementUpdate,
 )
-from app.services import export_service, paiement_service
+from app.services import audit_service, export_service, paiement_service
 from app.services.paiement_service import PaiementError
 from app.models.moyen_paiement import MoyenPaiement
 
@@ -134,3 +135,34 @@ def detail_paiement(
     if paiement is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paiement introuvable.")
     return ApiResponse(success=True, data=PaiementRead.model_validate(paiement))
+
+
+@router.put("/{paiement_id}", response_model=ApiResponse[PaiementRead])
+def modifier_paiement(
+    paiement_id: uuid.UUID,
+    payload: PaiementUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: Utilisateur = Depends(require_permission("paiements.modification")),
+):
+    """Modifie un paiement (montant, moyen de paiement, statut)."""
+    paiement = paiement_service.obtenir(db, paiement_id)
+    if paiement is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paiement introuvable.")
+    try:
+        paiement = paiement_service.modifier(db, paiement, payload)
+    except PaiementError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+
+    audit_service.enregistrer(
+        db,
+        utilisateur_id=current_user.id,
+        action="modification",
+        module="paiements",
+        cible_table="paiements",
+        cible_id=paiement.id,
+        details=payload.model_dump(exclude_unset=True, mode="json"),
+        request=request,
+    )
+    db.commit()
+    return ApiResponse(success=True, data=PaiementRead.model_validate(paiement), message="Paiement modifié.")

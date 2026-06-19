@@ -65,3 +65,9 @@ export interface PaiementCreateResult {
   montant: number;
   type_paiement: string;
 }
+
+export interface PaiementUpdatePayload {
+  montant?: number;
+  moyen_paiement_id?: string;
+  statut?: string;
+}

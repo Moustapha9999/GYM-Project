@@ -262,6 +262,7 @@
       "subtitle": "Journal des encaissements, caisse du jour et moyens locaux.",
       "listTitle": "Journal des paiements",
       "detailsTitle": "Détails du paiement",
+      "editTitle": "Modifier le paiement",
       "newPayment": "Nouveau paiement",
       "cashRegisterTitle": "Caisse du {{date}}",
       "kpi": {

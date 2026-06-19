@@ -262,6 +262,7 @@
       "subtitle": "سجل المدفوعات وصندوق اليوم ووسائل الدفع المحلية.",
       "listTitle": "سجل المدفوعات",
       "detailsTitle": "تفاصيل الدفع",
+      "editTitle": "تعديل الدفع",
       "newPayment": "دفعة جديدة",
       "cashRegisterTitle": "صندوق {{date}}",
       "kpi": {

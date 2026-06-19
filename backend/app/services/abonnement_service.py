@@ -245,7 +245,7 @@ def resilier(db: Session, abonnement: Abonnement) -> Abonnement:
 
 
 def modifier(db: Session, abonnement: Abonnement, payload: AbonnementUpdate) -> Abonnement:
-    """Met à jour un abonnement (réservé au super administrateur)."""
+    """Met à jour un abonnement."""
     data = payload.model_dump(exclude_unset=True)
 
     for champ, valeur in data.items():

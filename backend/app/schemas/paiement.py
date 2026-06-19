@@ -75,6 +75,26 @@ class PaiementCreateResult(BaseModel):
     type_paiement: str
 
 
+class PaiementUpdate(BaseModel):
+    montant: Decimal | None = None
+    moyen_paiement_id: uuid.UUID | None = None
+    statut: str | None = None
+
+    @model_validator(mode="after")
+    def valider_champs(self):
+        if self.montant is not None and self.montant <= 0:
+            raise ValueError("Le montant doit être positif.")
+        if self.statut is not None and self.statut not in ("Validé", "Annulé"):
+            raise ValueError("Statut invalide. Valeurs acceptées : Validé, Annulé.")
+        if (
+            self.montant is None
+            and self.moyen_paiement_id is None
+            and self.statut is None
+        ):
+            raise ValueError("Aucune modification fournie.")
+        return self
+
+
 class RepartitionMoyen(BaseModel):
     moyen_paiement: str
     nombre: int
