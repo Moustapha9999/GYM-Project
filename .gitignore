@@ -45,6 +45,7 @@ notification-service/dist/
 *.env
 *.pem
 *.key
+!.env.example
 !*.env.example
 docker/pgadmin/pgpass
 

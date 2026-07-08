@@ -1,18 +1,22 @@
+# Machine A : docker compose up -d  (PostgreSQL partagé sur le réseau local)
+# Machines B/C : backend + frontend → DATABASE_URL vers l'IP de la machine A
 services:
   db:
     image: postgres:16-alpine
     container_name: gym-sylla-db
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: gym_sylla
+      POSTGRES_DB: ${POSTGRES_DB:-gym_sylla}
       POSTGRES_USER: ${POSTGRES_USER:-gym_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gym_password_dev_only}
     ports:
-      - "5432:5432"
+      - "0.0.0.0:5432:5432"
     volumes:
       - gym_sylla_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gym_user -d gym_sylla"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 10

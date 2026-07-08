@@ -23,6 +23,8 @@ class Settings(BaseSettings):
 
     # ── CORS (frontend autorisé) ─────────────────────────────
     CORS_ORIGINS: str = "http://localhost:4200"
+    # Dev multi-postes : autorise http://192.168.x.x:port (ignoré en production)
+    CORS_ALLOW_LAN: bool = False
 
     # ── Service de notifications ─────────────────────────────
     NOTIFICATION_SERVICE_URL: str = "http://localhost:3001"

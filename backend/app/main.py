@@ -22,13 +22,20 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 # ── CORS ────────────────────────────────────────────────────
 origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With"],
-)
+cors_kwargs: dict = {
+    "allow_credentials": True,
+    "allow_methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    "allow_headers": ["Authorization", "Content-Type", "Accept", "X-Requested-With"],
+}
+if settings.CORS_ALLOW_LAN and not _is_production:
+    cors_kwargs["allow_origin_regex"] = (
+        r"http://(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3})(:\d+)?"
+    )
+    cors_kwargs["allow_origins"] = origins
+else:
+    cors_kwargs["allow_origins"] = origins
+
+app.add_middleware(CORSMiddleware, **cors_kwargs)
 
 # ── Routers ─────────────────────────────────────────────────
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
