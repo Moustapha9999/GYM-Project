@@ -1,0 +1,2 @@
+cd "/c/Users/TOTAL FITNESS/Documents/GYM-Project"
+./scripts/start-machine-a.sh
