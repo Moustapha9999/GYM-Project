@@ -1,6 +1,7 @@
 cd "/c/Users/TOTAL FITNESS/Documents/GYM-Project"
 
-# ── Machine A (serveur) — IP fixe : 192.168.100.6
+# ── Machine A (serveur) — double-clic bureau : "GYM SYLLA - Machine A"
+# Ou en ligne de commande :
 ./scripts/start-machine-a.sh
 
 # ── Machines B/C (réception / manager)
