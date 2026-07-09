@@ -17,6 +17,12 @@ kill_port() {
         }
       }
     " >/dev/null 2>&1 || true
+    return
+  fi
+  local pids
+  pids="$(lsof -ti tcp:"$port" -sTCP:LISTEN 2>/dev/null || true)"
+  if [[ -n "$pids" ]]; then
+    echo "$pids" | xargs kill -9 2>/dev/null || true
   fi
 }
 

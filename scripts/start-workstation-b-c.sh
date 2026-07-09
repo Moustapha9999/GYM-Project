@@ -44,8 +44,9 @@ port_listening() {
       >/dev/null 2>&1
     return $?
   fi
-  curl -sf "http://localhost:${port}/" >/dev/null 2>&1 \
-    || curl -sf "http://localhost:${port}/docs" >/dev/null 2>&1
+  # --max-time évite de bloquer si un ancien processus occupe le port sans répondre
+  curl -sf --max-time 2 "http://127.0.0.1:${port}/" >/dev/null 2>&1 \
+    || curl -sf --max-time 2 "http://127.0.0.1:${port}/docs" >/dev/null 2>&1
 }
 
 resolve_uvicorn() {
@@ -123,6 +124,12 @@ kill_port() {
         }
       }
     " >/dev/null 2>&1 || true
+    return
+  fi
+  local pids
+  pids="$(lsof -ti tcp:"$port" -sTCP:LISTEN 2>/dev/null || true)"
+  if [[ -n "$pids" ]]; then
+    echo "$pids" | xargs kill -9 2>/dev/null || true
   fi
 }
 
@@ -210,17 +217,18 @@ if [[ ! -d frontend/node_modules ]]; then
   (cd frontend && npm install)
 fi
 
-if ! port_listening 4200; then
-  echo "→ Démarrage interface Angular (config lan)..."
-  (
-    cd frontend
-    nohup npm start -- --configuration=lan --host 0.0.0.0 \
-      > "$LOG_DIR/frontend.log" 2>&1 &
-    echo $! > "$LOG_DIR/frontend.pid"
-  )
-else
-  echo "✅ Frontend déjà actif (port 4200)"
-fi
+# Toujours redémarrer le frontend (évite un ancien ng serve bloqué sur localhost seul)
+stop_pid_file "frontend"
+kill_port 4200
+sleep 1
+
+echo "→ Démarrage interface Angular (config lan)..."
+(
+  cd frontend
+  nohup npm start -- --configuration=lan --host 0.0.0.0 \
+    > "$LOG_DIR/frontend.log" 2>&1 &
+  echo $! > "$LOG_DIR/frontend.pid"
+)
 
 # ── 5. Attendre l'interface ───────────────────────────────────
 if ! port_listening 4200; then
