@@ -2,7 +2,7 @@ import { Environment } from './environment.model';
 
 /**
  * Postes B/C sur le réseau local.
- * Remplacer 192.168.1.10 par l'IP de la machine qui héberge le backend API.
+ * Machine A (serveur DB) : 192.168.100.6 — apiUrl = backend local sur ce poste (localhost:8000).
  */
 export const environment: Environment = {
   production: false,

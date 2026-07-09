@@ -170,7 +170,7 @@ ipconfig getifaddr en0
 hostname -I | awk '{print $1}'
 ```
 
-Exemple : `192.168.1.10`
+Exemple : `192.168.100.6`
 
 #### 2.4 Démarrer le service WhatsApp (machine A)
 
@@ -196,11 +196,11 @@ Autoriser les ports entrants depuis le réseau local :
 
 #### 3.1 Configuration automatique
 
-Remplacer `192.168.1.10` par l'IP réelle de la machine A :
+Remplacer `192.168.100.6` par l'IP réelle de la machine A :
 
 ```bash
 chmod +x scripts/start-workstation.sh
-./scripts/start-workstation.sh 192.168.1.10
+./scripts/start-workstation.sh 192.168.100.6
 ```
 
 Ce script crée ou met à jour :
@@ -218,8 +218,8 @@ cp .env.workstation.example .env
 Dans `backend/.env`, renseigner :
 
 ```env
-DATABASE_URL=postgresql://gym_user:gym_password_dev_only@192.168.1.10:5432/gym_sylla
-NOTIFICATION_SERVICE_URL=http://192.168.1.10:3001
+DATABASE_URL=postgresql://gym_user:gym_password_dev_only@192.168.100.6:5432/gym_sylla
+NOTIFICATION_SERVICE_URL=http://192.168.100.6:3001
 SECRET_KEY=<même valeur que sur la machine A>
 NOTIFICATION_API_SECRET=<même valeur que sur la machine A>
 CORS_ALLOW_LAN=true

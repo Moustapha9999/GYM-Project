@@ -7,6 +7,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# IP fixe machine A
+# shellcheck source=machine-a-ip.conf
+source "$ROOT/scripts/machine-a-ip.conf" 2>/dev/null || MACHINE_A_IP="192.168.100.6"
+
 LOG_DIR="$ROOT/.run"
 mkdir -p "$LOG_DIR"
 
@@ -186,7 +190,7 @@ if ! port_listening 4200; then
 fi
 
 LAN_IP="$(get_lan_ip)"
-LAN_IP="${LAN_IP:-192.168.x.x}"
+LAN_IP="${LAN_IP:-${MACHINE_A_IP:-192.168.100.6}}"
 
 echo ""
 echo "══════════════════════════════════════════"

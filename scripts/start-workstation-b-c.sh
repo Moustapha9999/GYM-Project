@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 # Machines B/C — postes réception / manager (backend + frontend → base sur machine A)
 # Usage :
-#   ./scripts/start-workstation-b-c.sh <IP_MACHINE_A>
-#   ./scripts/start-workstation-b-c.sh              # réutilise l'IP enregistrée
-# Exemple :
-#   ./scripts/start-workstation-b-c.sh 192.168.100.6
+#   ./scripts/start-workstation-b-c.sh              # IP fixe 192.168.100.6 (machine A)
+#   ./scripts/start-workstation-b-c.sh <IP>         # autre IP si besoin
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+
+# shellcheck source=machine-a-ip.conf
+source "$ROOT/scripts/machine-a-ip.conf" 2>/dev/null || MACHINE_A_IP="192.168.100.6"
 
 LOG_DIR="$ROOT/.run"
 IP_FILE="$LOG_DIR/machine-a-ip"
@@ -18,13 +19,8 @@ DB_HOST="${1:-}"
 if [[ -z "$DB_HOST" && -f "$IP_FILE" ]]; then
   DB_HOST="$(tr -d '\r\n' < "$IP_FILE")"
 fi
-
 if [[ -z "$DB_HOST" ]]; then
-  echo "Usage: $0 <IP_MACHINE_A>"
-  echo "Exemple: $0 192.168.100.6"
-  echo ""
-  echo "La machine A doit être allumée (PostgreSQL actif)."
-  exit 1
+  DB_HOST="${MACHINE_A_IP:-192.168.100.6}"
 fi
 
 echo "$DB_HOST" > "$IP_FILE"
@@ -242,7 +238,7 @@ if ! port_listening 4200; then
 fi
 
 LAN_IP="$(get_lan_ip)"
-LAN_IP="${LAN_IP:-192.168.x.x}"
+LAN_IP="${LAN_IP:-${MACHINE_A_IP:-192.168.100.6}}"
 
 echo ""
 echo "══════════════════════════════════════════"

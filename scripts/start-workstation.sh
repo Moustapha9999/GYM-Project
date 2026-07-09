@@ -2,14 +2,17 @@
 # Machines B/C — backend + frontend vers la base partagée (machine A)
 set -euo pipefail
 
-DB_HOST="${1:-}"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=machine-a-ip.conf
+source "$ROOT/scripts/machine-a-ip.conf" 2>/dev/null || MACHINE_A_IP="192.168.100.6"
+
+DB_HOST="${1:-${MACHINE_A_IP:-192.168.100.6}}"
 if [[ -z "$DB_HOST" ]]; then
-  echo "Usage: $0 <IP_MACHINE_A>"
-  echo "Exemple: $0 192.168.1.10"
+  echo "Usage: $0 [IP_MACHINE_A]"
+  echo "Exemple: $0 192.168.100.6"
   exit 1
 fi
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BACKEND_ENV="$ROOT/backend/.env"
 
 if [[ ! -f "$BACKEND_ENV" ]]; then

@@ -5,6 +5,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# shellcheck source=machine-a-ip.conf
+source "$ROOT/scripts/machine-a-ip.conf" 2>/dev/null || MACHINE_A_IP="192.168.100.6"
+
 if [[ ! -f .env ]]; then
   cp .env.example .env
   echo "→ .env créé depuis .env.example"
@@ -18,7 +21,7 @@ until docker compose exec -T db pg_isready -U "${POSTGRES_USER:-gym_user}" -d "$
   sleep 1
 done
 
-LAN_IP="$(ipconfig getifaddr en0 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}' || echo "192.168.x.x")"
+LAN_IP="$(ipconfig getifaddr en0 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}' || echo "${MACHINE_A_IP:-192.168.100.6}")"
 echo ""
 echo "PostgreSQL prêt."
 echo "  URL locale  : postgresql://gym_user:***@localhost:5432/gym_sylla"

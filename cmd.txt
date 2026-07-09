@@ -1,12 +1,13 @@
 cd "/c/Users/TOTAL FITNESS/Documents/GYM-Project"
+
+# ── Machine A (serveur) — IP fixe : 192.168.100.6
 ./scripts/start-machine-a.sh
 
-cd "/c/chemin/vers/GYM-Project"
+# ── Machines B/C (réception / manager)
 chmod +x scripts/start-workstation-b-c.sh scripts/stop-workstation-b-c.sh
-./scripts/start-workstation-b-c.sh 192.168.100.6
-
-
 ./scripts/start-workstation-b-c.sh
 
+# Redémarrage suivant (IP mémorisée dans .run/machine-a-ip)
+./scripts/start-workstation-b-c.sh
 
 ./scripts/stop-workstation-b-c.sh
