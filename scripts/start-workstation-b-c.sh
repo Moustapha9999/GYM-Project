@@ -101,6 +101,31 @@ db_host_reachable() {
   (echo >/dev/tcp/"$DB_HOST"/5432) >/dev/null 2>&1
 }
 
+stop_pid_file() {
+  local name="$1"
+  local pid_file="$LOG_DIR/${name}.pid"
+  if [[ -f "$pid_file" ]]; then
+    local pid
+    pid="$(cat "$pid_file")"
+    kill "$pid" 2>/dev/null || true
+    rm -f "$pid_file"
+  fi
+}
+
+kill_port() {
+  local port="$1"
+  if command -v powershell.exe >/dev/null 2>&1; then
+    powershell.exe -NoProfile -Command "
+      \$conns = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
+      if (\$conns) {
+        \$conns | ForEach-Object {
+          Stop-Process -Id \$_.OwningProcess -Force -ErrorAction SilentlyContinue
+        }
+      }
+    " >/dev/null 2>&1 || true
+  fi
+}
+
 configure_workstation() {
   local backend_env="$ROOT/backend/.env"
   local lan_env="$ROOT/frontend/src/environments/environment.lan.ts"
@@ -110,9 +135,13 @@ configure_workstation() {
     echo "→ backend/.env créé depuis .env.workstation.example"
   fi
 
-  # Remplacer le placeholder ou toute IP 192.168.x.x dans DATABASE_URL / NOTIFICATION_SERVICE_URL
+  # Remplacer localhost, 127.0.0.1 ou toute IP 192.168.x.x par l'IP machine A
   sed -i.bak \
+    -e "s|@localhost:5432|@${DB_HOST}:5432|g" \
+    -e "s|@127\.0\.0\.1:5432|@${DB_HOST}:5432|g" \
     -e "s|@192\.168\.[0-9.]\+:5432|@${DB_HOST}:5432|g" \
+    -e "s|http://localhost:3001|http://${DB_HOST}:3001|g" \
+    -e "s|http://127\.0\.0\.1:3001|http://${DB_HOST}:3001|g" \
     -e "s|http://192\.168\.[0-9.]\+:3001|http://${DB_HOST}:3001|g" \
     -e "s|192\.168\.1\.10|${DB_HOST}|g" \
     "$backend_env"
@@ -161,18 +190,19 @@ if [[ -z "$UVICORN" ]]; then
   exit 1
 fi
 
-if ! port_listening 8000; then
-  echo "→ Démarrage API backend..."
-  (
-    cd backend
-    nohup "$UVICORN" app.main:app --reload --host 0.0.0.0 --port 8000 \
-      > "$LOG_DIR/backend.log" 2>&1 &
-    echo $! > "$LOG_DIR/backend.pid"
-  )
-  sleep 3
-else
-  echo "✅ Backend déjà actif (port 8000)"
-fi
+# Toujours redémarrer le backend pour prendre en compte backend/.env
+stop_pid_file "backend"
+kill_port 8000
+sleep 1
+
+echo "→ Démarrage API backend..."
+(
+  cd backend
+  nohup "$UVICORN" app.main:app --reload --host 0.0.0.0 --port 8000 \
+    > "$LOG_DIR/backend.log" 2>&1 &
+  echo $! > "$LOG_DIR/backend.pid"
+)
+sleep 3
 
 # ── 4. Frontend Angular (config réseau local) ─────────────────
 if [[ ! -d frontend/node_modules ]]; then

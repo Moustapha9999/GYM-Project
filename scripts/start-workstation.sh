@@ -17,18 +17,23 @@ if [[ ! -f "$BACKEND_ENV" ]]; then
   echo "→ backend/.env créé depuis .env.workstation.example"
 fi
 
-# Met à jour l'hôte DB et le service notifications si encore sur placeholder
-if grep -q "192.168.1.10" "$BACKEND_ENV"; then
-  sed -i.bak "s/192.168.1.10/${DB_HOST}/g" "$BACKEND_ENV"
-  rm -f "${BACKEND_ENV}.bak"
-  echo "→ backend/.env : IP ${DB_HOST} appliquée"
-fi
+sed -i.bak \
+  -e "s|@localhost:5432|@${DB_HOST}:5432|g" \
+  -e "s|@127\.0\.0\.1:5432|@${DB_HOST}:5432|g" \
+  -e "s|@192\.168\.[0-9.]\+:5432|@${DB_HOST}:5432|g" \
+  -e "s|http://localhost:3001|http://${DB_HOST}:3001|g" \
+  -e "s|http://127\.0\.0\.1:3001|http://${DB_HOST}:3001|g" \
+  -e "s|http://192\.168\.[0-9.]\+:3001|http://${DB_HOST}:3001|g" \
+  -e "s|192\.168\.1\.10|${DB_HOST}|g" \
+  "$BACKEND_ENV"
+rm -f "${BACKEND_ENV}.bak"
+echo "→ backend/.env : base distante → ${DB_HOST}:5432"
 
 LAN_ENV="$ROOT/frontend/src/environments/environment.lan.ts"
-if grep -q "192.168.1.10" "$LAN_ENV"; then
-  sed -i.bak "s/192.168.1.10/${DB_HOST}/g" "$LAN_ENV"
+if [[ -f "$LAN_ENV" ]]; then
+  sed -i.bak "s|apiUrl: 'http://[^']*'|apiUrl: 'http://localhost:8000/api/v1'|" "$LAN_ENV"
   rm -f "${LAN_ENV}.bak"
-  echo "→ environment.lan.ts : apiUrl → http://${DB_HOST}:8000/api/v1"
+  echo "→ environment.lan.ts : apiUrl → http://localhost:8000/api/v1"
 fi
 
 echo ""

@@ -7,5 +7,5 @@ import { Environment } from './environment.model';
 export const environment: Environment = {
   production: false,
   appName: 'TOTAL FITNESS',
-  apiUrl: 'http://192.168.1.10:8000/api/v1',
+  apiUrl: 'http://localhost:8000/api/v1',
 };
