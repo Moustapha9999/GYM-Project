@@ -130,6 +130,15 @@ if [[ -z "$UVICORN" ]]; then
   exit 1
 fi
 
+PYTHON_BIN="$(resolve_python)"
+echo "→ Vérification migrations et données initiales..."
+export PYTHONIOENCODING=utf-8
+(
+  cd backend
+  "$PYTHON_BIN" -m alembic upgrade head
+  "$PYTHON_BIN" -m scripts.seed
+)
+
 if ! port_listening 8000; then
   echo "→ Démarrage API backend..."
   (
